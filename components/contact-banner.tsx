@@ -20,7 +20,7 @@ const inputClassName =
 const textareaClassName =
   'min-h-32 w-full resize-y rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15'
 
-function createMailtoUrl(form: HTMLFormElement) {
+function createContactDraft(form: HTMLFormElement) {
   const data = new FormData(form)
   const name = String(data.get('name') || '').trim()
   const email = String(data.get('email') || '').trim()
@@ -35,15 +35,41 @@ function createMailtoUrl(form: HTMLFormElement) {
     message,
   ].join('\n')
 
+  return { body, subject }
+}
+
+function createGmailUrl(subject: string, body: string) {
+  const params = new URLSearchParams({
+    body,
+    fs: '1',
+    su: subject,
+    to: contactEmail,
+    view: 'cm',
+  })
+
+  return `https://mail.google.com/mail/?${params.toString()}`
+}
+
+function createMailtoUrl(subject: string, body: string) {
   return `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
 }
 
 export function ContactBanner() {
   const [copied, setCopied] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    window.location.href = createMailtoUrl(event.currentTarget)
+    const { body, subject } = createContactDraft(event.currentTarget)
+    const composeWindow = window.open(createGmailUrl(subject, body), '_blank')
+
+    setSubmitted(true)
+
+    if (composeWindow) {
+      composeWindow.opener = null
+    } else {
+      window.location.href = createMailtoUrl(subject, body)
+    }
   }
 
   async function handleCopyEmail() {
@@ -149,6 +175,12 @@ export function ContactBanner() {
                     placeholder="Stručne popíš, čo chceš vyriešiť, pre koho to je a aký výsledok očakávaš."
                   />
                 </label>
+
+                {submitted ? (
+                  <div className="rounded-lg border border-brand/20 bg-brand-soft/60 px-4 py-3 text-sm leading-6 text-foreground">
+                    Otvoril som pripravený email v novej karte. Ak sa neotvoril, skopíruj email nižšie a pošli správu ručne.
+                  </div>
+                ) : null}
 
                 <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <button
