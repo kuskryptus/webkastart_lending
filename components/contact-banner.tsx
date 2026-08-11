@@ -6,6 +6,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Copy,
+  LoaderCircle,
   Mail,
   MessageSquareText,
   Send,
@@ -20,55 +21,47 @@ const inputClassName =
 const textareaClassName =
   'min-h-32 w-full resize-y rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15'
 
-function createContactDraft(form: HTMLFormElement) {
+type SubmitState = 'idle' | 'sending' | 'sent' | 'not-configured' | 'error'
+
+function createContactPayload(form: HTMLFormElement) {
   const data = new FormData(form)
   const name = String(data.get('name') || '').trim()
   const email = String(data.get('email') || '').trim()
   const message = String(data.get('message') || '').trim()
+  const website = String(data.get('website') || '').trim()
 
-  const subject = `Dopyt z webu - ${name || 'nový kontakt'}`
-  const body = [
-    `Meno: ${name}`,
-    `Email: ${email}`,
-    '',
-    'Správa:',
-    message,
-  ].join('\n')
-
-  return { body, subject }
-}
-
-function createGmailUrl(subject: string, body: string) {
-  const params = new URLSearchParams({
-    body,
-    fs: '1',
-    su: subject,
-    to: contactEmail,
-    view: 'cm',
-  })
-
-  return `https://mail.google.com/mail/?${params.toString()}`
-}
-
-function createMailtoUrl(subject: string, body: string) {
-  return `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  return { email, message, name, website }
 }
 
 export function ContactBanner() {
   const [copied, setCopied] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [submitState, setSubmitState] = useState<SubmitState>('idle')
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const { body, subject } = createContactDraft(event.currentTarget)
-    const composeWindow = window.open(createGmailUrl(subject, body), '_blank')
+    const form = event.currentTarget
 
-    setSubmitted(true)
+    setSubmitState('sending')
 
-    if (composeWindow) {
-      composeWindow.opener = null
-    } else {
-      window.location.href = createMailtoUrl(subject, body)
+    try {
+      const response = await fetch('/api/contact', {
+        body: JSON.stringify(createContactPayload(form)),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+      const result = await response.json().catch(() => null)
+
+      if (response.ok) {
+        form.reset()
+        setSubmitState('sent')
+        return
+      }
+
+      setSubmitState(result?.reason === 'not_configured' ? 'not-configured' : 'error')
+    } catch {
+      setSubmitState('error')
     }
   }
 
@@ -140,6 +133,15 @@ export function ContactBanner() {
               </div>
 
               <form onSubmit={handleSubmit} className="grid gap-5 px-5 py-5 sm:px-6">
+                <input
+                  aria-hidden="true"
+                  autoComplete="off"
+                  className="sr-only"
+                  name="website"
+                  tabIndex={-1}
+                  type="text"
+                />
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="grid gap-2 text-sm font-medium">
                     Meno
@@ -176,11 +178,26 @@ export function ContactBanner() {
                   />
                 </label>
 
-                {submitted ? (
-                  <div className="rounded-lg border border-brand/20 bg-brand-soft/60 px-4 py-3 text-sm leading-6 text-foreground">
-                    Otvoril som pripravený email v novej karte. Ak sa neotvoril, skopíruj email nižšie a pošli správu ručne.
-                  </div>
-                ) : null}
+                <div aria-live="polite">
+                  {submitState === 'sent' ? (
+                    <div className="flex items-start gap-3 rounded-lg border border-brand/20 bg-brand-soft/60 px-4 py-3 text-sm leading-6 text-foreground">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden="true" />
+                      Správa bola odoslaná. Ozvem sa ti čo najskôr.
+                    </div>
+                  ) : null}
+
+                  {submitState === 'not-configured' ? (
+                    <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
+                      Kontaktný formulár ešte nie je pripojený na email službu. Zatiaľ mi prosím napíš priamo na email nižšie.
+                    </div>
+                  ) : null}
+
+                  {submitState === 'error' ? (
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-foreground">
+                      Správu sa nepodarilo odoslať. Skús to prosím znova alebo použi email nižšie.
+                    </div>
+                  ) : null}
+                </div>
 
                 <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <button
@@ -198,10 +215,20 @@ export function ContactBanner() {
 
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-3 focus:ring-ring/30"
+                    disabled={submitState === 'sending'}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-3 focus:ring-ring/30 disabled:pointer-events-none disabled:opacity-70"
                   >
-                    Odoslať správu
-                    <Send className="size-4" aria-hidden="true" />
+                    {submitState === 'sending' ? (
+                      <>
+                        Odosielam
+                        <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+                      </>
+                    ) : (
+                      <>
+                        Odoslať správu
+                        <Send className="size-4" aria-hidden="true" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
