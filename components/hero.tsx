@@ -5,7 +5,7 @@ import { DashboardMockup } from '@/components/dashboard-mockup'
 const features = [
   { icon: Zap, title: 'Hotové ešte dnes', desc: 'Pri jednoduchších projektoch.' },
   { icon: Sparkles, title: 'Od 100 €', desc: 'Transparentná cena bez prekvapení.' },
-  { icon: Ruler, title: 'Stačí problém', desc: 'Riešenie nájdeme spolu.' },
+  { icon: Ruler, title: 'Stačí problém', desc: 'Riešenie nájdeme a prekonzultujeme.' },
 ]
 
 export function Hero() {
@@ -30,17 +30,17 @@ export function Hero() {
             Máte nápad, ktorý chcete overiť? Potrebujete web, interný systém alebo jednoduchú aplikáciu? Navrhnem a vytvorím riešenie bez zbytočne dlhého vývoja a veľkých rozpočtov.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Link
               href="#projekty"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary sm:order-none"
             >
               Pozrieť projekty
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
             <Link
               href="#kontakt"
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              className="order-first inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:order-none"
             >
               Mám nápad
               <Lightbulb className="size-4" aria-hidden="true" />

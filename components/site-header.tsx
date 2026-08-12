@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import { Logo } from '@/components/logo'
 
 const navItems = [
@@ -31,10 +31,11 @@ export function SiteHeader() {
 
         <Link
           href="#kontakt"
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          aria-label="Napíš mi"
+          className="inline-flex size-11 items-center justify-center gap-2 rounded-full bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:h-auto sm:w-auto sm:px-5 sm:py-2.5"
         >
-          Napíš mi
-          <ArrowRight className="size-4" aria-hidden="true" />
+          <span className="hidden sm:inline">Napíš mi</span>
+          <MessageCircle className="size-5 sm:size-4" aria-hidden="true" />
         </Link>
       </div>
     </header>
