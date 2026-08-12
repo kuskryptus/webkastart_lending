@@ -12,20 +12,20 @@ const stats = [
 export function About() {
   return (
     <section id="o-mne" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
-      <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr_auto] lg:gap-12">
+      <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1fr_1.1fr_auto] lg:gap-12">
         {/* Image */}
-        <div className="overflow-hidden rounded-2xl">
+        <div className="min-w-0 overflow-hidden rounded-2xl">
           <Image
             src="/about-portrait.png"
             alt="Vývojár pracujúci na notebooku"
             width={520}
             height={420}
-            className="h-full w-full object-cover"
+            className="aspect-[13/10] w-full object-cover"
           />
         </div>
 
         {/* Text */}
-        <div>
+        <div className="min-w-0">
           <SectionLabel>O mne</SectionLabel>
           <h2 className="mt-4 text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
             Rád tvorím veci, ktoré majú zmysel.
@@ -44,13 +44,13 @@ export function About() {
         </div>
 
         {/* Stats */}
-        <dl className="flex flex-row gap-8 lg:flex-col lg:gap-8">
+        <dl className="grid min-w-0 gap-4 sm:grid-cols-3 lg:flex lg:flex-col lg:gap-8">
           {stats.map((s) => (
-            <div key={s.label} className="flex items-center gap-3">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
+            <div key={s.label} className="flex min-w-0 items-center gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
                 <s.icon className="size-5" aria-hidden="true" />
               </div>
-              <dd className="text-sm font-medium leading-relaxed text-muted-foreground">{s.label}</dd>
+              <dd className="min-w-0 text-sm font-medium leading-relaxed text-muted-foreground">{s.label}</dd>
             </div>
           ))}
         </dl>

@@ -9,7 +9,7 @@ import { SiteFooter } from '@/components/site-footer'
 
 export default function Home() {
   return (
-    <main className="min-h-dvh bg-background">
+    <main className="min-h-dvh overflow-x-clip bg-background">
       <SiteHeader />
       <Hero />
       <Projects />

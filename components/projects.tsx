@@ -67,7 +67,7 @@ export function Projects() {
         <div>
           <SectionLabel>Moje projekty</SectionLabel>
           <h2 className="mt-4 max-w-3xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
-            Vy poviete problém. Ja navrhnem riešenie. Vy získate viac času na podnikanie.
+            Vy sa venujte podnikaniu. Ja vytvorím technológie, ktoré vám ušetria čas.
           </h2>
         </div>
         <Link
