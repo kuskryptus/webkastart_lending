@@ -9,7 +9,6 @@ type Package = {
   intro: string
   items: string[]
   highlight?: string
-  featured?: boolean
 }
 
 const packages: Package[] = [
@@ -39,7 +38,6 @@ const packages: Package[] = [
       'prepojenie formulárov',
     ],
     highlight: 'Dodanie dnes alebo do 3 dní.',
-    featured: true,
   },
   {
     icon: Gem,
@@ -74,23 +72,12 @@ export function Pricing() {
         {packages.map((p) => (
           <li
             key={p.name}
-            className={`group flex flex-col rounded-2xl border bg-card p-6 transition-shadow hover:shadow-lg hover:shadow-foreground/5 ${
-              p.featured ? 'border-brand/40 ring-1 ring-brand/20' : 'border-border'
-            }`}
+            className="group flex flex-col rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-lg hover:shadow-foreground/5"
           >
             <div className="flex items-center justify-between">
-              <div
-                className={`flex size-11 items-center justify-center rounded-xl ${
-                  p.featured ? 'bg-brand text-brand-foreground' : 'bg-brand-soft text-brand'
-                }`}
-              >
+              <div className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
                 <p.icon className="size-5" aria-hidden="true" />
               </div>
-              {p.featured && (
-                <span className="rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
-                  Najobľúbenejšie
-                </span>
-              )}
             </div>
 
             <h3 className="mt-5 text-xl font-bold tracking-tight">{p.name}</h3>
@@ -106,20 +93,16 @@ export function Pricing() {
               ))}
             </ul>
 
-            {p.highlight && (
-              <p className="mt-5 flex min-h-12 items-center rounded-full border border-brand/15 bg-brand-soft/60 px-4 py-2 text-sm font-normal leading-snug text-brand shadow-sm">
-                {p.highlight}
-              </p>
-            )}
+            <div className="mt-auto pt-6">
+              {p.highlight && (
+                <p className="flex min-h-12 items-center rounded-full border border-brand/15 bg-brand-soft/60 px-4 py-2 text-sm font-normal leading-snug text-brand shadow-sm">
+                  {p.highlight}
+                </p>
+              )}
 
-            <div className="mt-6 flex flex-1 items-end">
               <Link
                 href="#kontakt"
-                className={`flex w-full items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-medium transition-colors ${
-                  p.featured
-                    ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    : 'border border-border bg-card text-foreground hover:bg-secondary'
-                }`}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
               >
                 Toto potrebujem
                 <ArrowRight className="size-4" aria-hidden="true" />

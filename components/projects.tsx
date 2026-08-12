@@ -66,8 +66,8 @@ export function Projects() {
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <SectionLabel>Moje projekty</SectionLabel>
-          <h2 className="mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
-            Riešenia, ktoré prinášajú výsledky
+          <h2 className="mt-4 max-w-3xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
+            Vy poviete problém. Ja navrhnem riešenie. Vy získate viac času na podnikanie.
           </h2>
         </div>
         <Link
