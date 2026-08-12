@@ -21,7 +21,7 @@ const inputClassName =
 const textareaClassName =
   'min-h-32 w-full resize-y rounded-lg border border-border bg-background px-3 py-3 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15'
 
-type SubmitState = 'idle' | 'sending' | 'sent' | 'not-configured' | 'error'
+type SubmitState = 'idle' | 'sending' | 'sent' | 'not-configured' | 'server-missing' | 'error'
 
 function createContactPayload(form: HTMLFormElement) {
   const data = new FormData(form)
@@ -51,6 +51,7 @@ export function ContactBanner() {
         },
         method: 'POST',
       })
+      const contentType = response.headers.get('content-type') || ''
       const result = await response.json().catch(() => null)
 
       if (response.ok) {
@@ -59,7 +60,17 @@ export function ContactBanner() {
         return
       }
 
-      setSubmitState(result?.reason === 'not_configured' ? 'not-configured' : 'error')
+      if (
+        result?.reason === 'not_configured' ||
+        response.status === 404 ||
+        response.status === 405 ||
+        contentType.includes('text/html')
+      ) {
+        setSubmitState(response.status === 404 || response.status === 405 ? 'server-missing' : 'not-configured')
+        return
+      }
+
+      setSubmitState('error')
     } catch {
       setSubmitState('error')
     }
@@ -189,6 +200,12 @@ export function ContactBanner() {
                   {submitState === 'not-configured' ? (
                     <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
                       Kontaktný formulár ešte nie je pripojený na email službu. Zatiaľ mi prosím napíš priamo na email nižšie.
+                    </div>
+                  ) : null}
+
+                  {submitState === 'server-missing' ? (
+                    <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
+                      Kontaktný formulár ešte nie je spustený na serveri. Zatiaľ mi prosím napíš priamo na email nižšie.
                     </div>
                   ) : null}
 
