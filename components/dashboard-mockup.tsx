@@ -70,7 +70,7 @@ export function DashboardMockup() {
             <div key={s.label} className="rounded-lg border border-border/70 p-2.5">
               <p className="truncate text-muted-foreground">{s.label}</p>
               <p className="mt-1 text-[13px] font-semibold">{s.value}</p>
-              <p className="mt-0.5 font-medium text-emerald-600">{s.delta}</p>
+              <p className="mt-0.5 font-medium text-brand">{s.delta}</p>
             </div>
           ))}
         </div>
@@ -137,8 +137,8 @@ export function DashboardMockup() {
                 <span
                   className={`shrink-0 rounded-full px-2 py-0.5 text-[8px] font-medium ${
                     o.status === 'Zaplatená'
-                      ? 'bg-emerald-50 text-emerald-600'
-                      : 'bg-amber-50 text-amber-600'
+                      ? 'bg-brand-soft text-brand'
+                      : 'bg-secondary text-muted-foreground'
                   }`}
                 >
                   {o.status}

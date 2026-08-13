@@ -72,7 +72,7 @@ export function Pricing() {
         {packages.map((p) => (
           <li
             key={p.name}
-            className="group flex flex-col rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-lg hover:shadow-foreground/5"
+            className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-card-hover"
           >
             <div className="flex items-center justify-between">
               <div className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand">

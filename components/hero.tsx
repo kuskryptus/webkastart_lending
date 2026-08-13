@@ -11,9 +11,9 @@ const features = [
 export function Hero() {
   return (
     <section className="mx-auto max-w-6xl px-5 pb-10 pt-6 sm:px-6 lg:pb-20 lg:pt-10">
-      <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-10">
+      <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
         {/* Left */}
-        <div>
+        <div className="max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
             <span className="size-1.5 rounded-full bg-brand" aria-hidden="true" />
             OD NÁPADU K RIEŠENIU
@@ -62,14 +62,14 @@ export function Hero() {
 
         {/* Right */}
         <div className="relative hidden lg:block">
-          <div className="rounded-[14px] border border-border bg-neutral-800 p-2 shadow-2xl shadow-brand/10">
+          <div className="rounded-[14px] border border-border bg-primary p-2 shadow-card-hover">
             <div className="aspect-[16/11] w-full overflow-hidden rounded-lg bg-card">
               <DashboardMockup />
             </div>
           </div>
-          <div className="mx-auto h-2.5 w-[calc(100%+2rem)] -translate-x-4 rounded-b-xl bg-neutral-700" />
+          <div className="mx-auto h-2.5 w-[calc(100%+2rem)] -translate-x-4 rounded-b-xl bg-primary/85" />
 
-          <figure className="absolute -bottom-6 right-2 max-w-[220px] rounded-xl border border-border bg-card p-4 shadow-xl sm:right-6">
+          <figure className="absolute -bottom-6 right-2 max-w-[220px] rounded-xl border border-border bg-card p-4 shadow-card-hover sm:right-6">
             <span className="text-2xl font-serif leading-none text-brand" aria-hidden="true">
               &#8220;
             </span>

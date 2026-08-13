@@ -1,13 +1,12 @@
 'use client'
 
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import {
   ArrowRight,
   CheckCircle2,
   Copy,
   LoaderCircle,
-  Mail,
   MessageSquareText,
   Send,
   X,
@@ -35,7 +34,24 @@ function createContactPayload(form: HTMLFormElement) {
 
 export function ContactBanner() {
   const [copied, setCopied] = useState(false)
+  const [open, setOpen] = useState(false)
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
+
+  useEffect(() => {
+    function openFromHash() {
+      if (window.location.hash === '#kontakt-formular') {
+        setOpen(true)
+      }
+    }
+
+    openFromHash()
+    window.addEventListener('hashchange', openFromHash)
+    window.addEventListener('open-contact-form', openFromHash)
+    return () => {
+      window.removeEventListener('hashchange', openFromHash)
+      window.removeEventListener('open-contact-form', openFromHash)
+    }
+  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -82,14 +98,22 @@ export function ContactBanner() {
       setCopied(true)
       window.setTimeout(() => setCopied(false), 1800)
     } catch {
-      window.location.href = `mailto:${contactEmail}`
+      setCopied(false)
+    }
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen)
+
+    if (!nextOpen && window.location.hash === '#kontakt-formular') {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     }
   }
 
   return (
     <section id="kontakt" className="mx-auto max-w-6xl px-5 py-6 sm:px-6 lg:pb-16">
-      <Dialog.Root>
-        <div className="rounded-3xl border border-brand/10 bg-brand-soft/70 px-6 py-9 shadow-sm sm:px-10 lg:px-12 lg:py-11">
+      <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+        <div className="rounded-3xl border border-brand/10 bg-brand-soft/70 px-6 py-9 shadow-card sm:px-10 lg:px-12 lg:py-11">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <h2 className="text-pretty text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
@@ -101,13 +125,18 @@ export function ContactBanner() {
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end lg:min-w-max">
-              <a
-                href={`mailto:${contactEmail}`}
+              <button
+                type="button"
+                onClick={handleCopyEmail}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
               >
-                <Mail className="size-4 text-brand" aria-hidden="true" />
-                {contactEmail}
-              </a>
+                {copied ? (
+                  <CheckCircle2 className="size-4 text-brand" aria-hidden="true" />
+                ) : (
+                  <Copy className="size-4 text-brand" aria-hidden="true" />
+                )}
+                {copied ? 'Email skopírovaný' : 'Kopírovať email'}
+              </button>
               <Dialog.Trigger
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-3 focus:ring-ring/30"
               >
@@ -121,7 +150,7 @@ export function ContactBanner() {
         <Dialog.Portal>
           <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/35 backdrop-blur-sm transition-opacity data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
           <Dialog.Viewport className="fixed inset-0 z-50 grid place-items-center overflow-y-auto px-4 py-6">
-            <Dialog.Popup className="relative w-full max-w-2xl rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl outline-none transition-all data-[ending-style]:scale-98 data-[ending-style]:opacity-0 data-[starting-style]:scale-98 data-[starting-style]:opacity-0">
+            <Dialog.Popup className="relative w-full max-w-2xl rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-card-hover outline-none transition-all data-[ending-style]:scale-98 data-[ending-style]:opacity-0 data-[starting-style]:scale-98 data-[starting-style]:opacity-0">
               <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-6">
                 <div>
                   <div className="mb-3 inline-flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand">
@@ -199,19 +228,19 @@ export function ContactBanner() {
 
                   {submitState === 'not-configured' ? (
                     <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
-                      Kontaktný formulár ešte nie je pripojený na email službu. Zatiaľ mi prosím napíš priamo na email nižšie.
+                      Email služba ešte nie je nakonfigurovaná. Použi kopírovanie emailu nižšie a napíš mi priamo.
                     </div>
                   ) : null}
 
                   {submitState === 'server-missing' ? (
                     <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
-                      Kontaktný formulár ešte nie je spustený na serveri. Zatiaľ mi prosím napíš priamo na email nižšie.
+                      Kontaktný formulár ešte nie je spustený na serveri. Použi kopírovanie emailu nižšie a napíš mi priamo.
                     </div>
                   ) : null}
 
                   {submitState === 'error' ? (
                     <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-foreground">
-                      Správu sa nepodarilo odoslať. Skús to prosím znova alebo použi email nižšie.
+                      Správu sa nepodarilo odoslať. Skús to prosím znova alebo si skopíruj email nižšie.
                     </div>
                   ) : null}
                 </div>
@@ -227,7 +256,7 @@ export function ContactBanner() {
                     ) : (
                       <Copy className="size-4 text-brand" aria-hidden="true" />
                     )}
-                    {copied ? 'Email skopírovaný' : contactEmail}
+                    {copied ? 'Email skopírovaný' : 'Kopírovať email'}
                   </button>
 
                   <button

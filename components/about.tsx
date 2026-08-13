@@ -11,7 +11,7 @@ const stats = [
 
 export function About() {
   return (
-    <section id="o-mne" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
+    <section id="preco-webkastart" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
       <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1fr_1.1fr_auto] lg:gap-12">
         {/* Image */}
         <div className="min-w-0 overflow-hidden rounded-2xl">
@@ -26,7 +26,7 @@ export function About() {
 
         {/* Text */}
         <div className="min-w-0">
-          <SectionLabel>O mne</SectionLabel>
+          <SectionLabel>Prečo WebkaStart?</SectionLabel>
           <h2 className="mt-4 text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
             Rád tvorím veci, ktoré majú zmysel.
           </h2>

@@ -34,7 +34,7 @@ export function FlowPreview() {
       {[
         { label: 'Doklad', tone: 'bg-secondary text-muted-foreground' },
         { label: 'Spracovanie', tone: 'bg-brand-soft text-brand' },
-        { label: 'Faktúra', tone: 'bg-emerald-50 text-emerald-600' },
+        { label: 'Faktúra', tone: 'bg-card text-foreground ring-1 ring-border' },
       ].map((node, i) => (
         <div key={node.label} className="flex flex-col items-start gap-2">
           <div
