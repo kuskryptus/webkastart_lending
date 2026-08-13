@@ -16,11 +16,11 @@ export function About() {
         {/* Image */}
         <div className="min-w-0 overflow-hidden rounded-2xl">
           <Image
-            src="/about-portrait.png"
+            src="/kristian-about-landscape.png"
             alt="Vývojár pracujúci na notebooku"
             width={941}
-            height={1672}
-            className="aspect-[13/10] w-full object-cover [object-position:center_38%]"
+            height={724}
+            className="aspect-[13/10] w-full object-cover"
           />
         </div>
 
