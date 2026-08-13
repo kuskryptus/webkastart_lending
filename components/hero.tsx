@@ -60,17 +60,15 @@ export function Hero() {
           </dl>
         </div>
 
-        {/* Right — laptop mockup */}
-        <div className="relative">
+        {/* Right */}
+        <div className="relative hidden lg:block">
           <div className="rounded-[14px] border border-border bg-neutral-800 p-2 shadow-2xl shadow-brand/10">
             <div className="aspect-[16/11] w-full overflow-hidden rounded-lg bg-card">
               <DashboardMockup />
             </div>
           </div>
-          {/* Laptop base */}
           <div className="mx-auto h-2.5 w-[calc(100%+2rem)] -translate-x-4 rounded-b-xl bg-neutral-700" />
 
-          {/* Testimonial */}
           <figure className="absolute -bottom-6 right-2 max-w-[220px] rounded-xl border border-border bg-card p-4 shadow-xl sm:right-6">
             <span className="text-2xl font-serif leading-none text-brand" aria-hidden="true">
               &#8220;

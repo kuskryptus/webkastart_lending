@@ -18,9 +18,9 @@ export function About() {
           <Image
             src="/about-portrait.png"
             alt="Vývojár pracujúci na notebooku"
-            width={520}
-            height={420}
-            className="aspect-[13/10] w-full object-cover"
+            width={941}
+            height={1672}
+            className="aspect-[13/10] w-full object-cover [object-position:center_38%]"
           />
         </div>
 
