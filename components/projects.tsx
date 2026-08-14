@@ -1,5 +1,3 @@
-import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
 import { ProjectCarousel } from '@/components/project-carousel'
 import { ProjectVisual, type ProjectShowcase } from '@/components/project-visual'
 import { SectionLabel } from '@/components/section-label'
@@ -146,17 +144,7 @@ export function Projects() {
           <h2 className="mt-4 max-w-3xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
             Produkty v praxi
           </h2>
-          <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-            Každý projekt ukazujem cez rozhranie a krátke funkčné body, aby bolo hneď jasné, čo aplikácia rieši.
-          </p>
         </div>
-        <Link
-          href="/projekty"
-          className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
-        >
-          Zobraziť viac detailov
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Link>
       </div>
 
       <ProjectCarousel projects={projects} />

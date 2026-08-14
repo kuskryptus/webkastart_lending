@@ -6,6 +6,7 @@ import {
   BarChart3,
   Settings,
 } from 'lucide-react'
+import { LogoMark } from '@/components/logo'
 
 const stats = [
   { label: 'Príjmy (tento mesiac)', value: '24 540 €', delta: '+12,5 %' },
@@ -36,7 +37,7 @@ export function DashboardMockup() {
       {/* Sidebar */}
       <aside className="hidden w-36 shrink-0 flex-col gap-1 border-r border-border/70 bg-secondary/60 p-3 sm:flex">
         <div className="mb-3 flex items-center gap-2 px-1">
-          <span className="size-2 rounded-full bg-brand" aria-hidden="true" />
+          <LogoMark size="compact" className="shadow-none" />
           <span className="font-semibold">WebkaStart</span>
         </div>
         {sidebar.map((item) => (

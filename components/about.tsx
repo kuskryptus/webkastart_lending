@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { Mail, Phone } from 'lucide-react'
 import { FaFacebookF, FaInstagram } from 'react-icons/fa'
 import { SectionLabel } from '@/components/section-label'
 
@@ -55,6 +56,23 @@ export function About() {
               <FaFacebookF className="size-5 text-[#1877F2]" aria-hidden="true" />
               Facebook
             </Link>
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-x-7 gap-y-3 text-sm text-muted-foreground">
+            <a
+              href="mailto:kampczykristian@gmail.com"
+              className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+            >
+              <Mail className="size-4 text-brand" aria-hidden="true" />
+              kampczykristian@gmail.com
+            </a>
+            <a
+              href="tel:+421950591354"
+              className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+            >
+              <Phone className="size-4 text-brand" aria-hidden="true" />
+              0950 591 354
+            </a>
           </div>
         </div>
       </div>

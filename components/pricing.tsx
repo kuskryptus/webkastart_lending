@@ -24,7 +24,7 @@ const packages: Package[] = [
       'kontaktný formulár',
       'MVP nápad',
     ],
-    highlight: 'Často hotové ešte dnes.',
+    highlight: 'Hotové ešte dnes',
   },
   {
     icon: Zap,
@@ -38,7 +38,7 @@ const packages: Package[] = [
       'administráciu',
       'prepojenie formulárov',
     ],
-    highlight: 'Dodanie dnes alebo do 3 dní.',
+    highlight: 'Dodanie do 3 dní',
   },
   {
     icon: Gem,
@@ -52,7 +52,7 @@ const packages: Package[] = [
       'klientsku zónu',
       'automatizácie',
     ],
-    highlight: 'Funkčný základ do týždňa.',
+    highlight: 'Základ do týždňa',
   },
 ]
 
@@ -95,8 +95,13 @@ export function Pricing() {
             key={p.name}
             className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-card-hover"
           >
-            <div className="flex items-center justify-between">
-              <p.icon className="size-7 text-brand" aria-hidden="true" />
+            <div className="flex h-7 items-center justify-between gap-4">
+              <p.icon className="size-7 shrink-0 text-brand" aria-hidden="true" />
+              {p.highlight && (
+                <p className="shrink-0 whitespace-nowrap text-right text-[10px] font-semibold uppercase leading-none tracking-wide text-brand">
+                  {p.highlight}
+                </p>
+              )}
             </div>
 
             <h3 className="mt-5 text-xl font-bold tracking-tight">{p.name}</h3>
@@ -113,12 +118,6 @@ export function Pricing() {
             </ul>
 
             <div className="mt-auto pt-6">
-              {p.highlight && (
-                <p className="flex min-h-12 items-center rounded-full border border-brand/15 bg-brand-soft/60 px-4 py-2 text-sm font-normal leading-snug text-brand shadow-sm">
-                  {p.highlight}
-                </p>
-              )}
-
               <button
                 type="button"
                 onClick={() => handlePlanClick(p)}

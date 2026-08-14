@@ -18,7 +18,7 @@ function ProjectSlide({
       aria-hidden={!active}
       className="min-w-full px-0.5"
     >
-      <div className="grid gap-8 lg:min-h-[560px] lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-12">
+      <div className="grid gap-8 lg:min-h-[560px] lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:gap-12">
         <div className="max-w-xl">
           <span className="inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
             {project.category}
@@ -52,7 +52,7 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
   }
 
   return (
-    <div className="mt-10">
+    <div className="mt-6">
       <div className="mb-4 flex items-center justify-between gap-4">
         <p className="text-sm font-medium text-muted-foreground">
           {String(activeIndex + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
