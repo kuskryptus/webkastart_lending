@@ -26,20 +26,33 @@ function createContactPayload(form: HTMLFormElement) {
   const data = new FormData(form)
   const name = String(data.get('name') || '').trim()
   const email = String(data.get('email') || '').trim()
+  const phone = String(data.get('phone') || '').trim()
   const message = String(data.get('message') || '').trim()
   const website = String(data.get('website') || '').trim()
 
-  return { email, message, name, website }
+  return { email, message, name, phone, website }
 }
+
+type OpenContactFormEvent = CustomEvent<{
+  message?: string
+}>
 
 export function ContactBanner() {
   const [copied, setCopied] = useState(false)
   const [open, setOpen] = useState(false)
+  const [message, setMessage] = useState('')
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
 
   useEffect(() => {
-    function openFromHash() {
-      if (window.location.hash === '#kontakt-formular') {
+    function openFromHash(event?: Event) {
+      const detail = (event as OpenContactFormEvent | undefined)?.detail
+
+      if (detail?.message) {
+        setMessage(detail.message)
+      }
+
+      if (window.location.hash === '#kontakt-formular' || event?.type === 'open-contact-form') {
+        setSubmitState('idle')
         setOpen(true)
       }
     }
@@ -72,6 +85,7 @@ export function ContactBanner() {
 
       if (response.ok) {
         form.reset()
+        setMessage('')
         setSubmitState('sent')
         return
       }
@@ -104,6 +118,11 @@ export function ContactBanner() {
 
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen)
+
+    if (!nextOpen) {
+      setMessage('')
+      setSubmitState('idle')
+    }
 
     if (!nextOpen && window.location.hash === '#kontakt-formular') {
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
@@ -209,10 +228,26 @@ export function ContactBanner() {
                 </div>
 
                 <label className="grid gap-2 text-sm font-medium">
+                  <span className="flex items-center gap-2">
+                    Telefón
+                    <span className="text-xs font-normal text-muted-foreground">nepovinné</span>
+                  </span>
+                  <input
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    className={inputClassName}
+                    placeholder="+421 ..."
+                  />
+                </label>
+
+                <label className="grid gap-2 text-sm font-medium">
                   Správa
                   <textarea
                     name="message"
                     required
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
                     className={textareaClassName}
                     placeholder="Stručne popíš, čo chceš vyriešiť, pre koho to je a aký výsledok očakávaš."
                   />

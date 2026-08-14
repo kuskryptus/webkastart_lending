@@ -1,18 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Award, Briefcase, Heart } from 'lucide-react'
+import { FaFacebookF, FaInstagram } from 'react-icons/fa'
 import { SectionLabel } from '@/components/section-label'
-
-const stats = [
-  { icon: Award, label: 'Dodanie za dni, nie mesiace' },
-  { icon: Briefcase, label: 'Riešenia od 100 €' },
-  { icon: Heart, label: 'Weby aj malé aplikácie na mieru' },
-]
 
 export function About() {
   return (
     <section id="preco-webkastart" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
-      <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1fr_1.1fr_auto] lg:gap-12">
+      <div className="grid min-w-0 items-center gap-10 lg:grid-cols-[1fr_1.25fr] lg:gap-14">
         {/* Image */}
         <div className="min-w-0 overflow-hidden rounded-2xl">
           <Image
@@ -28,32 +22,41 @@ export function About() {
         <div className="min-w-0">
           <SectionLabel>Prečo WebkaStart?</SectionLabel>
           <h2 className="mt-4 text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-            Rád tvorím veci, ktoré majú zmysel.
+            Kristián Kampczyk
           </h2>
-          <p className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-            Som full-stack vývojár s vášňou pre tvorbu aplikácií, ktoré naozaj
-            pomáhajú. Milujem čistý kód, premyslené riešenia a férovú komunikáciu.
+          <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
+            Som živnostník s 5 rokmi skúseností s vývojom rôznych riešení pre firmy
+            aj vlastných nástrojov pre seba. Práve preto som sa rozhodol založiť
+            WebkaStart a posunúť tieto skúsenosti ďalej.
           </p>
-          <Link
-            href="#kontakt"
-            className="mt-7 inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-          >
-            Viac o mne
-            <ArrowRight className="size-4" aria-hidden="true" />
-          </Link>
-        </div>
+          <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
+            V auguste 2026 som si založil živnosť s cieľom pomáhať firmám
+            automatizovať a zjednodušovať manuálnu a repetitívnu prácu. WebkaStart
+            je miesto, kde sa tieto riešenia môžu začať a kde sa aj menšie podnikanie
+            môže viac zviditeľniť.
+          </p>
 
-        {/* Stats */}
-        <dl className="grid min-w-0 gap-4 sm:grid-cols-3 lg:flex lg:flex-col lg:gap-8">
-          {stats.map((s) => (
-            <div key={s.label} className="flex min-w-0 items-center gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
-                <s.icon className="size-5" aria-hidden="true" />
-              </div>
-              <dd className="min-w-0 text-sm font-medium leading-relaxed text-muted-foreground">{s.label}</dd>
-            </div>
-          ))}
-        </dl>
+          <div className="mt-7 flex flex-wrap items-center gap-x-9 gap-y-4">
+            <Link
+              href="https://www.instagram.com/kristiankampczyk/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-foreground transition duration-200 hover:-translate-y-0.5 hover:opacity-75"
+            >
+              <FaInstagram className="size-5 text-[#E4405F]" aria-hidden="true" />
+              Instagram
+            </Link>
+            <Link
+              href="https://www.facebook.com/kristian.kampczyk.3"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2.5 text-sm font-medium text-foreground transition duration-200 hover:-translate-y-0.5 hover:opacity-75"
+            >
+              <FaFacebookF className="size-5 text-[#1877F2]" aria-hidden="true" />
+              Facebook
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   )

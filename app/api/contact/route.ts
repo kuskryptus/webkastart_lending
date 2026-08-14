@@ -5,6 +5,7 @@ type ContactPayload = {
   email?: unknown
   message?: unknown
   name?: unknown
+  phone?: unknown
   website?: unknown
 }
 
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
 
   const name = cleanText(payload.name, 120)
   const email = cleanText(payload.email, 160)
+  const phone = cleanText(payload.phone, 60)
   const message = cleanText(payload.message, 3000)
 
   if (!name || !email || !message) {
@@ -54,11 +56,19 @@ export async function POST(request: Request) {
   }
 
   const subject = `Dopyt z webu - ${name}`
-  const text = [`Meno: ${name}`, `Email: ${email}`, '', 'Správa:', message].join('\n')
+  const text = [
+    `Meno: ${name}`,
+    `Email: ${email}`,
+    phone ? `Telefón: ${phone}` : null,
+    '',
+    'Správa:',
+    message,
+  ].filter(Boolean).join('\n')
   const html = `
     <h2>Nový dopyt z webu</h2>
     <p><strong>Meno:</strong> ${escapeHtml(name)}</p>
     <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+    ${phone ? `<p><strong>Telefón:</strong> ${escapeHtml(phone)}</p>` : ''}
     <p><strong>Správa:</strong></p>
     <p>${escapeHtml(message).replaceAll('\n', '<br />')}</p>
   `

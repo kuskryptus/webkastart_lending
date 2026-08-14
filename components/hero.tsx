@@ -40,10 +40,11 @@ export function Hero() {
             </Link>
             <Link
               href="#kontakt"
-              className="order-first inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:order-none"
+              className="relative order-first inline-flex items-center justify-center gap-2 overflow-visible rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:order-none"
             >
               Mám nápad
               <Lightbulb className="size-4" aria-hidden="true" />
+              <span className="hero-tap-indicator pointer-events-none absolute right-5 top-1/2 lg:hidden" aria-hidden="true" />
             </Link>
           </div>
 
@@ -61,25 +62,38 @@ export function Hero() {
         </div>
 
         {/* Right */}
-        <div className="relative hidden lg:block">
+        <div className="hero-visual-stage relative hidden lg:block">
           <div className="rounded-[14px] border border-border bg-primary p-2 shadow-card-hover">
             <div className="aspect-[16/11] w-full overflow-hidden rounded-lg bg-card">
               <DashboardMockup />
             </div>
           </div>
           <div className="mx-auto h-2.5 w-[calc(100%+2rem)] -translate-x-4 rounded-b-xl bg-primary/85" />
-
-          <figure className="absolute -bottom-6 right-2 max-w-[220px] rounded-xl border border-border bg-card p-4 shadow-card-hover sm:right-6">
-            <span className="text-2xl font-serif leading-none text-brand" aria-hidden="true">
-              &#8220;
-            </span>
-            <blockquote className="mt-1 text-sm leading-snug text-foreground">
-              Vďaka tejto aplikácii máme vo fakturácii konečne poriadok.
-            </blockquote>
-            <figcaption className="mt-2 text-xs text-muted-foreground">
-              — Petra, účtovníctvo
-            </figcaption>
-          </figure>
+          <div className="hero-cursor-demo pointer-events-none absolute left-0 top-0 z-10 text-brand" aria-hidden="true">
+            <svg
+              className="hero-cursor-icon"
+              width="26"
+              height="31"
+              viewBox="0 0 26 31"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4.5 3.8L20.7 19.2L13.2 20.1L10.1 27.2L4.5 3.8Z"
+                fill="var(--card)"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M12.9 19.9L17.7 27.7"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span className="hero-cursor-click" />
+          </div>
         </div>
       </div>
     </section>

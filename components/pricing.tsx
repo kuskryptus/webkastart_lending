@@ -1,4 +1,5 @@
-import Link from 'next/link'
+'use client'
+
 import { ArrowRight, Rocket, Zap, Gem, Check } from 'lucide-react'
 import { SectionLabel } from '@/components/section-label'
 
@@ -56,6 +57,26 @@ const packages: Package[] = [
 ]
 
 export function Pricing() {
+  function handlePlanClick(plan: Package) {
+    const message = [
+      `Mám záujem o plán ${plan.name} (${plan.price}).`,
+      '',
+      'Potrebujem vyriešiť:',
+      ...plan.items.map((item) => `- ${item}`),
+      '',
+      'Môj projekt / poznámka:',
+    ].join('\n')
+
+    window.history.pushState(null, '', '#kontakt-formular')
+    window.dispatchEvent(
+      new CustomEvent('open-contact-form', {
+        detail: {
+          message,
+        },
+      }),
+    )
+  }
+
   return (
     <section id="cennik" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
       <div className="max-w-2xl">
@@ -75,9 +96,7 @@ export function Pricing() {
             className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-card transition-shadow hover:shadow-card-hover"
           >
             <div className="flex items-center justify-between">
-              <div className="flex size-11 items-center justify-center rounded-xl bg-brand-soft text-brand">
-                <p.icon className="size-5" aria-hidden="true" />
-              </div>
+              <p.icon className="size-7 text-brand" aria-hidden="true" />
             </div>
 
             <h3 className="mt-5 text-xl font-bold tracking-tight">{p.name}</h3>
@@ -100,13 +119,14 @@ export function Pricing() {
                 </p>
               )}
 
-              <Link
-                href="#kontakt"
+              <button
+                type="button"
+                onClick={() => handlePlanClick(p)}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
               >
-                Toto potrebujem
+                Mám záujem
                 <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
+              </button>
             </div>
           </li>
         ))}

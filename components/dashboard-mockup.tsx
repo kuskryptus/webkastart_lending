@@ -46,7 +46,7 @@ export function DashboardMockup() {
               item.active
                 ? 'bg-card font-medium text-foreground shadow-sm'
                 : 'text-muted-foreground'
-            }`}
+            } ${item.label === 'Faktúry' ? 'dashboard-action-target' : ''}`}
           >
             <item.icon className="size-3.5" aria-hidden="true" />
             <span>{item.label}</span>

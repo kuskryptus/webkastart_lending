@@ -135,3 +135,191 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .hero-visual-stage {
+    container-type: inline-size;
+  }
+
+  .hero-cursor-demo {
+    opacity: 0;
+    transform: translate3d(80cqw, 12cqw, 0) scale(0.98);
+    transform-origin: 35% 35%;
+    filter: drop-shadow(0 8px 14px rgb(24 23 22 / 16%));
+    animation: hero-cursor-journey 12s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    will-change: transform, opacity;
+  }
+
+  .hero-cursor-icon {
+    display: block;
+  }
+
+  .hero-cursor-click {
+    position: absolute;
+    left: -5px;
+    top: -4px;
+    width: 18px;
+    height: 18px;
+    border: 1px solid color-mix(in srgb, var(--brand) 70%, transparent);
+    border-radius: 999px;
+    opacity: 0;
+    transform: scale(0.55);
+    animation: hero-cursor-click 12s ease-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .dashboard-action-target {
+    position: relative;
+    transform-origin: center;
+    animation: dashboard-action-flash 12s ease-in-out infinite;
+    will-change: transform, box-shadow, background-color, color;
+  }
+
+  .hero-tap-indicator {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 999px;
+    background: var(--brand);
+    opacity: 0;
+    transform: translate3d(50%, -50%, 0) scale(0.9);
+    animation: hero-mobile-tap 9s ease-out infinite;
+    will-change: transform, opacity;
+  }
+
+  .hero-tap-indicator::after {
+    position: absolute;
+    inset: -0.55rem;
+    border: 1px solid rgb(255 255 255 / 70%);
+    border-radius: inherit;
+    content: '';
+    opacity: 0;
+    transform: scale(0.65);
+    animation: hero-mobile-tap-ring 9s ease-out infinite;
+  }
+
+  @keyframes hero-cursor-journey {
+    0%,
+    8% {
+      opacity: 0;
+      transform: translate3d(80cqw, 12cqw, 0) scale(0.98);
+    }
+    12% {
+      opacity: 1;
+      transform: translate3d(80cqw, 12cqw, 0) scale(0.98);
+    }
+    32%,
+    39% {
+      opacity: 1;
+      transform: translate3d(14cqw, 15cqw, 0) scale(1);
+    }
+    42% {
+      opacity: 1;
+      transform: translate3d(14cqw, 15cqw, 0) scale(0.94);
+    }
+    46% {
+      opacity: 1;
+      transform: translate3d(14cqw, 15cqw, 0) scale(1);
+    }
+    62% {
+      opacity: 1;
+      transform: translate3d(80cqw, 12cqw, 0) scale(0.98);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: translate3d(80cqw, 12cqw, 0) scale(0.98);
+    }
+  }
+
+  @keyframes hero-cursor-click {
+    0%,
+    38%,
+    100% {
+      opacity: 0;
+      transform: scale(0.55);
+    }
+    42% {
+      opacity: 0.32;
+      transform: scale(1.35);
+    }
+    48% {
+      opacity: 0;
+      transform: scale(1.8);
+    }
+  }
+
+  @keyframes dashboard-action-flash {
+    0%,
+    37%,
+    100% {
+      color: var(--muted-foreground);
+      box-shadow: 0 0 0 0 rgb(95 82 232 / 0%);
+      transform: scale(1);
+    }
+    42%,
+    48% {
+      color: var(--foreground);
+      background-color: var(--brand-soft);
+      box-shadow: 0 0 0 1px rgb(95 82 232 / 22%), 0 8px 20px rgb(24 23 22 / 5%);
+      transform: scale(1.015);
+    }
+    56% {
+      color: var(--muted-foreground);
+      box-shadow: 0 0 0 0 rgb(95 82 232 / 0%);
+      transform: scale(1);
+    }
+  }
+
+  @keyframes hero-mobile-tap {
+    0%,
+    18%,
+    100% {
+      opacity: 0;
+      transform: translate3d(50%, -50%, 0) scale(0.85);
+    }
+    24% {
+      opacity: 0.72;
+      transform: translate3d(50%, -50%, 0) scale(1);
+    }
+    30% {
+      opacity: 0.18;
+      transform: translate3d(50%, -50%, 0) scale(0.82);
+    }
+    38% {
+      opacity: 0;
+      transform: translate3d(50%, -50%, 0) scale(1);
+    }
+  }
+
+  @keyframes hero-mobile-tap-ring {
+    0%,
+    22%,
+    100% {
+      opacity: 0;
+      transform: scale(0.65);
+    }
+    26% {
+      opacity: 0.5;
+      transform: scale(0.95);
+    }
+    38% {
+      opacity: 0;
+      transform: scale(1.7);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-cursor-demo,
+    .hero-cursor-click,
+    .dashboard-action-target,
+    .hero-tap-indicator,
+    .hero-tap-indicator::after {
+      animation: none;
+    }
+
+    .hero-cursor-demo,
+    .hero-tap-indicator {
+      display: none;
+    }
+  }
+}
