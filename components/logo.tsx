@@ -7,10 +7,10 @@ type LogoMarkProps = {
 
 const markSizes = {
   default: {
-    frame: 'size-9 rounded-xl',
+    frame: 'h-8 w-[52px]',
   },
   compact: {
-    frame: 'size-6 rounded-lg',
+    frame: 'h-5 w-[32px]',
   },
 }
 
@@ -19,15 +19,18 @@ export function LogoMark({ className = '', size = 'default' }: LogoMarkProps) {
 
   return (
     <span
-      className={`inline-grid shrink-0 place-items-center overflow-hidden border border-border/70 bg-white text-foreground shadow-card ${sizes.frame} ${className}`}
+      className={`inline-flex shrink-0 items-center text-foreground ${sizes.frame} ${className}`}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 180 180" className="size-full" fill="none">
+      <svg viewBox="0 0 220 140" className="h-full w-full" fill="none">
         <path
-          d="M42 54H61.2L75.6 107.7L90.7 54H106.9L122.1 107.7L136.5 54H155L132.1 126H113.4L98.5 75.9L83.5 126H64.8L42 54Z"
-          fill="currentColor"
+          d="M32 32L72 108L110 32L148 108L188 32"
+          stroke="currentColor"
+          strokeWidth="26"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
-        <circle cx="145" cy="119" r="10" className="fill-brand" />
+        <circle cx="204" cy="104" r="13" className="fill-brand" />
       </svg>
     </span>
   )
@@ -37,13 +40,10 @@ export function Logo({ className = '' }: { className?: string }) {
   return (
     <Link
       href="#"
-      className={`inline-flex items-center gap-2 ${className}`}
+      className={`inline-flex items-center ${className}`}
       aria-label="WebkaStart — domovská stránka"
     >
       <LogoMark />
-      <span className="text-[17px] font-semibold text-foreground">
-        Webka<span className="text-muted-foreground">Start</span>
-      </span>
     </Link>
   )
 }
