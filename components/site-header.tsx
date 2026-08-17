@@ -23,7 +23,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="w-full">
+    <header className="sticky top-0 z-30 w-full border-b border-border/70 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5 sm:px-6 lg:py-6">
         <Logo />
 
