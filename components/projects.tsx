@@ -137,7 +137,7 @@ export function ProjectFeatureShowcase({
 
 export function Projects() {
   return (
-    <section id="projekty" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
+    <section id="projekty" className="mx-auto max-w-6xl px-5 pb-16 pt-10 sm:px-6 lg:pb-24 lg:pt-14">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <SectionLabel>Moje projekty</SectionLabel>

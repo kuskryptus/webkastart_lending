@@ -98,7 +98,7 @@ export function ProjectVisual({
   const variant = showcase.variant ?? 'mobile'
 
   return (
-    <div className="relative isolate flex min-h-[430px] items-center justify-center overflow-visible px-3 py-8 lg:min-h-[560px] lg:px-8">
+    <div className="relative isolate flex min-h-[430px] items-center justify-center overflow-visible px-3 py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2">
       <div className="absolute left-1/2 top-1/2 -z-10 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/18 blur-3xl" />
       <div className="absolute left-[58%] top-[48%] -z-10 h-56 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300/16 blur-3xl" />
       <div className="absolute bottom-[10%] left-1/2 -z-10 h-10 w-72 -translate-x-1/2 rounded-full bg-foreground/10 blur-2xl" />
