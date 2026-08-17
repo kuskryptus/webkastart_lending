@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, Lightbulb, Zap, Sparkles, Ruler } from 'lucide-react'
+import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
 import { DashboardMockup } from '@/components/dashboard-mockup'
 
 const features = [
@@ -14,9 +14,19 @@ export function Hero() {
       <div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-12">
         {/* Left */}
         <div className="max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
-            <span className="size-1.5 rounded-full bg-brand" aria-hidden="true" />
-            WEBY • AUTOMATIZÁCIE • RIEŠENIA NA MIERU
+          <span className="inline-flex max-w-full items-center gap-2.5 rounded-full border border-brand/15 bg-card px-3 py-1.5 text-[11px] font-semibold uppercase leading-none tracking-wide text-brand shadow-sm sm:bg-brand-soft/70 sm:px-3.5 sm:text-xs sm:shadow-none">
+            <span className="inline-flex items-center gap-1.5">
+              <Code2 className="size-3.5" aria-hidden="true" />
+              Weby
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Bot className="size-3.5" aria-hidden="true" />
+              Automatizácie
+            </span>
+            <span className="hidden items-center gap-1.5 sm:inline-flex">
+              <Sparkles className="size-3.5" aria-hidden="true" />
+              Riešenia na mieru
+            </span>
           </span>
 
           <h1 className="mt-5 text-balance text-[2.6rem] font-bold leading-[1.04] tracking-tight text-foreground sm:mt-6 sm:text-6xl">
