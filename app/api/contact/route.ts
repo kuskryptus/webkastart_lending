@@ -1,4 +1,4 @@
-const contactEmail = process.env.CONTACT_TO_EMAIL || 'kontakt@webkastart.sk'
+const contactEmail = process.env.CONTACT_TO_EMAIL || 'kampczykristian@gmail.com'
 const fromEmail = process.env.CONTACT_FROM_EMAIL || 'WebkaStart <kontakt@webkastart.sk>'
 
 type ContactPayload = {

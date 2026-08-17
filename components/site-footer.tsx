@@ -35,7 +35,7 @@ export function SiteFooter() {
             </svg>
           </a>
           <a
-            href="mailto:kontakt@webkastart.sk"
+            href="mailto:kampczykristian@gmail.com"
             aria-label="E-mail"
             className="transition-colors hover:text-foreground"
           >

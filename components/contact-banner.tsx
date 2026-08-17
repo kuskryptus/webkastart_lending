@@ -4,15 +4,24 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import {
   ArrowRight,
+  Building2,
   CheckCircle2,
   Copy,
+  ExternalLink,
+  IdCard,
   LoaderCircle,
+  Mail,
+  MapPin,
   MessageSquareText,
+  Phone,
   Send,
   X,
 } from 'lucide-react'
 
-const contactEmail = 'kontakt@webkastart.sk'
+const contactEmail = 'kampczykristian@gmail.com'
+const contactPhone = '+421 950 591 354'
+const contactPhoneHref = 'tel:+421950591354'
+const businessRegisterUrl = 'https://zrsr.sk/Detail/eHqSPk-psW-veY-qc0QOg4PXyDh5iWz6CDFeEpTooHk'
 
 const inputClassName =
   'h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15'
@@ -317,6 +326,80 @@ export function ContactBanner() {
           </Dialog.Viewport>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <div className="mt-6 grid gap-6 rounded-2xl border border-border bg-card px-5 py-6 shadow-sm sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+            Kontaktné a obchodné údaje
+          </p>
+          <h3 className="mt-3 text-xl font-semibold tracking-tight">
+            Kristián Kampczyk
+          </h3>
+          <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
+            <a
+              href={`mailto:${contactEmail}`}
+              className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+            >
+              <Mail className="size-4 text-brand" aria-hidden="true" />
+              {contactEmail}
+            </a>
+            <a
+              href={contactPhoneHref}
+              className="inline-flex items-center gap-2 transition-colors hover:text-foreground"
+            >
+              <Phone className="size-4 text-brand" aria-hidden="true" />
+              {contactPhone}
+            </a>
+          </div>
+        </div>
+
+        <dl className="grid gap-4 text-sm sm:grid-cols-2">
+          <div className="grid gap-1">
+            <dt className="inline-flex items-center gap-2 font-medium text-foreground">
+              <Building2 className="size-4 text-brand" aria-hidden="true" />
+              Obchodné meno
+            </dt>
+            <dd className="text-muted-foreground">Kristián Kampczyk</dd>
+          </div>
+
+          <div className="grid gap-1">
+            <dt className="inline-flex items-center gap-2 font-medium text-foreground">
+              <IdCard className="size-4 text-brand" aria-hidden="true" />
+              IČO
+            </dt>
+            <dd className="text-muted-foreground">57723940</dd>
+          </div>
+
+          <div className="grid gap-1">
+            <dt className="inline-flex items-center gap-2 font-medium text-foreground">
+              <MapPin className="size-4 text-brand" aria-hidden="true" />
+              Miesto podnikania
+            </dt>
+            <dd className="text-muted-foreground">
+              Nitrianska 2439/6
+              <br />
+              052 01 Spišská Nová Ves
+            </dd>
+          </div>
+
+          <div className="grid gap-1">
+            <dt className="inline-flex items-center gap-2 font-medium text-foreground">
+              <ExternalLink className="size-4 text-brand" aria-hidden="true" />
+              Register
+            </dt>
+            <dd>
+              <a
+                href={businessRegisterUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground"
+              >
+                Živnostenský register
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
     </section>
   )
 }

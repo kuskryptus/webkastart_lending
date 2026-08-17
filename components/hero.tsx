@@ -16,11 +16,11 @@ export function Hero() {
         <div className="max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-accent-foreground">
             <span className="size-1.5 rounded-full bg-brand" aria-hidden="true" />
-            WEBY A APLIKÁCIE NA MIERU
+            WEBY • AUTOMATIZÁCIE • RIEŠENIA NA MIERU
           </span>
 
           <h1 className="mt-6 text-pretty text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-            Čo by sa dalo vo vašom podnikaní robiť jednoduchšie?
+            Menej rutiny. <span className="text-brand">Viac priestoru</span> na podnikanie.
           </h1>
 
           <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
