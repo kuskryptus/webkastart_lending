@@ -89,16 +89,21 @@ function SquareVisual({
 }
 
 export function ProjectVisual({
+  compactMobile = false,
   priority = false,
   showcase,
 }: {
+  compactMobile?: boolean
   priority?: boolean
   showcase: ProjectShowcase
 }) {
   const variant = showcase.variant ?? 'mobile'
+  const wrapperClassName = compactMobile
+    ? 'relative isolate flex min-h-[350px] items-start justify-center overflow-visible px-1 py-3 sm:min-h-[430px] sm:items-center sm:px-3 sm:py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2'
+    : 'relative isolate flex min-h-[430px] items-center justify-center overflow-visible px-3 py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2'
 
   return (
-    <div className="relative isolate flex min-h-[430px] items-center justify-center overflow-visible px-3 py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2">
+    <div className={wrapperClassName}>
       <div className="absolute left-1/2 top-1/2 -z-10 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/18 blur-3xl" />
       <div className="absolute left-[58%] top-[48%] -z-10 h-56 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-300/16 blur-3xl" />
       <div className="absolute bottom-[10%] left-1/2 -z-10 h-10 w-72 -translate-x-1/2 rounded-full bg-foreground/10 blur-2xl" />
