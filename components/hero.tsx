@@ -20,14 +20,11 @@ export function Hero() {
           </span>
 
           <h1 className="mt-6 text-pretty text-5xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-            Máte nápad?{' '}
-            <span className="text-foreground">
-              Postarám sa o <span className="text-brand">zvyšok</span>..
-            </span>
+            Čo by sa dalo vo vašom podnikaní robiť jednoduchšie?
           </h1>
 
           <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-            Máte nápad, ktorý chcete overiť? Potrebujete web, interný systém alebo jednoduchú aplikáciu? Navrhnem a vytvorím riešenie bez zbytočne dlhého vývoja a veľkých rozpočtov.
+            Pomáham firmám zjednodušiť podnikanie pomocou webov, automatizácií, AI a riešení na mieru.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
