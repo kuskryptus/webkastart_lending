@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'WebkaStart — Aplikácie, ktoré šetria čas a peniaze',
   description:
-    'Tvorím webové aplikácie a automatizácie na mieru, ktoré zjednodušujú každodennú prácu a prinášajú merateľné výsledky.',
+    'Tvorím weby, automatizácie a malé aplikácie pre firmy, ktoré chcú menej ručnej práce.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -5,22 +5,22 @@ const steps = [
   {
     icon: MessageSquare,
     title: 'Povieme si o nápade',
-    desc: 'Povieš mi, čo potrebuješ vyriešiť. Ja sa pýtam, počúvam a navrhnem smer.',
+    desc: 'Poviete mi, čo potrebujete vyriešiť. Spýtam sa na dôležité veci a navrhnem smer.',
   },
   {
     icon: PenLine,
     title: 'Navrhnem riešenie',
-    desc: 'Pripravím jednoduchý plán a ukážem, ako to bude fungovať.',
+    desc: 'Pripravím krátky plán a ukážem, ako bude riešenie fungovať.',
   },
   {
     icon: Code2,
-    title: 'Vytvorím aplikáciu',
-    desc: 'Napíšem čistý, udržiavateľný kód a postavím spoľahlivú aplikáciu.',
+    title: 'Vytvorím riešenie',
+    desc: 'Postavím web, automatizáciu alebo aplikáciu podľa dohodnutého rozsahu.',
   },
   {
     icon: Rocket,
-    title: 'Spustíme a zlepšujeme',
-    desc: 'Aplikácia beží, ja som tu na podporu a ďalší rozvoj, keď to budeš potrebovať.',
+    title: 'Spustíme ho',
+    desc: 'Po spustení riešim úpravy, opravy a ďalší rozvoj podľa potreby.',
   },
 ]
 
@@ -30,7 +30,7 @@ export function Process() {
       <div className="rounded-3xl bg-brand-soft/50 px-6 py-12 sm:px-10 lg:px-12 lg:py-14">
         <SectionLabel>Ako prebieha spolupráca</SectionLabel>
         <h2 className="mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
-          Jednoduchý proces, ktorý funguje
+          Najprv si ujasníme, čo má riešenie robiť
         </h2>
 
         <ol className="mt-10 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">

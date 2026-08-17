@@ -26,15 +26,13 @@ export function About() {
             Kristián Kampczyk
           </h2>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
-            Som živnostník s 5 rokmi skúseností s vývojom rôznych riešení pre firmy
-            aj vlastných nástrojov pre seba. Práve preto som sa rozhodol založiť
-            WebkaStart a posunúť tieto skúsenosti ďalej.
+            Som živnostník a vývoju sa venujem približne 5 rokov. Robil som interné
+            nástroje, weby aj menšie aplikácie pre bežnú prácu vo firme.
           </p>
           <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
-            V auguste 2026 som si založil živnosť s cieľom pomáhať firmám
-            automatizovať a zjednodušovať manuálnu a repetitívnu prácu. WebkaStart
-            je miesto, kde sa tieto riešenia môžu začať a kde sa aj menšie podnikanie
-            môže viac zviditeľniť.
+            WebkaStart je moja práca pod jednou značkou. Pomáham firmám upratať
+            ručnú administratívu, pripraviť web alebo postaviť nástroj, ktorý im
+            ušetrí čas pri opakovaných úlohách.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-x-9 gap-y-4">

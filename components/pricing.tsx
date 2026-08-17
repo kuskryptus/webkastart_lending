@@ -17,20 +17,20 @@ const packages: Package[] = [
     icon: Rocket,
     name: 'Štart',
     price: '100 €',
-    intro: 'Ideálne ak potrebujete:',
+    intro: 'Vhodné, ak potrebujete:',
     items: [
-      'jednoduchú landing page',
+      'jednoduchú prezentačnú stránku',
       'jednostránkový web',
       'kontaktný formulár',
-      'MVP nápad',
+      'overiť menší nápad',
     ],
-    highlight: 'Hotové ešte dnes',
+    highlight: 'Menší rozsah',
   },
   {
     icon: Zap,
     name: 'Mini',
     price: '150–250 €',
-    intro: 'Ideálne ak potrebujete:',
+    intro: 'Vhodné, ak potrebujete:',
     items: [
       'firemný web',
       'rezervačný formulár',
@@ -38,13 +38,13 @@ const packages: Package[] = [
       'administráciu',
       'prepojenie formulárov',
     ],
-    highlight: 'Dodanie do 3 dní',
+    highlight: 'Krátke dodanie',
   },
   {
     icon: Gem,
     name: 'Na mieru',
     price: '500 €+',
-    intro: 'Ak potrebujete:',
+    intro: 'Pre väčší rozsah:',
     items: [
       'interný systém',
       'CRM',
@@ -52,14 +52,14 @@ const packages: Package[] = [
       'klientsku zónu',
       'automatizácie',
     ],
-    highlight: 'Základ do týždňa',
+    highlight: 'Podľa dohody',
   },
 ]
 
 export function Pricing() {
   function handlePlanClick(plan: Package) {
     const message = [
-      `Mám záujem o plán ${plan.name} (${plan.price}).`,
+      `Mám záujem o balík ${plan.name} (${plan.price}).`,
       '',
       'Potrebujem vyriešiť:',
       ...plan.items.map((item) => `- ${item}`),
@@ -82,10 +82,10 @@ export function Pricing() {
       <div className="max-w-2xl">
         <SectionLabel>Cenník</SectionLabel>
         <h2 className="mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
-          Vyberte, čo potrebujete
+          Orientačné ceny podľa rozsahu
         </h2>
         <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-          Vyberte si riešenie podľa rozsahu projektu. Ak si nie ste istí, pomôžem vám vybrať.
+          Po krátkom opise práce vám poviem presnejšiu cenu aj termín.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export function Pricing() {
                 onClick={() => handlePlanClick(p)}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
               >
-                Mám záujem
+                Chcem sa poradiť
                 <ArrowRight className="size-4" aria-hidden="true" />
               </button>
             </div>

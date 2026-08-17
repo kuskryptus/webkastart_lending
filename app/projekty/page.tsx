@@ -14,10 +14,10 @@ export default function ProjectsPage() {
         <div className="max-w-3xl">
           <SectionLabel>Produktové ukážky</SectionLabel>
           <h1 className="mt-4 text-pretty text-4xl font-bold tracking-tight sm:text-5xl">
-            Rozhrania, ktoré hovoria samé za seba.
+            Ukážky hotových obrazoviek
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground">
-            Namiesto dlhého opisovania ukazujem konkrétne obrazovky a hlavné funkcie priamo na nich.
+            Tu nájdete konkrétne obrazovky z projektov a stručný popis toho, čo riešia.
           </p>
         </div>
 
@@ -37,7 +37,7 @@ export default function ProjectsPage() {
             href="/#kontakt"
             className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Mám podobný projekt
+            Chcem podobný projekt
             <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>

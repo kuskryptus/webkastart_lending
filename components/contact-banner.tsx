@@ -145,10 +145,10 @@ export function ContactBanner() {
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <h2 className="text-pretty text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
-                Máš nápad alebo problém, ktorý by sa dal vyriešiť aplikáciou?
+                Potrebujete web, automatizáciu alebo úpravu systému?
               </h2>
               <p className="mt-3 text-base text-muted-foreground">
-                Ozvi sa mi cez krátky formulár a pozrieme sa na to spolu. Bez záväzkov.
+                Napíšte mi krátku správu. Ozvem sa s návrhom ďalšieho kroku.
               </p>
             </div>
 
@@ -168,7 +168,7 @@ export function ContactBanner() {
               <Dialog.Trigger
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-3 focus:ring-ring/30"
               >
-                Napíš mi správu
+                Napísať správu
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Dialog.Trigger>
             </div>
@@ -185,10 +185,10 @@ export function ContactBanner() {
                     <MessageSquareText className="size-5" aria-hidden="true" />
                   </div>
                   <Dialog.Title className="text-xl font-semibold tracking-tight">
-                    Napíš mi, čo potrebuješ vyriešiť
+                    Čo potrebujete vyriešiť?
                   </Dialog.Title>
                   <Dialog.Description className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                    Čím konkrétnejšie opíšeš nápad, problém alebo cieľ, tým rýchlejšie ti viem poslať rozumný návrh ďalšieho kroku.
+                    Stačí stručne opísať situáciu, cieľ a to, kde sa dnes stráca čas.
                   </Dialog.Description>
                 </div>
 
@@ -219,7 +219,7 @@ export function ContactBanner() {
                       autoComplete="name"
                       required
                       className={inputClassName}
-                      placeholder="Tvoje meno"
+                      placeholder="Vaše meno"
                     />
                   </label>
 
@@ -231,7 +231,7 @@ export function ContactBanner() {
                       autoComplete="email"
                       required
                       className={inputClassName}
-                      placeholder="tvoj@email.sk"
+                      placeholder="vas@email.sk"
                     />
                   </label>
                 </div>
@@ -258,7 +258,7 @@ export function ContactBanner() {
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                     className={textareaClassName}
-                    placeholder="Stručne popíš, čo chceš vyriešiť, pre koho to je a aký výsledok očakávaš."
+                    placeholder="Napíšte, čo potrebujete vyriešiť, pre koho to je a aký výsledok očakávate."
                   />
                 </label>
 
@@ -266,25 +266,25 @@ export function ContactBanner() {
                   {submitState === 'sent' ? (
                     <div className="flex items-start gap-3 rounded-lg border border-brand/20 bg-brand-soft/60 px-4 py-3 text-sm leading-6 text-foreground">
                       <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden="true" />
-                      Správa bola odoslaná. Ozvem sa ti čo najskôr.
+                      Správa bola odoslaná. Ozvem sa vám čo najskôr.
                     </div>
                   ) : null}
 
                   {submitState === 'not-configured' ? (
                     <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
-                      Email služba ešte nie je nakonfigurovaná. Použi kopírovanie emailu nižšie a napíš mi priamo.
+                      Email služba ešte nie je nakonfigurovaná. Skopírujte si email nižšie a napíšte mi priamo.
                     </div>
                   ) : null}
 
                   {submitState === 'server-missing' ? (
                     <div className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm leading-6 text-muted-foreground">
-                      Kontaktný formulár ešte nie je spustený na serveri. Použi kopírovanie emailu nižšie a napíš mi priamo.
+                      Kontaktný formulár ešte nie je spustený na serveri. Skopírujte si email nižšie a napíšte mi priamo.
                     </div>
                   ) : null}
 
                   {submitState === 'error' ? (
                     <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-foreground">
-                      Správu sa nepodarilo odoslať. Skús to prosím znova alebo si skopíruj email nižšie.
+                      Správu sa nepodarilo odoslať. Skúste to znova alebo si skopírujte email nižšie.
                     </div>
                   ) : null}
                 </div>

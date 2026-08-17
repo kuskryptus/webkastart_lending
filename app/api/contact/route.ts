@@ -41,11 +41,11 @@ export async function POST(request: Request) {
   const message = cleanText(payload.message, 3000)
 
   if (!name || !email || !message) {
-    return Response.json({ error: 'Vyplň meno, email a správu.' }, { status: 400 })
+    return Response.json({ error: 'Vyplňte meno, email a správu.' }, { status: 400 })
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return Response.json({ error: 'Zadaj platný email.' }, { status: 400 })
+    return Response.json({ error: 'Zadajte platný email.' }, { status: 400 })
   }
 
   if (!process.env.RESEND_API_KEY) {
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
 
   if (!response.ok) {
     return Response.json(
-      { error: 'Správu sa nepodarilo odoslať. Skús to prosím znova.' },
+      { error: 'Správu sa nepodarilo odoslať. Skúste to prosím znova.' },
       { status: 502 },
     )
   }

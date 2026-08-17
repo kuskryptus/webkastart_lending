@@ -58,7 +58,7 @@ export const projects: Project[] = [
     title: 'New Level Youth web',
     summary: 'Mobilne ladený web pre mládežnícke stretnutia s výraznou hero sekciou a jasným registračným tlačidlom.',
     result: 'Návštevník hneď pochopí, kedy sa akcia deje, pre koho je určená a aký je ďalší krok.',
-    scope: 'Web · landing page · registrácia',
+    scope: 'Web · prezentačná stránka · registrácia',
     showcase: {
       src: '/portfolio/newlevel-youth.jpg',
       alt: 'Mobilná stránka New Level Youth',
