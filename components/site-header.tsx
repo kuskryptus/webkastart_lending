@@ -8,6 +8,7 @@ const navItems = [
   { label: 'Projekty', href: '#projekty' },
   { label: 'Ako pracujem', href: '#proces' },
   { label: 'Prečo WebkaStart?', href: '#preco-webkastart' },
+  { label: 'Kontakt', href: '#kontakt' },
 ]
 
 export function SiteHeader() {
