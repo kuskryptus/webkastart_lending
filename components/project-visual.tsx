@@ -11,7 +11,7 @@ export type ProjectShowcase = {
 
 const imageClassByVariant: Record<ShowcaseVariant, string> = {
   desktop: 'object-contain',
-  mobile: 'object-contain',
+  mobile: 'object-cover',
   square: 'object-contain',
 }
 
