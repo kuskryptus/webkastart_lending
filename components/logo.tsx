@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import type { MouseEvent } from 'react'
 
 type LogoMarkProps = {
   className?: string
@@ -37,9 +40,31 @@ export function LogoMark({ className = '', size = 'default' }: LogoMarkProps) {
 }
 
 export function Logo({ className = '' }: { className?: string }) {
+  function handleClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey
+    ) {
+      return
+    }
+
+    if (window.location.pathname !== '/') {
+      return
+    }
+
+    event.preventDefault()
+    window.history.pushState(null, '', '/')
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' })
+  }
+
   return (
     <Link
-      href="#"
+      href="/"
+      onClick={handleClick}
       className={`inline-flex items-center ${className}`}
       aria-label="WebkaStart — domovská stránka"
     >
