@@ -16,14 +16,22 @@ const imageClassByVariant: Record<ShowcaseVariant, string> = {
 }
 
 function MobileVisual({
+  compactMobile = false,
   priority,
   showcase,
 }: {
+  compactMobile?: boolean
   priority?: boolean
   showcase: ProjectShowcase
 }) {
   return (
-    <div className="relative z-10 aspect-[9/19.5] h-[min(62vh,540px)] min-h-[360px] max-h-[540px] rotate-[-2deg] rounded-[2.4rem] bg-[#171513] p-1.5 shadow-[0_22px_70px_rgb(24_23_22_/_16%),0_5px_18px_rgb(24_23_22_/_10%)] ring-1 ring-foreground/10 sm:p-2">
+    <div
+      className={`relative z-10 aspect-[9/19.5] rotate-[-2deg] rounded-[2.4rem] bg-[#171513] p-1.5 shadow-[0_22px_70px_rgb(24_23_22_/_16%),0_5px_18px_rgb(24_23_22_/_10%)] ring-1 ring-foreground/10 sm:p-2 ${
+        compactMobile
+          ? 'h-[min(34vh,290px)] min-h-[250px] max-h-[290px] sm:h-[min(62vh,540px)] sm:min-h-[360px] sm:max-h-[540px]'
+          : 'h-[min(62vh,540px)] min-h-[360px] max-h-[540px]'
+      }`}
+    >
       <div className="absolute left-1/2 top-2 z-20 h-1.5 w-16 -translate-x-1/2 rounded-full bg-white/18" />
       <div className="relative h-full overflow-hidden rounded-[2rem] bg-[#0d0d0d]">
         <Image
@@ -99,7 +107,7 @@ export function ProjectVisual({
 }) {
   const variant = showcase.variant ?? 'mobile'
   const wrapperClassName = compactMobile
-    ? 'relative isolate flex min-h-[350px] items-start justify-center overflow-visible px-1 py-3 sm:min-h-[430px] sm:items-center sm:px-3 sm:py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2'
+    ? 'relative isolate flex min-h-[270px] items-start justify-center overflow-visible px-1 py-1 sm:min-h-[430px] sm:items-center sm:px-3 sm:py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2'
     : 'relative isolate flex min-h-[430px] items-center justify-center overflow-visible px-3 py-8 lg:min-h-[520px] lg:items-start lg:px-8 lg:py-2'
 
   return (
@@ -113,7 +121,7 @@ export function ProjectVisual({
       ) : variant === 'square' ? (
         <SquareVisual priority={priority} showcase={showcase} />
       ) : (
-        <MobileVisual priority={priority} showcase={showcase} />
+        <MobileVisual compactMobile={compactMobile} priority={priority} showcase={showcase} />
       )}
     </div>
   )

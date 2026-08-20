@@ -40,6 +40,35 @@ function ProjectNavButtons({
   )
 }
 
+function ProjectDots({
+  activeIndex,
+  className = '',
+  projects,
+  setActiveIndex,
+}: {
+  activeIndex: number
+  className?: string
+  projects: Project[]
+  setActiveIndex: (index: number) => void
+}) {
+  return (
+    <div className={`items-center gap-2 ${className}`} aria-label="Výber projektu">
+      {projects.map((project, index) => (
+        <button
+          key={project.slug}
+          type="button"
+          onClick={() => setActiveIndex(index)}
+          className={`h-2.5 rounded-full transition-all ${
+            index === activeIndex ? 'w-7 bg-brand' : 'w-2.5 bg-border hover:bg-brand/45'
+          }`}
+          aria-current={index === activeIndex ? 'true' : undefined}
+          aria-label={`Zobraziť projekt ${index + 1}: ${project.title}`}
+        />
+      ))}
+    </div>
+  )
+}
+
 function ProjectSlide({
   active,
   onNext,
@@ -57,15 +86,15 @@ function ProjectSlide({
       aria-hidden={!active}
       className="min-w-full px-0.5"
     >
-      <div className="grid gap-5 lg:min-h-[560px] lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:gap-x-12 lg:gap-y-0">
+      <div className="grid gap-4 lg:min-h-[560px] lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:gap-x-12 lg:gap-y-0">
         <div className="max-w-xl lg:col-start-1 lg:row-start-1">
           <span className="inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
             {project.category}
           </span>
-          <h3 className="mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
+          <h3 className="mt-3 text-pretty text-3xl font-bold tracking-tight sm:mt-4 sm:text-4xl">
             {project.title}
           </h3>
-          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-base leading-relaxed text-muted-foreground sm:mt-4">
             {project.summary}
           </p>
         </div>
@@ -75,7 +104,7 @@ function ProjectSlide({
         </div>
 
         <ProjectNavButtons
-          className="flex justify-center lg:hidden"
+          className="flex justify-center pt-1 lg:hidden"
           onNext={onNext}
           onPrevious={onPrevious}
           tabIndex={active ? 0 : -1}
@@ -135,6 +164,12 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
         <p className="text-sm font-medium text-muted-foreground">
           {String(activeIndex + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
         </p>
+        <ProjectDots
+          activeIndex={activeIndex}
+          className="flex lg:hidden"
+          projects={projects}
+          setActiveIndex={setActiveIndex}
+        />
         <ProjectNavButtons
           className="hidden lg:flex"
           onNext={() => goToProject(1)}
@@ -163,7 +198,7 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 hidden flex-wrap gap-2 lg:flex">
         {projects.map((project, index) => (
           <button
             key={project.slug}
