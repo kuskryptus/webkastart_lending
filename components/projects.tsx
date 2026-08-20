@@ -22,6 +22,7 @@ export const projects: Project[] = [
     scope: 'Mobilná aplikácia · evidencia · import dát',
     showcase: {
       device: 'phone',
+      phoneTone: 'light',
       src: '/portfolio/mirela-materials.jpg',
       alt: 'Správa materiálov v aplikácii Mirela',
       imageClassName: 'object-top',
@@ -36,6 +37,7 @@ export const projects: Project[] = [
     scope: 'Mobilná aplikácia · financie · skenovanie',
     showcase: {
       device: 'phone',
+      phoneTone: 'light',
       src: '/portfolio/expenses-overview.jpg',
       alt: 'Prehľad výdavkov v mobilnej aplikácii',
       imageClassName: 'object-top',
@@ -50,6 +52,7 @@ export const projects: Project[] = [
     scope: 'Mobilná aplikácia · reader · import obsahu',
     showcase: {
       device: 'phone',
+      phoneTone: 'dark',
       src: '/portfolio/reader-view.jpg',
       alt: 'Obrazovka mobilnej čítačky s textom',
       imageClassName: 'object-center',
@@ -64,6 +67,7 @@ export const projects: Project[] = [
     scope: 'Web · prezentačná stránka · registrácia',
     showcase: {
       device: 'phone',
+      phoneTone: 'dark',
       src: '/portfolio/newlevel-youth.jpg',
       alt: 'Mobilná stránka New Level Youth',
       imageClassName: 'object-top',
@@ -142,12 +146,12 @@ export function Projects() {
   return (
     <section
       id="projekty"
-      className="mx-auto max-w-[1400px] px-5 pb-20 pt-16 sm:px-6 lg:pb-28 lg:pt-24"
+      className="mx-auto max-w-6xl px-5 pb-20 pt-16 sm:px-6 lg:pb-28 lg:pt-24"
     >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <SectionLabel>Moje projekty</SectionLabel>
-          <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.5rem,6vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.04em]">
+          <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
             Produkty v praxi
           </h2>
         </div>
