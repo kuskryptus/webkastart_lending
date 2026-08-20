@@ -6,12 +6,16 @@ import type { Project } from '@/components/projects'
 import { ProjectVisual } from '@/components/project-visual'
 
 function ProjectNavButtons({
+  buttonClassName = '',
   className = '',
+  iconClassName = 'size-4',
   onNext,
   onPrevious,
   tabIndex,
 }: {
+  buttonClassName?: string
   className?: string
+  iconClassName?: string
   onNext: () => void
   onPrevious: () => void
   tabIndex?: 0 | -1
@@ -22,16 +26,93 @@ function ProjectNavButtons({
         type="button"
         onClick={onPrevious}
         tabIndex={tabIndex}
-        className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
+        className={`inline-flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary ${buttonClassName}`}
         aria-label="Predchádzajúci projekt"
       >
-        <ArrowLeft className="size-4" aria-hidden="true" />
+        <ArrowLeft className={iconClassName} aria-hidden="true" />
       </button>
       <button
         type="button"
         onClick={onNext}
         tabIndex={tabIndex}
-        className="inline-flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
+        className={`inline-flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary ${buttonClassName}`}
+        aria-label="Ďalší projekt"
+      >
+        <ArrowRight className={iconClassName} aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
+function ProjectDots({
+  activeIndex,
+  onSelect,
+  projects,
+  tabIndex,
+}: {
+  activeIndex: number
+  onSelect: (index: number) => void
+  projects: Project[]
+  tabIndex?: 0 | -1
+}) {
+  return (
+    <div className="flex items-center gap-1.5" aria-label="Výber projektu">
+      {projects.map((project, index) => (
+        <button
+          key={project.slug}
+          type="button"
+          onClick={() => onSelect(index)}
+          tabIndex={tabIndex}
+          className={`h-2.5 rounded-full transition-all ${
+            index === activeIndex
+              ? 'w-6 bg-brand'
+              : 'w-2.5 bg-border hover:bg-muted-foreground/45'
+          }`}
+          aria-current={index === activeIndex ? 'true' : undefined}
+          aria-label={`Zobraziť projekt ${index + 1}: ${project.category}`}
+        />
+      ))}
+    </div>
+  )
+}
+
+function MobileProjectControls({
+  activeIndex,
+  onNext,
+  onPrevious,
+  onSelect,
+  projects,
+  tabIndex,
+}: {
+  activeIndex: number
+  onNext: () => void
+  onPrevious: () => void
+  onSelect: (index: number) => void
+  projects: Project[]
+  tabIndex?: 0 | -1
+}) {
+  return (
+    <div className="mt-5 flex items-center justify-center gap-3 lg:hidden">
+      <button
+        type="button"
+        onClick={onPrevious}
+        tabIndex={tabIndex}
+        className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
+        aria-label="Predchádzajúci projekt"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+      </button>
+      <ProjectDots
+        activeIndex={activeIndex}
+        onSelect={onSelect}
+        projects={projects}
+        tabIndex={tabIndex}
+      />
+      <button
+        type="button"
+        onClick={onNext}
+        tabIndex={tabIndex}
+        className="inline-flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-secondary"
         aria-label="Ďalší projekt"
       >
         <ArrowRight className="size-4" aria-hidden="true" />
@@ -42,14 +123,20 @@ function ProjectNavButtons({
 
 function ProjectSlide({
   active,
+  activeIndex,
   onNext,
   onPrevious,
+  onSelect,
   project,
+  projects,
 }: {
   active: boolean
+  activeIndex: number
   onNext: () => void
   onPrevious: () => void
+  onSelect: (index: number) => void
   project: Project
+  projects: Project[]
 }) {
   return (
     <article
@@ -68,18 +155,19 @@ function ProjectSlide({
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
             {project.summary}
           </p>
+          <MobileProjectControls
+            activeIndex={activeIndex}
+            onNext={onNext}
+            onPrevious={onPrevious}
+            onSelect={onSelect}
+            projects={projects}
+            tabIndex={active ? 0 : -1}
+          />
         </div>
 
         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <ProjectVisual compactMobile priority={active} showcase={project.showcase} />
         </div>
-
-        <ProjectNavButtons
-          className="flex justify-center lg:hidden"
-          onNext={onNext}
-          onPrevious={onPrevious}
-          tabIndex={active ? 0 : -1}
-        />
 
         <div className="max-w-xl lg:col-start-1 lg:row-start-2">
           <p className="text-sm font-medium leading-relaxed text-foreground lg:mt-5">
@@ -131,12 +219,12 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
 
   return (
     <div className="mt-6">
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-4 hidden items-center justify-between gap-4 lg:flex">
         <p className="text-sm font-medium text-muted-foreground">
           {String(activeIndex + 1).padStart(2, '0')} / {String(projects.length).padStart(2, '0')}
         </p>
         <ProjectNavButtons
-          className="hidden lg:flex"
+          className="flex"
           onNext={() => goToProject(1)}
           onPrevious={() => goToProject(-1)}
         />
@@ -155,15 +243,18 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
             <ProjectSlide
               key={project.slug}
               active={index === activeIndex}
+              activeIndex={activeIndex}
               onNext={() => goToProject(1)}
               onPrevious={() => goToProject(-1)}
+              onSelect={setActiveIndex}
               project={project}
+              projects={projects}
             />
           ))}
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 hidden flex-wrap gap-2 lg:flex">
         {projects.map((project, index) => (
           <button
             key={project.slug}

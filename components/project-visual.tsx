@@ -23,12 +23,12 @@ function MobileVisual({
   showcase: ProjectShowcase
 }) {
   return (
-    <div className="relative z-10 aspect-[9/19.5] h-[min(62vh,540px)] min-h-[360px] max-h-[540px] rotate-[-1deg] rounded-[2.75rem] bg-[#11100f] p-1.5 shadow-[0_24px_70px_rgb(24_23_22_/_18%),0_6px_18px_rgb(24_23_22_/_10%)] ring-1 ring-black/20 sm:p-2">
-      <span className="absolute -left-1 top-[22%] h-12 w-1 rounded-l-full bg-[#2a2927]" aria-hidden="true" />
-      <span className="absolute -left-1 top-[34%] h-16 w-1 rounded-l-full bg-[#2a2927]" aria-hidden="true" />
-      <span className="absolute -right-1 top-[31%] h-20 w-1 rounded-r-full bg-[#2a2927]" aria-hidden="true" />
-      <div className="absolute left-1/2 top-4 z-20 h-6 w-24 -translate-x-1/2 rounded-full bg-black shadow-[inset_0_0_0_1px_rgb(255_255_255_/_6%)]" />
-      <div className="relative h-full overflow-hidden rounded-[2.25rem] bg-card">
+    <div className="relative z-10 aspect-[9/19.5] h-[min(62vh,540px)] min-h-[360px] max-h-[540px] rotate-[-1deg] rounded-[2.95rem] bg-[#0b0b0b] p-[5px] shadow-[0_24px_70px_rgb(24_23_22_/_18%),0_6px_18px_rgb(24_23_22_/_10%)] ring-1 ring-black/25 sm:p-1.5">
+      <span className="absolute -left-[3px] top-[21%] h-9 w-[3px] rounded-l-full bg-[#1d1d1d]" aria-hidden="true" />
+      <span className="absolute -left-[3px] top-[32%] h-12 w-[3px] rounded-l-full bg-[#1d1d1d]" aria-hidden="true" />
+      <span className="absolute -right-[3px] top-[31%] h-14 w-[3px] rounded-r-full bg-[#1d1d1d]" aria-hidden="true" />
+      <div className="absolute inset-[3px] rounded-[2.75rem] border border-white/10" aria-hidden="true" />
+      <div className="relative h-full overflow-hidden rounded-[2.55rem] bg-card ring-1 ring-black/30">
         <Image
           src={showcase.src}
           alt={showcase.alt}
