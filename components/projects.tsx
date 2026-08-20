@@ -21,6 +21,7 @@ export const projects: Project[] = [
     result: 'Jedna aplikácia namiesto roztrúsených tabuliek a manuálnej evidencie.',
     scope: 'Mobilná aplikácia · evidencia · import dát',
     showcase: {
+      device: 'phone',
       src: '/portfolio/mirela-materials.jpg',
       alt: 'Správa materiálov v aplikácii Mirela',
       imageClassName: 'object-top',
@@ -34,6 +35,7 @@ export const projects: Project[] = [
     result: 'Prehľadná mobilná aplikácia s históriou, štatistikami a rýchlym skenovaním bločkov.',
     scope: 'Mobilná aplikácia · financie · skenovanie',
     showcase: {
+      device: 'phone',
       src: '/portfolio/expenses-overview.jpg',
       alt: 'Prehľad výdavkov v mobilnej aplikácii',
       imageClassName: 'object-top',
@@ -47,6 +49,7 @@ export const projects: Project[] = [
     result: 'Obsah sa dá rýchlo importovať, čítať a ovládať v tmavom, sústredenom rozhraní.',
     scope: 'Mobilná aplikácia · reader · import obsahu',
     showcase: {
+      device: 'phone',
       src: '/portfolio/reader-view.jpg',
       alt: 'Obrazovka mobilnej čítačky s textom',
       imageClassName: 'object-center',
@@ -60,10 +63,10 @@ export const projects: Project[] = [
     result: 'Návštevník hneď pochopí, kedy sa akcia deje, pre koho je určená a aký je ďalší krok.',
     scope: 'Web · prezentačná stránka · registrácia',
     showcase: {
+      device: 'phone',
       src: '/portfolio/newlevel-youth.jpg',
       alt: 'Mobilná stránka New Level Youth',
       imageClassName: 'object-top',
-      variant: 'mobile',
     },
   },
   {
@@ -74,9 +77,9 @@ export const projects: Project[] = [
     result: 'Nové ponuky sa dali rýchlo otvoriť bez manuálneho preklikávania pracovných portálov.',
     scope: 'Automatizácia · monitoring · notifikácie',
     showcase: {
+      device: 'browser',
       src: '/portfolio/job-offer-monitor.png',
       alt: 'Správy s automaticky nájdenými pracovnými ponukami',
-      variant: 'square',
     },
   },
   {
@@ -87,9 +90,9 @@ export const projects: Project[] = [
     result: 'Používateľ má históriu faktúr, stav úhrady a cestu k súborom na jednom mieste.',
     scope: 'Desktop aplikácia · faktúry · lokálne dáta',
     showcase: {
+      device: 'desktop',
       src: '/portfolio/invoice-wizard.png',
       alt: 'História faktúr vo fakturačnom wizardovi',
-      variant: 'desktop',
     },
   },
 ]
@@ -137,11 +140,14 @@ export function ProjectFeatureShowcase({
 
 export function Projects() {
   return (
-    <section id="projekty" className="mx-auto max-w-6xl px-5 pb-16 pt-10 sm:px-6 lg:pb-24 lg:pt-14">
+    <section
+      id="projekty"
+      className="mx-auto max-w-[1400px] px-5 pb-20 pt-16 sm:px-6 lg:pb-28 lg:pt-24"
+    >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <SectionLabel>Moje projekty</SectionLabel>
-          <h2 className="mt-4 max-w-3xl text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
+          <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.5rem,6vw,3.5rem)] font-bold leading-[1.05] tracking-[-0.04em]">
             Produkty v praxi
           </h2>
         </div>
