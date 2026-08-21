@@ -8,18 +8,15 @@ import { ProjectVisual } from '@/components/project-visual'
 
 function ProjectNavButtons({
   className = '',
-  compact = false,
   onNext,
   onPrevious,
 }: {
   className?: string
-  compact?: boolean
   onNext: () => void
   onPrevious: () => void
 }) {
-  const buttonClassName = compact
-    ? 'inline-flex size-9 items-center justify-center rounded-full bg-secondary/75 text-foreground transition-colors duration-200 hover:bg-brand-soft hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35'
-    : 'inline-flex size-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-[0_2px_10px_rgb(24_23_22_/_5%)] transition-[background-color,border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-brand-soft sm:size-11'
+  const buttonClassName =
+    'inline-flex size-9 items-center justify-center rounded-full bg-secondary/75 text-foreground transition-colors duration-200 hover:bg-brand-soft hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35'
 
   return (
     <div className={`items-center gap-2 ${className}`}>
@@ -29,7 +26,7 @@ function ProjectNavButtons({
         className={buttonClassName}
         aria-label="Predchádzajúci projekt"
       >
-        <ArrowLeft className={compact ? 'size-3.5' : 'size-4'} aria-hidden="true" />
+        <ArrowLeft className="size-3.5" aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -37,7 +34,7 @@ function ProjectNavButtons({
         className={buttonClassName}
         aria-label="Ďalší projekt"
       >
-        <ArrowRight className={compact ? 'size-3.5' : 'size-4'} aria-hidden="true" />
+        <ArrowRight className="size-3.5" aria-hidden="true" />
       </button>
     </div>
   )
@@ -54,7 +51,7 @@ function ProjectDots({
 }) {
   return (
     <div
-      className="flex items-center justify-center gap-0.5 lg:hidden"
+      className="flex items-center gap-0.5"
       role="group"
       aria-label="Výber projektu"
     >
@@ -100,32 +97,13 @@ function ProjectSlide({
 }) {
   return (
     <article id={project.slug} className="project-slide-enter">
-      <div className="hidden h-12 items-center justify-between border-b border-black/[0.08] lg:flex">
-        <p className="text-sm font-semibold tabular-nums tracking-[0.08em] text-muted-foreground">
-          <span className="text-foreground">{String(activeIndex + 1).padStart(2, '0')}</span>
-          <span className="mx-2 text-border">/</span>
-          {String(projectCount).padStart(2, '0')}
-        </p>
-        <ProjectNavButtons
-          className="flex"
-          onNext={onNext}
-          onPrevious={onPrevious}
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12 lg:pt-8 xl:gap-16">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12 xl:gap-16">
         <div className="max-w-xl">
-          <div className="flex min-h-9 items-center justify-between gap-4">
+          <div className="flex min-h-9 items-center gap-4">
             <p className="flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
               <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
               <span className="truncate">{project.category}</span>
             </p>
-            <ProjectNavButtons
-              compact
-              className="flex shrink-0 lg:hidden"
-              onNext={onNext}
-              onPrevious={onPrevious}
-            />
           </div>
           <h3 className="mt-3 max-w-[15ch] text-pretty text-[clamp(1.8rem,8vw,2.3rem)] font-bold leading-[1.03] tracking-[-0.035em] sm:mt-[18px] lg:text-[2.75rem] xl:text-5xl">
             {project.title}
@@ -145,7 +123,14 @@ function ProjectSlide({
         </div>
 
         <div className="bg-[radial-gradient(circle_at_50%_50%,rgba(95,82,232,0.07),transparent_66%)]">
-          <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
+          <div className="flex items-center justify-between gap-4 pb-3 sm:pb-4">
+            <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
+            <ProjectNavButtons
+              className="flex shrink-0"
+              onNext={onNext}
+              onPrevious={onPrevious}
+            />
+          </div>
           <button
             type="button"
             onClick={onOpenDetail}
@@ -153,7 +138,7 @@ function ProjectSlide({
             aria-label={`Zväčšiť ukážku projektu ${project.title}`}
           >
             <ProjectVisual compactMobile priority showcase={project.showcase} />
-            <span className="absolute right-1 top-1 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-foreground shadow-[0_2px_12px_rgb(24_23_22_/_8%)] backdrop-blur transition-colors group-hover:bg-brand group-hover:text-white sm:right-3 sm:top-3">
+            <span className="absolute right-1 top-1 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-foreground shadow-[0_2px_12px_rgb(24_23_22_/_8%)] backdrop-blur transition-colors group-hover:bg-brand group-hover:text-white sm:right-3 sm:top-3 lg:hidden">
               <Maximize2 className="size-3.5" aria-hidden="true" />
               Detail
             </span>
