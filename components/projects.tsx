@@ -14,21 +14,6 @@ export type Project = {
 
 export const projects: Project[] = [
   {
-    slug: 'mirela-interny-system',
-    category: 'Interný systém',
-    title: 'Mirela - evidencia práce a materiálov',
-    summary: 'Mobilný interný nástroj pre pracovníkov, pracoviská, materiály a odpracované hodiny.',
-    result: 'Jedna aplikácia namiesto roztrúsených tabuliek a manuálnej evidencie.',
-    scope: 'Mobilná aplikácia · evidencia · import dát',
-    showcase: {
-      device: 'phone',
-      phoneTone: 'light',
-      src: '/portfolio/mirela-materials.jpg',
-      alt: 'Správa materiálov v aplikácii Mirela',
-      imageClassName: 'object-top',
-    },
-  },
-  {
     slug: 'financny-prehlad-vydavkov',
     category: 'Osobná evidencia',
     title: 'Výdavky pod kontrolou za pár sekúnd',
@@ -40,6 +25,21 @@ export const projects: Project[] = [
       phoneTone: 'light',
       src: '/portfolio/expenses-overview.jpg',
       alt: 'Prehľad výdavkov v mobilnej aplikácii',
+      interactive: 'expenses',
+    },
+  },
+  {
+    slug: 'mirela-interny-system',
+    category: 'Interný systém',
+    title: 'Mirela - evidencia práce a materiálov',
+    summary: 'Mobilný interný nástroj pre pracovníkov, pracoviská, materiály a odpracované hodiny.',
+    result: 'Jedna aplikácia namiesto roztrúsených tabuliek a manuálnej evidencie.',
+    scope: 'Mobilná aplikácia · evidencia · import dát',
+    showcase: {
+      device: 'phone',
+      phoneTone: 'light',
+      src: '/portfolio/mirela-materials.jpg',
+      alt: 'Správa materiálov v aplikácii Mirela',
       imageClassName: 'object-top',
     },
   },

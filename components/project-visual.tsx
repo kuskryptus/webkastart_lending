@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { ExpenseTrackerDemo } from '@/components/expense-tracker-demo'
 
 export type ProjectDevice = 'phone' | 'browser' | 'desktop'
 
@@ -6,6 +7,7 @@ export type ProjectShowcase = {
   alt: string
   device: ProjectDevice
   imageClassName?: string
+  interactive?: 'expenses'
   phoneTone?: 'light' | 'dark'
   src: string
 }
@@ -16,6 +18,7 @@ type MockupProps = {
   detail?: boolean
   image: string
   imageClassName?: string
+  interactive?: 'expenses'
   preload?: boolean
   tone?: 'light' | 'dark'
 }
@@ -26,10 +29,13 @@ export function PhoneMockup({
   detail = false,
   image,
   imageClassName,
+  interactive,
   preload,
   tone = 'light',
 }: MockupProps) {
-  const widthClassName = detail
+  const widthClassName = interactive
+    ? 'w-[min(72vw,250px)] sm:w-[240px] lg:w-[250px]'
+    : detail
     ? 'w-[min(76vw,32dvh,340px)]'
     : compactMobile
       ? 'w-[min(49vw,190px)] min-[430px]:w-[200px] sm:w-[225px] lg:w-[250px]'
@@ -42,18 +48,22 @@ export function PhoneMockup({
       <span className="absolute -right-[3px] top-[31%] h-14 w-[3px] rounded-r-full bg-[#1d1d1d]" aria-hidden="true" />
       <div className="absolute inset-[3px] rounded-[2.3rem] border border-white/10 sm:rounded-[2.55rem]" aria-hidden="true" />
       <div className={`relative h-full overflow-hidden rounded-[2.18rem] ring-1 ring-black/30 sm:rounded-[2.4rem] ${tone === 'dark' ? 'bg-[#080808]' : 'bg-white'}`}>
-        <Image
-          src={image}
-          alt={alt}
-          fill
-          preload={preload}
-          sizes={detail
-            ? '(max-width: 639px) 76vw, 340px'
-            : compactMobile
-              ? '(max-width: 429px) 49vw, (max-width: 639px) 200px, (max-width: 1023px) 225px, 250px'
-              : '(max-width: 429px) 60vw, (max-width: 639px) 56vw, (max-width: 1023px) 240px, 250px'}
-          className={`object-contain ${imageClassName ?? ''}`}
-        />
+        {interactive === 'expenses' ? (
+          <ExpenseTrackerDemo />
+        ) : (
+          <Image
+            src={image}
+            alt={alt}
+            fill
+            preload={preload}
+            sizes={detail
+              ? '(max-width: 639px) 76vw, 340px'
+              : compactMobile
+                ? '(max-width: 429px) 49vw, (max-width: 639px) 200px, (max-width: 1023px) 225px, 250px'
+                : '(max-width: 429px) 60vw, (max-width: 639px) 56vw, (max-width: 1023px) 240px, 250px'}
+            className={`object-contain ${imageClassName ?? ''}`}
+          />
+        )}
         {tone === 'dark' && (
           <div
             className="absolute inset-x-0 bottom-0 z-10 flex h-[4.25%] items-center justify-center bg-[#080808]"
@@ -159,6 +169,7 @@ export function ProjectVisual({
           detail={detail}
           image={showcase.src}
           imageClassName={showcase.imageClassName}
+          interactive={showcase.interactive}
           preload={preload}
           tone={showcase.phoneTone}
         />

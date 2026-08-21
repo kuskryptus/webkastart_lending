@@ -131,18 +131,24 @@ function ProjectSlide({
               onPrevious={onPrevious}
             />
           </div>
-          <button
-            type="button"
-            onClick={onOpenDetail}
-            className="group relative block w-full cursor-zoom-in rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-4"
-            aria-label={`Zväčšiť ukážku projektu ${project.title}`}
-          >
-            <ProjectVisual compactMobile priority showcase={project.showcase} />
-            <span className="absolute right-1 top-1 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-foreground shadow-[0_2px_12px_rgb(24_23_22_/_8%)] backdrop-blur transition-colors group-hover:bg-brand group-hover:text-white sm:right-3 sm:top-3 lg:hidden">
-              <Maximize2 className="size-3.5" aria-hidden="true" />
-              Detail
-            </span>
-          </button>
+          {project.showcase.interactive ? (
+            <div className="relative w-full" aria-label={`Interaktívna ukážka projektu ${project.title}`}>
+              <ProjectVisual compactMobile priority showcase={project.showcase} />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenDetail}
+              className="group relative block w-full cursor-zoom-in rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 focus-visible:ring-offset-4"
+              aria-label={`Zväčšiť ukážku projektu ${project.title}`}
+            >
+              <ProjectVisual compactMobile priority showcase={project.showcase} />
+              <span className="absolute right-1 top-1 inline-flex items-center gap-1.5 rounded-full bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-foreground shadow-[0_2px_12px_rgb(24_23_22_/_8%)] backdrop-blur transition-colors group-hover:bg-brand group-hover:text-white sm:right-3 sm:top-3 lg:hidden">
+                <Maximize2 className="size-3.5" aria-hidden="true" />
+                Detail
+              </span>
+            </button>
+          )}
         </div>
 
         <div className="border-t border-black/[0.08] pt-6 lg:hidden">
