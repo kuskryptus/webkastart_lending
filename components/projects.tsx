@@ -18,8 +18,8 @@ export const projects: Project[] = [
     category: 'Osobná evidencia',
     title: 'Výdavky pod kontrolou za pár sekúnd',
     summary: 'Jednoduché zapisovanie výdavkov, kategórie a rýchla orientácia v tom, kam idú peniaze.',
-    result: 'Prehľadná mobilná aplikácia s históriou, štatistikami a rýchlym skenovaním bločkov.',
-    scope: 'Mobilná aplikácia · financie · skenovanie',
+    result: 'Prehľadná mobilná aplikácia s históriou, štatistikami a rýchlym spracovaním bločkov aj výpisov z banky.',
+    scope: 'Mobilná aplikácia · financie · bločky · bankové výpisy',
     showcase: {
       device: 'phone',
       phoneTone: 'light',
