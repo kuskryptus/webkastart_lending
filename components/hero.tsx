@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
 import { DashboardMockup } from '@/components/dashboard-mockup'
+import { LaptopFrame } from '@/components/laptop-frame'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
@@ -72,12 +73,9 @@ export function Hero() {
 
         {/* Right */}
         <div className="hero-visual-stage relative hidden lg:block">
-          <div className="rounded-[14px] border border-border bg-primary p-2 shadow-card-hover">
-            <div className="aspect-[16/11] w-full overflow-hidden rounded-lg bg-card">
-              <DashboardMockup />
-            </div>
-          </div>
-          <div className="mx-auto h-2.5 w-[calc(100%+2rem)] -translate-x-4 rounded-b-xl bg-primary/85" />
+          <LaptopFrame>
+            <DashboardMockup />
+          </LaptopFrame>
           <div className="hero-cursor-demo pointer-events-none absolute left-0 top-0 z-10 text-brand" aria-hidden="true">
             <svg
               className="hero-cursor-icon"

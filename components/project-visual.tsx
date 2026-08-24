@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { ExpenseTrackerDemo } from '@/components/expense-tracker-demo'
+import { LaptopFrame } from '@/components/laptop-frame'
 
 export type ProjectDevice = 'phone' | 'browser' | 'desktop'
 
@@ -64,12 +65,18 @@ export function PhoneMockup({
             className={`object-contain ${imageClassName ?? ''}`}
           />
         )}
-        {tone === 'dark' && (
+        {interactive !== 'expenses' && (
           <div
-            className="absolute inset-x-0 bottom-0 z-10 flex h-[4.25%] items-center justify-center bg-[#080808]"
+            className={`absolute inset-x-0 bottom-0 z-10 flex items-center justify-center ${
+              tone === 'dark' ? 'h-[4.25%] bg-[#080808]' : 'h-[3.6%] bg-white'
+            }`}
             aria-hidden="true"
           >
-            <span className="h-[3px] w-[24%] rounded-full bg-white/55" />
+            <span
+              className={`h-[3px] w-[24%] rounded-full ${
+                tone === 'dark' ? 'bg-white/55' : 'bg-[#1d1a18]/45'
+              }`}
+            />
           </div>
         )}
       </div>
@@ -102,21 +109,26 @@ export function BrowserMockup({ alt, detail = false, image, imageClassName, prel
 
 export function LaptopMockup({ alt, detail = false, image, imageClassName, preload }: MockupProps) {
   return (
-    <div data-device-mockup="desktop" className={`relative z-10 w-full pb-[5.5%] ${detail ? 'max-w-[1100px]' : 'max-w-[390px] sm:max-w-[620px] lg:max-w-[760px]'}`}>
-      <div className="relative overflow-hidden rounded-[0.75rem] border-[5px] border-[#222222] bg-[#111111] shadow-[0_24px_64px_rgb(24_23_22_/_16%),0_5px_18px_rgb(24_23_22_/_8%)] sm:rounded-[1rem] sm:border-[7px]">
-        <div className="relative aspect-[16/10] overflow-hidden rounded-[0.35rem] bg-card sm:rounded-[0.55rem]">
-          <Image
-            src={image}
-            alt={alt}
-            fill
-            preload={preload}
-            sizes="(max-width: 767px) 90vw, (max-width: 1023px) 640px, 760px"
-            className={`object-contain ${imageClassName ?? ''}`}
-          />
-        </div>
-      </div>
-      <div className="absolute bottom-[2.5%] left-1/2 h-[4.5%] w-[108%] -translate-x-1/2 rounded-b-[45%] rounded-t-sm bg-gradient-to-b from-[#dedddc] to-[#aaa9a7] shadow-[0_8px_15px_rgb(24_23_22_/_12%)]" aria-hidden="true" />
-      <div className="absolute bottom-[4.5%] left-1/2 h-[1.2%] w-[14%] -translate-x-1/2 rounded-b-full bg-[#9c9b99]" aria-hidden="true" />
+    <div
+      data-device-mockup="desktop"
+      className={`relative z-10 w-full ${
+        detail ? 'max-w-[1120px]' : 'max-w-[420px] sm:max-w-[650px] lg:max-w-[780px]'
+      }`}
+    >
+      <LaptopFrame screenClassName="bg-white">
+        <Image
+          src={image}
+          alt={alt}
+          fill
+          preload={preload}
+          sizes="(max-width: 767px) 90vw, (max-width: 1023px) 640px, 760px"
+          className={`object-fill ${imageClassName ?? ''}`}
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.035] via-transparent to-black/[0.025]"
+          aria-hidden="true"
+        />
+      </LaptopFrame>
     </div>
   )
 }
