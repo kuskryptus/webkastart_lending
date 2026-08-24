@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { Logo } from '@/components/logo'
+import { SectionLink } from '@/components/section-link'
 
 const navItems = [
   { label: 'Projekty', href: '#projekty' },
@@ -68,13 +68,13 @@ export function SiteHeader() {
             className="hidden items-center gap-9 md:flex"
           >
             {navItems.map((item) => (
-              <Link
+              <SectionLink
                 key={item.href}
                 href={item.href}
                 className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
               >
                 {item.label}
-              </Link>
+              </SectionLink>
             ))}
           </nav>
 

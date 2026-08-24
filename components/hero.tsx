@@ -1,7 +1,7 @@
-import Link from 'next/link'
 import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
 import { DashboardMockup } from '@/components/dashboard-mockup'
 import { LaptopFrame } from '@/components/laptop-frame'
+import { SectionLink } from '@/components/section-link'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
@@ -41,21 +41,21 @@ export function Hero() {
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">
-            <Link
+            <SectionLink
               href="#kontakt"
               className="relative inline-flex items-center justify-center gap-2 overflow-visible rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Nezáväzne sa poradiť
               <Lightbulb className="size-4" aria-hidden="true" />
               <span className="hero-tap-indicator pointer-events-none absolute right-5 top-1/2 lg:hidden" aria-hidden="true" />
-            </Link>
-            <Link
+            </SectionLink>
+            <SectionLink
               href="#projekty"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
             >
               Pozrieť projekty
               <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
+            </SectionLink>
           </div>
 
           <dl className="mt-7 flex flex-wrap gap-x-10 gap-y-5 sm:mt-10 sm:gap-y-6">
