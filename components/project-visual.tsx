@@ -7,6 +7,7 @@ export type ProjectDevice = 'phone' | 'browser' | 'desktop'
 export type ProjectShowcase = {
   alt: string
   device: ProjectDevice
+  hasEmbeddedSystemBar?: boolean
   imageClassName?: string
   interactive?: 'expenses'
   phoneTone?: 'light' | 'dark'
@@ -19,6 +20,7 @@ type MockupProps = {
   detail?: boolean
   image: string
   imageClassName?: string
+  hasEmbeddedSystemBar?: boolean
   interactive?: 'expenses'
   preload?: boolean
   tone?: 'light' | 'dark'
@@ -30,6 +32,7 @@ export function PhoneMockup({
   detail = false,
   image,
   imageClassName,
+  hasEmbeddedSystemBar = false,
   interactive,
   preload,
   tone = 'light',
@@ -62,22 +65,16 @@ export function PhoneMockup({
               : compactMobile
                 ? '(max-width: 429px) 49vw, (max-width: 639px) 200px, (max-width: 1023px) 225px, 250px'
                 : '(max-width: 429px) 60vw, (max-width: 639px) 56vw, (max-width: 1023px) 240px, 250px'}
-            className={`object-contain ${imageClassName ?? ''}`}
+            className={`object-contain ${hasEmbeddedSystemBar ? '[clip-path:inset(0_0_3.2%_0)]' : ''} ${imageClassName ?? ''}`}
           />
         )}
         {interactive !== 'expenses' && (
-          <div
-            className={`absolute inset-x-0 bottom-0 z-10 flex items-center justify-center ${
-              tone === 'dark' ? 'h-[4.25%] bg-[#080808]' : 'h-[3.6%] bg-white'
+          <span
+            className={`absolute bottom-[0.85%] left-1/2 z-10 h-[3px] w-[24%] -translate-x-1/2 rounded-full ${
+              tone === 'dark' ? 'bg-white/55' : 'bg-[#1d1a18]/45'
             }`}
             aria-hidden="true"
-          >
-            <span
-              className={`h-[3px] w-[24%] rounded-full ${
-                tone === 'dark' ? 'bg-white/55' : 'bg-[#1d1a18]/45'
-              }`}
-            />
-          </div>
+          />
         )}
       </div>
     </div>
@@ -181,6 +178,7 @@ export function ProjectVisual({
           detail={detail}
           image={showcase.src}
           imageClassName={showcase.imageClassName}
+          hasEmbeddedSystemBar={showcase.hasEmbeddedSystemBar}
           interactive={showcase.interactive}
           preload={preload}
           tone={showcase.phoneTone}
