@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto'
 import { checkRateLimit, findOnboardingByToken, submitOnboarding } from '@/lib/onboarding/db'
+import { createOnboardingEmail } from '@/lib/onboarding/email'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
 
@@ -35,6 +37,42 @@ export async function POST(request: Request, { params }: Context) {
     const errors = validateContact(answers)
     if (Object.keys(errors).length) {
       return privateJson({ error: 'Doplňte prosím kontaktné údaje.', fields: errors }, { status: 422 })
+    }
+
+    if (!process.env.RESEND_API_KEY) {
+      return privateJson(
+        { error: 'Odosielanie e-mailu ešte nie je nakonfigurované.', reason: 'not_configured' },
+        { status: 503 },
+      )
+    }
+
+    const recipient = process.env.CONTACT_TO_EMAIL || 'kampczykristian@gmail.com'
+    const sender = process.env.CONTACT_FROM_EMAIL || 'WebkaStart <kontakt@webkastart.sk>'
+    const email = createOnboardingEmail(project.clientLabel, answers)
+    const answersHash = createHash('sha256').update(JSON.stringify(answers)).digest('hex').slice(0, 20)
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      body: JSON.stringify({
+        from: sender,
+        html: email.html,
+        reply_to: answers.contact.email,
+        subject: email.subject,
+        text: email.text,
+        to: [recipient],
+      }),
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': `onboarding-${project.id}-${answersHash}`,
+      },
+      method: 'POST',
+    })
+
+    if (!emailResponse.ok) {
+      console.error('[onboarding] Resend rejected the submission', emailResponse.status, await emailResponse.text())
+      return privateJson(
+        { error: 'Podklady sa nepodarilo odoslať e-mailom. Skúste to prosím znova.' },
+        { status: 502 },
+      )
     }
 
     await submitOnboarding(project.id, answers)

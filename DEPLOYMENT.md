@@ -48,8 +48,9 @@ Ak nginx vracia `405 Not Allowed` pri odoslaní formulára, znamená to, že req
 
 ## Klientsky onboarding
 
-Onboarding potrebuje PostgreSQL databázu a privátny S3-kompatibilný bucket. Všetky
-premenné sú uvedené v `.env.example`. Bucket nesmie mať zapnuté verejné čítanie.
+Onboarding potrebuje PostgreSQL databázu. Vyplnený dotazník sa pri odoslaní pošle
+cez Resend na `CONTACT_TO_EMAIL`. Súbory klient odošle samostatne e-mailom cez
+tlačidlo v piatom kroku, preto S3 premenné v tomto dočasnom režime nie sú potrebné.
 
 Pred prvým použitím spusti migráciu:
 
@@ -78,11 +79,6 @@ pnpm onboarding:list
 pnpm onboarding:show -- <project-id>
 ```
 
-S3/R2 bucket musí povoliť CORS `PUT` požiadavky z domény webu s hlavičkou
-`Content-Type`. Upload ide priamo z prehliadača cez URL platnú 10 minút. Aplikácia
-po uploade server-side overí existenciu, veľkosť, deklarovaný MIME typ aj podpis
-formátu v obsahu objektu. Objektové kľúče obsahujú iba náhodné UUID; pôvodné názvy
-sú uložené samostatne v databáze.
-
-Odporúčané limity reverse proxy pre malé JSON API môžu zostať nízke. Samotné súbory
-cez nginx ani Next.js neprechádzajú. Maximálne je podporovaných 100 súborov po 50 MB.
+S3/R2 integrácia zostáva v projekte pripravená na neskoršie zapnutie. Bucket potom
+musí povoliť CORS `PUT` požiadavky z domény webu s hlavičkou `Content-Type` a nesmie
+mať zapnuté verejné čítanie.

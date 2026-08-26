@@ -61,21 +61,21 @@ export function Hero() {
 
         {/* Right */}
         <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
-          <figcaption className="pointer-events-none absolute -top-28 right-[2%] z-10 hidden gap-4 lg:flex xl:-top-24 xl:right-0">
+          <figcaption className="pointer-events-none absolute top-0 right-[3%] z-10 hidden items-start gap-2 lg:flex xl:right-0">
             <svg
-              className="mt-5 h-[4.75rem] w-24 translate-y-24 overflow-visible text-brand/80"
-              viewBox="0 0 96 76"
+              className="mt-5 h-24 w-28 shrink-0 overflow-visible text-brand/80"
+              viewBox="0 0 112 96"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M93 5C65 6 50 22 46 45C44 59 38 69 25 73"
+                d="M108 8C80 8 65 23 58 45C52 66 45 81 24 90"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
               <path
-                d="M32 65L24 73L33 75"
+                d="M32 81L23 90L34 92"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -83,9 +83,12 @@ export function Hero() {
               />
             </svg>
 
-            <div>
-              <p className="max-w-56 text-sm font-semibold leading-snug text-foreground">
+            <div className="w-64 pt-0.5">
+              <p className="text-sm font-semibold leading-snug text-foreground">
                 Jedným klikom na všetky siete.
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                Príspevok pripravíte raz, upravíte podľa potreby a jedným klikom ho zverejníte na všetky siete.
               </p>
             </div>
           </figcaption>

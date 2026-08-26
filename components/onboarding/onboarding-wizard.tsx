@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Loader2, PartyPopper, Plus, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Loader2, Mail, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
-import { UploadField } from './upload-field'
 import {
   emptyOnboardingAnswers,
   type OnboardingAnswers,
-  type OnboardingAsset,
   type OnboardingProjectResponse,
 } from '@/lib/onboarding/types'
 import { validateContact } from '@/lib/onboarding/validation'
@@ -137,9 +135,16 @@ async function responseError(response: Response) {
   return data?.error || 'Niečo sa nepodarilo. Skúste to prosím znova.'
 }
 
-export function OnboardingWizard({ token, privacyPolicyUrl }: { token: string; privacyPolicyUrl?: string }) {
+export function OnboardingWizard({
+  filesEmail,
+  privacyPolicyUrl,
+  token,
+}: {
+  filesEmail: string
+  privacyPolicyUrl?: string
+  token: string
+}) {
   const [answers, setAnswers] = useState<OnboardingAnswers>(emptyOnboardingAnswers)
-  const [assets, setAssets] = useState<OnboardingAsset[]>([])
   const [step, setStep] = useState(1)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [loading, setLoading] = useState(true)
@@ -177,7 +182,6 @@ export function OnboardingWizard({ token, privacyPolicyUrl }: { token: string; p
         }
 
         setAnswers(nextAnswers)
-        setAssets(data.assets)
         setStep(Math.min(TOTAL_STEPS, Math.max(1, nextStep)))
         setCompleted(data.status === 'submitted')
         hydratedRef.current = true
@@ -312,7 +316,7 @@ export function OnboardingWizard({ token, privacyPolicyUrl }: { token: string; p
   }
 
   const filledSections = answers.sections.length
-  const uploadedAssets = assets.filter((asset) => asset.status === 'uploaded').length
+  const filesMailto = `mailto:${filesEmail}?subject=${encodeURIComponent('Podklady k novému webu')}`
 
   return (
     <main className="min-h-dvh bg-background">
@@ -411,9 +415,16 @@ export function OnboardingWizard({ token, privacyPolicyUrl }: { token: string; p
 
           {step === 5 && (
             <>
-              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Logo, fotografie, texty, cenník, referencie alebo akékoľvek ďalšie materiály. Nemusíte ich triediť ani pripravovať. Ak momentálne nič nemáte, pokojne pokračujte ďalej." />
-              <UploadField token={token} assets={assets} onAssetsChange={setAssets} />
-              <OptionalHint>Ak nič nemáte, nevadí. Môžeme vám s tým pomôcť.</OptionalHint>
+              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Logo, fotografie, texty, cenník alebo ďalšie materiály nám zatiaľ pošlite samostatne e-mailom. Dotazník môžete dokončiť aj bez nich." />
+              <div className="py-2">
+                <a href={filesMailto} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">
+                  <Mail className="size-4" aria-hidden="true" /> Poslať súbory e-mailom
+                </a>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                  Otvorí sa váš e-mailový program s adresou <span className="font-medium text-foreground">{filesEmail}</span>. Do predmetu alebo správy napíšte svoje meno či názov projektu, aby sme podklady správne priradili.
+                </p>
+              </div>
+              <OptionalHint>Ak sú súbory príliš veľké na e-mail, pokojne pošlite odkaz z WeTransferu, Google Disku alebo podobnej služby.</OptionalHint>
             </>
           )}
 
@@ -440,7 +451,7 @@ export function OnboardingWizard({ token, privacyPolicyUrl }: { token: string; p
                   <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
                     <p><span className="block text-lg font-semibold text-foreground">{filledSections}</span> vybraných častí webu</p>
                     <p><span className="block text-lg font-semibold text-foreground">{answers.designPreferences.length}</span> slov pre vizuálny smer</p>
-                    <p><span className="block text-lg font-semibold text-foreground">{uploadedAssets}</span> nahraných súborov</p>
+                    <p><span className="block text-lg font-semibold text-foreground">E-mail</span> samostatné podklady</p>
                   </div>
                 </div>
                 {privacyPolicyUrl && <p className="text-xs leading-5 text-muted-foreground">Odoslaním nám poskytujete údaje na prípravu vášho webu. <a href={privacyPolicyUrl} target="_blank" rel="noreferrer" referrerPolicy="no-referrer" className="underline underline-offset-2 hover:text-foreground">Ochrana osobných údajov</a></p>}

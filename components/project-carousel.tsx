@@ -16,7 +16,7 @@ function ProjectNavButtons({
   onPrevious: () => void
 }) {
   const buttonClassName =
-    'inline-flex size-9 items-center justify-center rounded-full bg-secondary/75 text-foreground transition-colors duration-200 hover:bg-brand-soft hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35'
+    'inline-flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors duration-200 hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35'
 
   return (
     <div className={`items-center gap-2 ${className}`}>
@@ -26,7 +26,7 @@ function ProjectNavButtons({
         className={buttonClassName}
         aria-label="Predchádzajúci projekt"
       >
-        <ArrowLeft className="size-3.5" aria-hidden="true" />
+        <ArrowLeft className="size-4" strokeWidth={1.75} aria-hidden="true" />
       </button>
       <button
         type="button"
@@ -34,7 +34,7 @@ function ProjectNavButtons({
         className={buttonClassName}
         aria-label="Ďalší projekt"
       >
-        <ArrowRight className="size-3.5" aria-hidden="true" />
+        <ArrowRight className="size-4" strokeWidth={1.75} aria-hidden="true" />
       </button>
     </div>
   )
@@ -131,7 +131,7 @@ function ProjectSlide({
         </div>
 
         <div className="bg-[radial-gradient(circle_at_50%_50%,rgba(95,82,232,0.07),transparent_66%)]">
-          <div className="flex items-center justify-between gap-4 pb-3 sm:pb-4">
+          <div className="flex items-center justify-start gap-3 pb-3 sm:pb-4">
             <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
             <ProjectNavButtons
               className="flex shrink-0"

@@ -11,6 +11,7 @@ export default async function StartPage({ params }: { params: Promise<{ token: s
   return (
     <OnboardingWizard
       token={token}
+      filesEmail={process.env.CONTACT_TO_EMAIL || 'kontakt@webkastart.sk'}
       privacyPolicyUrl={process.env.PRIVACY_POLICY_URL || undefined}
     />
   )
