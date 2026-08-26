@@ -45,3 +45,38 @@ server {
 ```
 
 Ak nginx vracia `405 Not Allowed` pri odoslaní formulára, znamená to, že request na `/api/contact` nejde do Next.js servera.
+
+## Klientsky onboarding
+
+Onboarding potrebuje PostgreSQL databázu a privátny S3-kompatibilný bucket. Všetky
+premenné sú uvedené v `.env.example`. Bucket nesmie mať zapnuté verejné čítanie.
+
+Pred prvým použitím spusti migráciu:
+
+```bash
+pnpm onboarding:migrate
+```
+
+Vytvorenie osobného linku pre klienta:
+
+```bash
+pnpm onboarding:create -- "Názov klienta alebo projektu"
+```
+
+Príkaz vypíše jediný osobný link. V databáze sa ukladá iba SHA-256 hash 256-bitového
+náhodného tokenu, preto si link po vytvorení bezpečne ulož. Interný prehľad a export
+štruktúrovaných odpovedí:
+
+```bash
+pnpm onboarding:list
+pnpm onboarding:show -- <project-id>
+```
+
+S3/R2 bucket musí povoliť CORS `PUT` požiadavky z domény webu s hlavičkou
+`Content-Type`. Upload ide priamo z prehliadača cez URL platnú 10 minút. Aplikácia
+po uploade server-side overí existenciu, veľkosť, deklarovaný MIME typ aj podpis
+formátu v obsahu objektu. Objektové kľúče obsahujú iba náhodné UUID; pôvodné názvy
+sú uložené samostatne v databáze.
+
+Odporúčané limity reverse proxy pre malé JSON API môžu zostať nízke. Samotné súbory
+cez nginx ani Next.js neprechádzajú. Maximálne je podporovaných 100 súborov po 50 MB.

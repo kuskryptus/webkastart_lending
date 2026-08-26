@@ -204,14 +204,13 @@ function DonutChart({
   onSelect: (index: number) => void
   total: string
 }) {
-  let offset = 0
-
   return (
     <div className="relative mx-auto size-[132px]">
       <svg className="size-full -rotate-90 overflow-visible" viewBox="0 0 100 100" role="group" aria-label="Rozdelenie výdavkov podľa kategórií">
         {categories.map((category, index) => {
-          const currentOffset = offset
-          offset += category.percentage
+          const currentOffset = categories
+            .slice(0, index)
+            .reduce((sum, item) => sum + item.percentage, 0)
           const isActive = activeCategory === index
 
           return (

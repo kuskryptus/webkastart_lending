@@ -1,0 +1,34 @@
+import { checkRateLimit, findOnboardingByToken, getDatabase } from '@/lib/onboarding/db'
+import { apiError, getClientIp, isValidToken, privateJson } from '@/lib/onboarding/http'
+import { deleteUploadedObject } from '@/lib/onboarding/storage'
+
+export const runtime = 'nodejs'
+
+type Context = { params: Promise<{ token: string; uploadId: string }> }
+
+export async function DELETE(request: Request, { params }: Context) {
+  try {
+    const { token, uploadId } = await params
+    if (!isValidToken(token)) return privateJson({ error: 'Tento odkaz nie je platný.' }, { status: 404 })
+    const project = await findOnboardingByToken(token)
+    if (!project) return privateJson({ error: 'Tento odkaz nie je platný.' }, { status: 404 })
+    const allowed = await checkRateLimit({ action: 'upload-delete', identity: `${project.tokenHash}:${getClientIp(request)}`, limit: 60 })
+    if (!allowed) return privateJson({ error: 'Príliš veľa požiadaviek.' }, { status: 429 })
+
+    const sql = getDatabase()
+    const rows = await sql<{ objectKey: string }[]>`
+      select object_key as "objectKey" from onboarding_assets
+      where id = ${uploadId} and project_id = ${project.id}
+      limit 1
+    `
+    const upload = rows[0]
+    if (!upload) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
+
+    await deleteUploadedObject(upload.objectKey)
+    await sql`delete from onboarding_assets where id = ${uploadId} and project_id = ${project.id}`
+    await sql`update onboarding_projects set updated_at = now(), last_activity_at = now() where id = ${project.id}`
+    return privateJson({ ok: true })
+  } catch (error) {
+    return apiError(error)
+  }
+}
