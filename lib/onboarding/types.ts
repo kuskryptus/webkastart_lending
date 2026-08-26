@@ -16,6 +16,7 @@ export type OnboardingAnswers = {
   otherSections: string
   futureFeatures: string[]
   designPreferences: string[]
+  designOther: string
   inspirationUrls: string[]
   dislikes: string
   existingWebsite: string
@@ -65,6 +66,7 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   otherSections: '',
   futureFeatures: [],
   designPreferences: [],
+  designOther: '',
   inspirationUrls: [''],
   dislikes: '',
   existingWebsite: '',

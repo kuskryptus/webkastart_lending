@@ -47,6 +47,7 @@ export async function getWebsiteGenerationInput(projectId: string) {
     sections: answers.sections,
     futureFeatures: answers.futureFeatures,
     designPreferences: answers.designPreferences,
+    designOther: answers.designOther,
     inspirationUrls: answers.inspirationUrls,
     existingWebsite: answers.existingWebsite,
     socialLinks: answers.socialLinks,

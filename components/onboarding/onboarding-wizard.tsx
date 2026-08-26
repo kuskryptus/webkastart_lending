@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Loader2, Mail, PartyPopper, Plus, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Copy, Loader2, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import {
   emptyOnboardingAnswers,
@@ -54,7 +54,7 @@ function Field({
         id={id}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        className={`mt-3 w-full border-0 border-b bg-transparent px-0 py-3 text-base outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0 ${error ? 'border-destructive' : 'border-border'}`}
+        className={`mt-3 w-full border-0 border-b bg-transparent px-0 py-3 text-base text-foreground caret-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0 ${error ? 'border-destructive' : 'border-border'}`}
       />
       {error && <span id={`${id}-error`} className="mt-2 block text-sm text-destructive">{error}</span>}
     </label>
@@ -74,9 +74,73 @@ function TextArea({
       <textarea
         {...props}
         id={id}
-        className="mt-3 min-h-28 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-3 text-base leading-7 outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0"
+        className="mt-3 min-h-28 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-3 text-base leading-7 text-foreground caret-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0"
       />
     </label>
+  )
+}
+
+function BulletListField({
+  hint,
+  label,
+  onChange,
+  placeholder,
+  value,
+}: {
+  hint?: string
+  label: string
+  onChange: (value: string) => void
+  placeholder?: string
+  value: string
+}) {
+  const items = value ? value.split('\n').slice(0, 12) : ['']
+
+  function updateItem(index: number, nextValue: string) {
+    const next = [...items]
+    next[index] = nextValue.replaceAll('\n', ' ').slice(0, 200)
+    onChange(next.join('\n').slice(0, 2000))
+  }
+
+  function removeItem(index: number) {
+    const next = items.filter((_, itemIndex) => itemIndex !== index)
+    onChange(next.join('\n'))
+  }
+
+  function addItem() {
+    if (items.length < 12) onChange([...items, ''].join('\n'))
+  }
+
+  return (
+    <div>
+      <p className="text-base font-semibold tracking-[-0.01em]">
+        {label}{hint && <span className="ml-2 text-xs font-normal text-muted-foreground">{hint}</span>}
+      </p>
+      <div className="mt-3 space-y-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex items-center gap-3">
+            <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
+            <input
+              aria-label={`${label} – bod ${index + 1}`}
+              value={item}
+              maxLength={200}
+              onChange={(event) => updateItem(index, event.target.value)}
+              placeholder={index === 0 ? placeholder : `Ďalší bod ${index + 1}`}
+              className="min-w-0 flex-1 border-0 border-b border-border bg-transparent px-0 py-3 text-base text-foreground caret-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0"
+            />
+            {items.length > 1 && (
+              <button type="button" onClick={() => removeItem(index)} className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label={`Odstrániť bod ${index + 1}`}>
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {items.length < 12 && (
+        <button type="button" onClick={addItem} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
+          <Plus className="size-4" /> Pridať ďalší bod
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -135,12 +199,48 @@ async function responseError(response: Response) {
   return data?.error || 'Niečo sa nepodarilo. Skúste to prosím znova.'
 }
 
+function CopyContactButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false)
+
+  async function copyContact() {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = value
+      input.style.position = 'fixed'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      input.remove()
+    }
+
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1800)
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={copyContact}
+      className="inline-flex min-h-9 items-center gap-1.5 px-1 text-sm font-medium text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+      aria-label={`Kopírovať ${value}`}
+    >
+      {copied ? <Check className="size-4" aria-hidden="true" /> : <Copy className="size-4" aria-hidden="true" />}
+      {copied ? 'Skopírované' : 'Kopírovať'}
+    </button>
+  )
+}
+
 export function OnboardingWizard({
   filesEmail,
+  filesPhone,
   privacyPolicyUrl,
   token,
 }: {
   filesEmail: string
+  filesPhone: string
   privacyPolicyUrl?: string
   token: string
 }) {
@@ -152,6 +252,8 @@ export function OnboardingWizard({
   const [submitError, setSubmitError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [reopening, setReopening] = useState(false)
+  const [reopenError, setReopenError] = useState('')
   const [completed, setCompleted] = useState(false)
   const hydratedRef = useRef(false)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
@@ -235,10 +337,12 @@ export function OnboardingWizard({
   }
 
   function updateStringList(key: 'inspirationUrls' | 'socialLinks', index: number, value: string) {
-    setAnswers((current) => ({
-      ...current,
-      [key]: current[key].map((item, itemIndex) => itemIndex === index ? value : item),
-    }))
+    setAnswers((current) => {
+      const next = [...current[key]]
+      while (next.length <= index) next.push('')
+      next[index] = value
+      return { ...current, [key]: next }
+    })
   }
 
   async function submit() {
@@ -266,6 +370,26 @@ export function OnboardingWizard({
       setSubmitError(error instanceof Error ? error.message : 'Podklady sa nepodarilo odoslať.')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function reopenOnboarding() {
+    setReopening(true)
+    setReopenError('')
+    try {
+      const response = await fetch(`/api/onboarding/${token}`, {
+        body: JSON.stringify({ answers, currentStep: step, reopen: true }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+      if (!response.ok) throw new Error(await responseError(response))
+      setCompleted(false)
+      setSaveState('saved')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (error) {
+      setReopenError(error instanceof Error ? error.message : 'Formulár sa nepodarilo znovu otvoriť.')
+    } finally {
+      setReopening(false)
     }
   }
 
@@ -305,11 +429,14 @@ export function OnboardingWizard({
           </p>
           <button
             type="button"
-            onClick={() => setCompleted(false)}
-            className="mt-8 text-sm font-semibold text-brand underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4"
+            onClick={reopenOnboarding}
+            disabled={reopening}
+            className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-brand underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 disabled:cursor-wait disabled:opacity-60"
           >
-            Znovu otvoriť a niečo doplniť
+            {reopening && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+            {reopening ? 'Otváram formulár…' : 'Znovu otvoriť a niečo doplniť'}
           </button>
+          {reopenError && <p className="mt-4 text-sm text-destructive" role="alert">{reopenError}</p>}
         </div>
       </main>
     )
@@ -317,6 +444,8 @@ export function OnboardingWizard({
 
   const filledSections = answers.sections.length
   const filesMailto = `mailto:${filesEmail}?subject=${encodeURIComponent('Podklady k novému webu')}`
+  const whatsappNumber = filesPhone.replace(/\D/g, '').replace(/^0/, '421')
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Dobrý deň, posielam podklady k novému webu.')}`
 
   return (
     <main className="min-h-dvh bg-background">
@@ -351,18 +480,18 @@ export function OnboardingWizard({
               <StepHeader eyebrow="Krok 1" title="Najprv niečo o vás" text="Pár viet nám pomôže pochopiť, čo robíte. Nemusia byť dokonalé – texty spolu ešte doladíme." />
               <div className="space-y-9">
                 <Field label="Ako sa voláte / názov podnikania" hint="Nepovinné" value={answers.client.displayName} maxLength={160} onChange={(e) => setAnswers({ ...answers, client: { displayName: e.target.value } })} placeholder="Napr. Jana Nováková / Ateliér Jana" />
-                <Field label="Čomu sa venujete?" hint="Nepovinné" value={answers.business.area} maxLength={500} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, area: e.target.value }, services: e.target.value })} placeholder="Napr. svadobná a rodinná fotografia" />
+                <Field label="Čomu sa venujete?" hint="Nepovinné" value={answers.business.area} maxLength={500} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, area: e.target.value }, services: e.target.value })} placeholder="Napr. svadobná a rodinná fotografka" />
                 <TextArea label="Ako by ste jednoducho vysvetlili svoju prácu?" hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Som fotografka a fotím najmä svadby a rodinné fotenia." />
                 <Field label="Máte už existujúci web?" hint="Nepovinné" type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => setAnswers({ ...answers, existingWebsite: e.target.value })} placeholder="https://" />
                 <div>
-                  <Field label="Sociálne siete" hint="Nepovinné" type="url" inputMode="url" value={answers.socialLinks[0] || ''} maxLength={500} onChange={(e) => updateStringList('socialLinks', 0, e.target.value)} placeholder="Instagram, Facebook alebo LinkedIn" />
+                  <Field label="Sociálne siete" hint="Nepovinné" type="url" inputMode="url" value={answers.socialLinks[0] || ''} maxLength={500} onChange={(e) => updateStringList('socialLinks', 0, e.target.value)} placeholder="Vložte odkaz na Instagram, Facebook alebo LinkedIn" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
                   {answers.socialLinks.slice(1).map((url, index) => (
                     <div key={index + 1} className="mt-3 flex items-end gap-3">
-                      <Field aria-label={`Sociálna sieť ${index + 2}`} label={`Ďalší odkaz ${index + 2}`} value={url} type="url" className="flex-1" onChange={(e) => updateStringList('socialLinks', index + 1, e.target.value)} />
+                      <Field aria-label={`Sociálna sieť ${index + 2}`} label={`Ďalší odkaz ${index + 2}`} value={url} type="url" className="flex-1" onChange={(e) => updateStringList('socialLinks', index + 1, e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
                       <button type="button" className="mb-2 grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Odstrániť odkaz" onClick={() => setAnswers({ ...answers, socialLinks: answers.socialLinks.filter((_, i) => i !== index + 1) })}><X className="size-4" /></button>
                     </div>
                   ))}
-                  {answers.socialLinks.length < 5 && <button type="button" onClick={() => setAnswers({ ...answers, socialLinks: [...answers.socialLinks, ''] })} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať ďalší odkaz</button>}
+                  {answers.socialLinks.length < 5 && <button type="button" onClick={() => setAnswers((current) => ({ ...current, socialLinks: [...(current.socialLinks.length ? current.socialLinks : ['']), ''] }))} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať ďalší odkaz</button>}
                 </div>
               </div>
             </>
@@ -384,7 +513,7 @@ export function OnboardingWizard({
               <StepHeader eyebrow="Krok 3" title="Čo chcete na stránke" text="Označte všetko, čo vám dáva zmysel. Ak si nie ste istí, pokojne nechajte návrh na nás." />
               <div className="space-y-10">
                 <div><ChoiceGrid options={sectionOptions} selected={answers.sections} onChange={(sections) => setAnswers({ ...answers, sections })} /></div>
-                <TextArea label="Je ešte niečo, čo by ste na stránke chceli?" hint="Nepovinné" value={answers.otherSections} maxLength={2000} onChange={(e) => setAnswers({ ...answers, otherSections: e.target.value })} placeholder="Pokojne len jednou vetou." />
+                <BulletListField label="Je ešte niečo, čo by ste na stránke chceli?" hint="Nepovinné" value={answers.otherSections} onChange={(otherSections) => setAnswers({ ...answers, otherSections })} placeholder="Napr. kalendár" />
                 <div><h3 className="text-base font-semibold">Chceli by ste web neskôr rozširovať?</h3><OptionalHint>Nemusíte to mať ešte premyslené. Pomôže nám aj „zatiaľ neviem“.</OptionalHint><div className="mt-4"><ChoiceGrid options={futureOptions} selected={answers.futureFeatures} onChange={(futureFeatures) => setAnswers({ ...answers, futureFeatures })} /></div></div>
               </div>
             </>
@@ -394,7 +523,14 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 4" title="Ako by mal web pôsobiť" text="Vyberte pár slov podľa pocitu. Zvyšok vám navrhneme tak, aby sedel vašej práci aj zákazníkom." />
               <div className="space-y-10">
-                <div><h3 className="text-base font-semibold">Ako by mal váš web pôsobiť?</h3><OptionalHint /><div className="mt-4"><ChoiceGrid options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} /></div></div>
+                <div>
+                  <h3 className="text-base font-semibold">Ako by mal váš web pôsobiť?</h3>
+                  <OptionalHint />
+                  <div className="mt-4"><ChoiceGrid options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} /></div>
+                  <div className="mt-6">
+                    <Field label="Vlastnými slovami" hint="Nepovinné" value={answers.designOther || ''} maxLength={500} onChange={(event) => setAnswers({ ...answers, designOther: event.target.value })} placeholder="Napr. jemný, vzdušný a prirodzený" />
+                  </div>
+                </div>
                 <div>
                   <h3 className="text-base font-semibold">Poznáte stránky, ktoré sa vám páčia? <span className="ml-2 text-xs font-normal text-muted-foreground">Nepovinné</span></h3>
                   <OptionalHint>Nemusíte vedieť vysvetliť prečo. Stačí nám ukázať, čo sa vám páči.</OptionalHint>
@@ -415,16 +551,28 @@ export function OnboardingWizard({
 
           {step === 5 && (
             <>
-              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Logo, fotografie, texty, cenník alebo ďalšie materiály nám zatiaľ pošlite samostatne e-mailom. Dotazník môžete dokončiť aj bez nich." />
-              <div className="py-2">
-                <a href={filesMailto} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2">
-                  <Mail className="size-4" aria-hidden="true" /> Poslať súbory e-mailom
-                </a>
-                <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                  Otvorí sa váš e-mailový program s adresou <span className="font-medium text-foreground">{filesEmail}</span>. Do predmetu alebo správy napíšte svoje meno či názov projektu, aby sme podklady správne priradili.
-                </p>
+              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Logo, fotografie, texty, cenník alebo ďalšie materiály môžete poslať cez WhatsApp alebo e-mail. Dotazník môžete dokončiť aj bez nich." />
+              <div className="max-w-xl divide-y divide-border/70">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">WhatsApp</p>
+                    <a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-0.5 inline-block text-base font-semibold text-foreground hover:text-brand hover:underline">
+                      {filesPhone}
+                    </a>
+                  </div>
+                  <CopyContactButton value={filesPhone} />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">E-mail</p>
+                    <a href={filesMailto} className="mt-0.5 inline-block text-base font-semibold text-foreground hover:text-brand hover:underline">
+                      {filesEmail}
+                    </a>
+                  </div>
+                  <CopyContactButton value={filesEmail} />
+                </div>
               </div>
-              <OptionalHint>Ak sú súbory príliš veľké na e-mail, pokojne pošlite odkaz z WeTransferu, Google Disku alebo podobnej služby.</OptionalHint>
+              <OptionalHint>Do správy napíšte svoje meno alebo názov projektu. Pri väčších súboroch nám môžete poslať odkaz z WeTransferu alebo Google Disku.</OptionalHint>
             </>
           )}
 
@@ -450,7 +598,7 @@ export function OnboardingWizard({
                   <h3 className="font-semibold">Krátke zhrnutie</h3>
                   <div className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
                     <p><span className="block text-lg font-semibold text-foreground">{filledSections}</span> vybraných častí webu</p>
-                    <p><span className="block text-lg font-semibold text-foreground">{answers.designPreferences.length}</span> slov pre vizuálny smer</p>
+                    <p><span className="block text-lg font-semibold text-foreground">{answers.designPreferences.length + (answers.designOther ? 1 : 0)}</span> slov pre vizuálny smer</p>
                     <p><span className="block text-lg font-semibold text-foreground">E-mail</span> samostatné podklady</p>
                   </div>
                 </div>

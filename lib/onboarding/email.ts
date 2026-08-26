@@ -48,6 +48,7 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
       title: 'Vizuálny smer',
       rows: [
         ['Preferovaný štýl', answers.designPreferences],
+        ['Vlastný opis štýlu', answers.designOther],
         ['Inšpirácie', answers.inspirationUrls],
         ['Čomu sa vyhnúť', answers.dislikes],
       ],

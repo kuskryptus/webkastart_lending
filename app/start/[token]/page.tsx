@@ -12,6 +12,7 @@ export default async function StartPage({ params }: { params: Promise<{ token: s
     <OnboardingWizard
       token={token}
       filesEmail={process.env.CONTACT_TO_EMAIL || 'kontakt@webkastart.sk'}
+      filesPhone={process.env.CONTACT_WHATSAPP_PHONE || '0950591354'}
       privacyPolicyUrl={process.env.PRIVACY_POLICY_URL || undefined}
     />
   )

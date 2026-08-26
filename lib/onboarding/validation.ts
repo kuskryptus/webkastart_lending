@@ -56,6 +56,7 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     otherSections: text(source.otherSections, 2000),
     futureFeatures: list(source.futureFeatures, 12, 100),
     designPreferences: list(source.designPreferences, 12, 100),
+    designOther: text(source.designOther, 500),
     inspirationUrls: list(source.inspirationUrls, 5, 500),
     dislikes: text(source.dislikes, 2000),
     existingWebsite: text(source.existingWebsite, 500),

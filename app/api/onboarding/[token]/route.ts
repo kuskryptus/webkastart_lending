@@ -66,9 +66,10 @@ export async function PATCH(request: Request, { params }: Context) {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const currentStep = Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1)))
     const answers = sanitizeAnswers(body.answers)
-    await saveOnboarding(result.project.id, answers, currentStep)
+    const reopen = body.reopen === true && result.project.status === 'submitted'
+    await saveOnboarding(result.project.id, answers, currentStep, reopen)
 
-    return privateJson({ ok: true, savedAt: new Date().toISOString() })
+    return privateJson({ ok: true, reopened: reopen, savedAt: new Date().toISOString() })
   } catch (error) {
     return apiError(error)
   }

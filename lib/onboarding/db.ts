@@ -118,6 +118,7 @@ export async function saveOnboarding(
   projectId: string,
   answers: OnboardingAnswers,
   currentStep: number,
+  reopen = false,
 ) {
   const sql = getDatabase()
   await sql`
@@ -125,7 +126,12 @@ export async function saveOnboarding(
     set
       answers = ${sql.json(answers as unknown as postgres.JSONValue)},
       current_step = ${currentStep},
-      status = case when status = 'not_started' then 'in_progress' else status end,
+      status = case
+        when ${reopen} then 'in_progress'
+        when status = 'not_started' then 'in_progress'
+        else status
+      end,
+      submitted_at = case when ${reopen} then null else submitted_at end,
       updated_at = now(),
       last_activity_at = now()
     where id = ${projectId}
