@@ -22,8 +22,9 @@ const statusLabel: Record<OnboardingStatus, string> = {
 }
 
 async function getError(response: Response) {
-  const data = await response.json().catch(() => null) as { error?: string } | null
-  return data?.error || 'Niečo sa nepodarilo.'
+  const data = await response.json().catch(() => null) as { details?: string; error?: string } | null
+  const message = data?.error || 'Niečo sa nepodarilo.'
+  return data?.details ? `${message}\n${data.details}` : message
 }
 
 function formatDate(value: string) {
@@ -154,7 +155,7 @@ export function OnboardingAdmin({
             <span className="text-sm font-semibold">Heslo</span>
             <input autoFocus type="password" value={secret} onChange={(event) => setSecret(event.target.value)} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand" autoComplete="current-password" />
           </label>
-          {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="mt-4 whitespace-pre-wrap break-words text-sm text-destructive">{error}</p>}
           <button disabled={submitting || !secret} className="mt-7 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
             {submitting && <Loader2 className="size-4 animate-spin" />} Prihlásiť sa
           </button>
@@ -183,7 +184,7 @@ export function OnboardingAdmin({
             {submitting ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Vytvoriť link
           </button>
         </form>
-        {error && <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="mt-4 whitespace-pre-wrap break-words text-sm text-destructive">{error}</p>}
 
         {createdUrl && (
           <div className="mt-8 bg-brand-soft px-5 py-5 sm:px-6">

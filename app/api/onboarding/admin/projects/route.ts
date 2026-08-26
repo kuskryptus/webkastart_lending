@@ -26,7 +26,7 @@ export async function GET(request: Request) {
       })),
     })
   } catch (error) {
-    return apiError(error)
+    return apiError(error, { exposeDetails: true })
   }
 }
 
@@ -65,6 +65,6 @@ export async function POST(request: Request) {
       url: `${siteUrl}/start/${project.token}`,
     }, { status: 201 })
   } catch (error) {
-    return apiError(error)
+    return apiError(error, { exposeDetails: true })
   }
 }

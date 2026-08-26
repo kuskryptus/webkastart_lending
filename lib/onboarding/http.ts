@@ -28,7 +28,57 @@ export async function readSmallJson(request: Request, maxBytes = 200_000) {
   return JSON.parse(text) as unknown
 }
 
-export function apiError(error: unknown) {
+function redactSecrets(value: string) {
+  const secretNames = [
+    'DATABASE_URL',
+    'ONBOARDING_ADMIN_SECRET',
+    'ONBOARDING_RATE_LIMIT_SECRET',
+    'RESEND_API_KEY',
+    'S3_ACCESS_KEY_ID',
+    'S3_SECRET_ACCESS_KEY',
+  ]
+
+  return secretNames.reduce((result, name) => {
+    const secret = process.env[name]
+    return secret && secret.length >= 8 ? result.replaceAll(secret, `[${name} skryté]`) : result
+  }, value)
+}
+
+export function getErrorDetails(error: unknown) {
+  if (!(error instanceof Error)) return redactSecrets(String(error)).slice(0, 2_000)
+
+  const details = new Set<string>()
+  const seen = new Set<unknown>()
+
+  function collect(current: unknown, depth = 0) {
+    if (depth > 3 || seen.has(current)) return
+    seen.add(current)
+
+    if (current instanceof Error) {
+      details.add(`${current.name}: ${current.message}`)
+      const record = current as Error & {
+        cause?: unknown
+        code?: unknown
+        detail?: unknown
+        errors?: unknown
+        hint?: unknown
+      }
+      if (typeof record.code === 'string') details.add(`Kód: ${record.code}`)
+      if (typeof record.detail === 'string') details.add(`Detail: ${record.detail}`)
+      if (typeof record.hint === 'string') details.add(`Hint: ${record.hint}`)
+      if (Array.isArray(record.errors)) record.errors.forEach((nested) => collect(nested, depth + 1))
+      if (record.cause) collect(record.cause, depth + 1)
+      return
+    }
+
+    if (typeof current === 'string') details.add(current)
+  }
+
+  collect(error)
+  return redactSecrets([...details].join('\n')).slice(0, 2_000)
+}
+
+export function apiError(error: unknown, options: { exposeDetails?: boolean } = {}) {
   console.error('[onboarding]', error)
   const configurationError =
     error instanceof Error &&
@@ -39,6 +89,7 @@ export function apiError(error: unknown) {
       error: configurationError
         ? 'Onboarding ešte nie je nakonfigurovaný.'
         : 'Niečo sa nepodarilo. Skúste to prosím znova.',
+      details: options.exposeDetails ? getErrorDetails(error) : undefined,
       reason: configurationError ? 'not_configured' : 'server_error',
     },
     { status: configurationError ? 503 : 500 },

@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { OnboardingAdmin } from '@/components/onboarding/onboarding-admin'
 import { ADMIN_COOKIE_NAME, isAdminConfigured, isAdminCookie } from '@/lib/onboarding/admin-auth'
 import { listOnboardingProjects } from '@/lib/onboarding/db'
+import { getErrorDetails } from '@/lib/onboarding/http'
 import type { OnboardingStatus } from '@/lib/onboarding/types'
 
 export const dynamic = 'force-dynamic'
@@ -24,8 +25,8 @@ export default async function StartAdminPage() {
   if (configured && authenticated) {
     try {
       initialProjects = [...await listOnboardingProjects()]
-    } catch {
-      initialError = 'Prehľad sa nepodarilo načítať. Skontrolujte pripojenie k databáze.'
+    } catch (error) {
+      initialError = `Prehľad sa nepodarilo načítať.\n${getErrorDetails(error)}`
     }
   }
 

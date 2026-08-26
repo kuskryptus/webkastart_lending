@@ -10,11 +10,17 @@ import { apiError, getClientIp, privateJson, readSmallJson } from '@/lib/onboard
 export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
+  let validAdminSecret = false
+
   if (!isAdminConfigured()) {
     return privateJson({ error: 'Interný prístup ešte nie je nakonfigurovaný.' }, { status: 503 })
   }
 
   try {
+    const payload = await readSmallJson(request, 2_000)
+    const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+    validAdminSecret = isValidAdminSecret(body.secret)
+
     const allowed = await checkRateLimit({
       action: 'admin-login',
       identity: getClientIp(request),
@@ -24,9 +30,7 @@ export async function POST(request: Request) {
       return privateJson({ error: 'Príliš veľa pokusov. Skúste to o chvíľu.' }, { status: 429 })
     }
 
-    const payload = await readSmallJson(request, 2_000)
-    const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
-    if (!isValidAdminSecret(body.secret)) {
+    if (!validAdminSecret) {
       return privateJson({ error: 'Nesprávne heslo.' }, { status: 401 })
     }
 
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
     if (error instanceof SyntaxError || (error instanceof Error && error.message === 'PAYLOAD_TOO_LARGE')) {
       return privateJson({ error: 'Neplatná požiadavka.' }, { status: 400 })
     }
-    return apiError(error)
+    return apiError(error, { exposeDetails: validAdminSecret })
   }
 }
 
