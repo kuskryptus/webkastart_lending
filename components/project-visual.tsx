@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { ExpenseTrackerDemo } from '@/components/expense-tracker-demo'
 import { LaptopFrame } from '@/components/laptop-frame'
 
-export type ProjectDevice = 'phone' | 'browser' | 'desktop'
+export type ProjectDevice = 'phone' | 'browser' | 'desktop' | 'image'
 
 export type ProjectShowcase = {
   alt: string
@@ -130,6 +130,26 @@ export function LaptopMockup({ alt, detail = false, image, imageClassName, prelo
   )
 }
 
+export function ProductImage({ alt, detail = false, image, imageClassName, preload }: MockupProps) {
+  return (
+    <div
+      data-device-mockup="image"
+      className={`relative z-10 aspect-[1442/960] w-full ${detail ? 'max-w-[1200px]' : 'max-w-[460px] sm:max-w-[680px] lg:max-w-[820px]'}`}
+    >
+      <Image
+        src={image}
+        alt={alt}
+        fill
+        preload={preload}
+        sizes={detail
+          ? '(max-width: 1279px) 94vw, 1200px'
+          : '(max-width: 639px) 94vw, (max-width: 1023px) 680px, 820px'}
+        className={`object-contain ${imageClassName ?? ''}`}
+      />
+    </div>
+  )
+}
+
 export function ProjectVisual({
   compactMobile = false,
   detail = false,
@@ -155,7 +175,15 @@ export function ProjectVisual({
       <div className="absolute left-1/2 top-1/2 -z-10 h-[72%] w-[74%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/[0.07] blur-3xl" />
       <div className="absolute bottom-[7%] left-1/2 -z-10 h-7 w-3/5 -translate-x-1/2 rounded-full bg-foreground/[0.06] blur-2xl" />
 
-      {showcase.device === 'desktop' ? (
+      {showcase.device === 'image' ? (
+        <ProductImage
+          alt={showcase.alt}
+          detail={detail}
+          image={showcase.src}
+          imageClassName={showcase.imageClassName}
+          preload={preload}
+        />
+      ) : showcase.device === 'desktop' ? (
         <LaptopMockup
           alt={showcase.alt}
           detail={detail}

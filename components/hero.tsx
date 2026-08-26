@@ -60,22 +60,22 @@ export function Hero() {
         </div>
 
         {/* Right */}
-        <figure className="relative mx-auto w-[90vw] max-w-[840px] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
-          <figcaption className="pointer-events-none absolute -top-14 right-[2%] z-10 hidden items-start gap-4 lg:flex xl:-top-12 xl:right-0">
+        <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
+          <figcaption className="pointer-events-none absolute -top-28 right-[2%] z-10 hidden gap-4 lg:flex xl:-top-24 xl:right-0">
             <svg
-              className="mt-5 h-16 w-24 overflow-visible text-brand/80"
-              viewBox="0 0 96 64"
+              className="mt-5 h-[4.75rem] w-24 translate-y-24 overflow-visible text-brand/80"
+              viewBox="0 0 96 76"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M93 5C65 6 50 18 46 37C44 47 38 53 25 55"
+                d="M93 5C65 6 50 22 46 45C44 59 38 69 25 73"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
               <path
-                d="M32 48L24 55L33 59"
+                d="M32 65L24 73L33 75"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -83,13 +83,9 @@ export function Hero() {
               />
             </svg>
 
-            <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-brand">
-                Ukážkový projekt
-              </p>
-              <p className="mt-1 max-w-44 text-sm font-semibold leading-snug text-foreground">
-                Správa sociálnych sietí
+              <p className="max-w-56 text-sm font-semibold leading-snug text-foreground">
+                Jedným klikom na všetky siete.
               </p>
             </div>
           </figcaption>
@@ -101,7 +97,7 @@ export function Hero() {
             height={960}
             priority
             sizes="(max-width: 1023px) 90vw, (min-width: 1280px) 700px, 52vw"
-            className="h-auto w-full object-contain drop-shadow-[0_20px_24px_rgb(24_23_22_/_13%)]"
+            className="order-1 h-auto w-full object-contain drop-shadow-[0_20px_24px_rgb(24_23_22_/_13%)] lg:mt-20"
           />
         </figure>
 

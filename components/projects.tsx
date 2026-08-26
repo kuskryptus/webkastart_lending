@@ -29,6 +29,19 @@ export const projects: Project[] = [
     },
   },
   {
+    slug: 'socia-sprava-socialnych-sieti',
+    category: 'Sociálne siete',
+    title: 'Všetky siete na jednom mieste',
+    summary: 'Príspevok pripravíte raz, upravíte podľa potreby a jedným klikom ho zverejníte na všetky siete.',
+    result: 'Hashtagy, správy, štatistiky aj dosah máte pokope bez preklikávania medzi nástrojmi.',
+    scope: '#príspevky #hashtagy #štatistiky #dosah #správy',
+    showcase: {
+      device: 'image',
+      src: '/postly-laptop-stone-socia.png',
+      alt: 'Aplikácia na správu sociálnych sietí zobrazená na notebooku',
+    },
+  },
+  {
     slug: 'mirela-interny-system',
     category: 'Interný systém',
     title: 'Mirela - evidencia práce a materiálov',
@@ -131,7 +144,13 @@ export function ProjectFeatureShowcase({
           <p className="mt-5 text-sm font-medium leading-relaxed text-foreground">
             {project.result}
           </p>
-          <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p
+            className={`mt-4 text-xs font-medium ${
+              project.scope.startsWith('#')
+                ? 'leading-relaxed tracking-normal text-brand'
+                : 'uppercase tracking-wide text-muted-foreground'
+            }`}
+          >
             {project.scope}
           </p>
         </div>

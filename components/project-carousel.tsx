@@ -95,6 +95,8 @@ function ProjectSlide({
   project: Project
   projectCount: number
 }) {
+  const isHashtagScope = project.scope.startsWith('#')
+
   return (
     <article id={project.slug} className="project-slide-enter">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12 xl:gap-16">
@@ -116,7 +118,13 @@ function ProjectSlide({
             <p className="max-w-lg text-[15px] font-medium leading-relaxed text-foreground">
               {project.result}
             </p>
-            <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.13em] text-muted-foreground">
+            <p
+              className={`mt-4 ${
+                isHashtagScope
+                  ? 'text-[12px] font-semibold leading-relaxed tracking-normal text-brand'
+                  : 'text-[11px] font-bold uppercase tracking-[0.13em] text-muted-foreground'
+              }`}
+            >
               {project.scope}
             </p>
           </div>
@@ -155,7 +163,13 @@ function ProjectSlide({
           <p className="text-[15px] font-medium leading-relaxed text-foreground">
             {project.result}
           </p>
-          <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <p
+            className={`mt-4 ${
+              isHashtagScope
+                ? 'text-[12px] font-semibold leading-relaxed tracking-normal text-brand'
+                : 'text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground'
+            }`}
+          >
             {project.scope}
           </p>
         </div>
