@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 import postgres, { type Sql } from 'postgres'
 import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus } from './types'
 
@@ -22,6 +22,45 @@ export function getDatabase() {
 
 export function hashOnboardingToken(token: string) {
   return createHash('sha256').update(token).digest('hex')
+}
+
+export async function createOnboardingProject(clientLabel: string) {
+  const sql = getDatabase()
+  const token = randomBytes(32).toString('base64url')
+  const tokenHash = hashOnboardingToken(token)
+  const rows = await sql<{ createdAt: Date; id: string }[]>`
+    insert into onboarding_projects (client_label, token_hash)
+    values (${clientLabel}, ${tokenHash})
+    returning id, created_at as "createdAt"
+  `
+  const project = rows[0]
+  if (!project) throw new Error('Could not create onboarding project')
+  return { ...project, token }
+}
+
+export async function listOnboardingProjects() {
+  const sql = getDatabase()
+  return sql<{
+    clientLabel: string
+    createdAt: Date
+    currentStep: number
+    id: string
+    lastActivityAt: Date
+    status: OnboardingStatus
+    submittedAt: Date | null
+  }[]>`
+    select
+      id,
+      client_label as "clientLabel",
+      status,
+      current_step as "currentStep",
+      created_at as "createdAt",
+      last_activity_at as "lastActivityAt",
+      submitted_at as "submittedAt"
+    from onboarding_projects
+    order by created_at desc
+    limit 200
+  `
 }
 
 export type OnboardingProjectRecord = {

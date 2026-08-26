@@ -59,6 +59,12 @@ pnpm onboarding:migrate
 
 Vytvorenie osobného linku pre klienta:
 
+Po nasadení otvorte `https://webkastart.sk/start`, prihláste sa hodnotou
+`ONBOARDING_ADMIN_SECRET`, napíšte názov klienta a kliknite na „Vytvoriť link“.
+Toto je odporúčaný bežný spôsob.
+
+Alternatívne je možné link vytvoriť aj príkazom:
+
 ```bash
 pnpm onboarding:create -- "Názov klienta alebo projektu"
 ```
