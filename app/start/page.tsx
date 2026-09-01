@@ -18,7 +18,6 @@ export default async function StartAdminPage() {
     currentStep: number
     id: string
     lastActivityAt: Date
-    portalLinkAvailable: boolean
     status: OnboardingStatus
     submittedAt: Date | null
   }> = []

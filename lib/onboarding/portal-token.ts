@@ -1,24 +1,51 @@
 import 'server-only'
 
-import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto'
+import { createDecipheriv, createHash, createHmac, timingSafeEqual } from 'node:crypto'
 
-function encryptionKey() {
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+function portalSecret() {
+  const secret = process.env.ONBOARDING_PORTAL_LINK_SECRET || process.env.ONBOARDING_ADMIN_SECRET
+  return secret && secret.length >= 16 ? secret : null
+}
+
+function legacyEncryptionKey() {
   const secret = process.env.ONBOARDING_LINK_ENCRYPTION_SECRET || process.env.ONBOARDING_ADMIN_SECRET
   if (!secret || secret.length < 16) return null
   return createHash('sha256').update(`webkastart-portal-link-v1:${secret}`).digest()
 }
 
-export function encryptPortalToken(token: string) {
-  const key = encryptionKey()
-  if (!key) return null
-  const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', key, iv)
-  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()])
-  return ['v1', iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.')
+function signature(encodedClientId: string, secret: string) {
+  return createHmac('sha256', secret)
+    .update(`webkastart-permanent-portal-v1:${encodedClientId}`)
+    .digest('base64url')
 }
 
-export function decryptPortalToken(value: string) {
-  const key = encryptionKey()
+export function createPermanentPortalToken(clientId: string) {
+  const secret = portalSecret()
+  if (!secret || !UUID_PATTERN.test(clientId)) return null
+  const encodedClientId = Buffer.from(clientId, 'utf8').toString('base64url')
+  return `${encodedClientId}.${signature(encodedClientId, secret)}`
+}
+
+export function clientIdFromPermanentPortalToken(token: string) {
+  const secret = portalSecret()
+  if (!secret) return null
+  const [encodedClientId, receivedSignature, extra] = token.split('.')
+  if (!encodedClientId || !receivedSignature || extra) return null
+  try {
+    const expected = Buffer.from(signature(encodedClientId, secret))
+    const received = Buffer.from(receivedSignature)
+    if (expected.length !== received.length || !timingSafeEqual(expected, received)) return null
+    const clientId = Buffer.from(encodedClientId, 'base64url').toString('utf8')
+    return UUID_PATTERN.test(clientId) ? clientId : null
+  } catch {
+    return null
+  }
+}
+
+export function decryptLegacyPortalToken(value: string) {
+  const key = legacyEncryptionKey()
   if (!key) return null
   const [version, ivValue, tagValue, encryptedValue] = value.split('.')
   if (version !== 'v1' || !ivValue || !tagValue || !encryptedValue) return null

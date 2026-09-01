@@ -24,16 +24,17 @@ and pnpm.
 - Onboarding persistence, validation, auth, and storage boundaries:
   `lib/onboarding/`.
 - PostgreSQL schema: ordered migrations under `migrations/`; migration 003 adds
-  the shared workspace and migration 004 adds encrypted, admin-retrievable portal
-  links while preserving hash-only lookup.
+  clients, client-level assets, Discovery 2, and the shared workspace without
+  rewriting Core answers. Migration 004 preserves previously issued portal tokens
+  for lookup and, when available, admin re-copy.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
 
-- Client links contain a cryptographically random bearer token; only its SHA-256
-  hash is used for lookup. A server-encrypted token copy in `client_portal_links`
-  supports admin re-copy; never expose `token_hash`, ciphertext, or private object
-  keys to clients. Keep `ONBOARDING_LINK_ENCRYPTION_SECRET` stable.
+- Each client has one canonical portal link signed from its client ID with
+  `ONBOARDING_PORTAL_LINK_SECRET` (falling back to the admin secret); keep that
+  secret stable. Existing random bearer links remain valid through hash lookup.
+  Never expose token hashes or private object keys to clients.
 - Onboarding pages and APIs are private/noindex. Admin reads and downloads must
   verify the HttpOnly admin session server-side.
 - Uploads stay private, keep original bytes, use UUID object keys, and use

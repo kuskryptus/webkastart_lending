@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises'
-import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto'
 import nextEnv from '@next/env'
 import postgres from 'postgres'
 
@@ -8,14 +8,14 @@ loadEnvConfig(process.cwd())
 
 const command = process.argv[2]
 
-function encryptPortalToken(token) {
-  const secret = process.env.ONBOARDING_LINK_ENCRYPTION_SECRET || process.env.ONBOARDING_ADMIN_SECRET
+function createPermanentPortalToken(clientId) {
+  const secret = process.env.ONBOARDING_PORTAL_LINK_SECRET || process.env.ONBOARDING_ADMIN_SECRET
   if (!secret || secret.length < 16) return null
-  const key = createHash('sha256').update(`webkastart-portal-link-v1:${secret}`).digest()
-  const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', key, iv)
-  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()])
-  return ['v1', iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.')
+  const encodedClientId = Buffer.from(clientId, 'utf8').toString('base64url')
+  const signature = createHmac('sha256', secret)
+    .update(`webkastart-permanent-portal-v1:${encodedClientId}`)
+    .digest('base64url')
+  return `${encodedClientId}.${signature}`
 }
 
 if (!process.env.DATABASE_URL) {
@@ -65,18 +65,16 @@ try {
     const clientLabel = process.argv.slice(3).join(' ').trim()
     if (!clientLabel) throw new Error('Použitie: pnpm onboarding:create -- "Názov klienta"')
 
-    const token = randomBytes(32).toString('base64url')
-    const tokenHash = createHash('sha256').update(token).digest('hex')
-    const encryptedToken = encryptPortalToken(token)
     const clientId = randomUUID()
+    const token = createPermanentPortalToken(clientId)
+    if (!token) {
+      throw new Error('Nastavte ONBOARDING_PORTAL_LINK_SECRET alebo ONBOARDING_ADMIN_SECRET (min. 16 znakov).')
+    }
+    const tokenHash = createHash('sha256').update(token).digest('hex')
     const [project] = await sql.begin(async (transaction) => {
       await transaction`
         insert into clients (id, display_name, portal_token_hash)
         values (${clientId}, ${clientLabel}, ${tokenHash})
-      `
-      await transaction`
-        insert into client_portal_links (client_id, token_hash, encrypted_token)
-        values (${clientId}, ${tokenHash}, ${encryptedToken})
       `
       const projects = await transaction`
         insert into onboarding_projects (id, client_id, client_label, token_hash)
@@ -104,7 +102,7 @@ try {
     console.log(`Klient: ${clientLabel}`)
     console.log(`Projekt ID: ${project.id}`)
     console.log(`Osobný link: ${siteUrl}/portal/${token}`)
-    console.log('Link si teraz bezpečne uložte; v databáze je iba jeho hash.')
+    console.log('Tento permanentný link možno kedykoľvek znova skopírovať v administrácii.')
   } else if (command === 'list') {
     const rows = await sql`
       select client.id, client.display_name, core.status, core.current_step,

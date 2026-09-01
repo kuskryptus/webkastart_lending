@@ -12,7 +12,6 @@ type Project = {
   currentStep: number
   id: string
   lastActivityAt: string
-  portalLinkAvailable: boolean
   status: OnboardingStatus
   submittedAt: string | null
 }
@@ -158,14 +157,10 @@ export function OnboardingAdmin({
     setError('')
     try {
       const endpoint = `/api/onboarding/admin/clients/${project.id}/portal-link`
-      let response = await fetch(endpoint, { method: project.portalLinkAvailable ? 'GET' : 'POST' })
-      if (response.status === 404 && project.portalLinkAvailable) {
-        response = await fetch(endpoint, { method: 'POST' })
-      }
+      const response = await fetch(endpoint, { method: 'GET' })
       if (!response.ok) throw new Error(await getError(response))
       const data = await response.json() as { url: string }
       await writeClipboard(data.url)
-      setProjects((current) => current.map((item) => item.id === project.id ? { ...item, portalLinkAvailable: true } : item))
       setCopiedClientId(project.id)
       window.setTimeout(() => setCopiedClientId((current) => current === project.id ? '' : current), 2000)
     } catch (copyError) {
@@ -291,7 +286,7 @@ export function OnboardingAdmin({
                         : copiedClientId === project.id
                           ? <Check className="size-3.5 text-emerald-600" />
                           : <Copy className="size-3.5" />}
-                      {copiedClientId === project.id ? 'Skopírované' : project.portalLinkAvailable ? 'Kopírovať link' : 'Vytvoriť nový link'}
+                      {copiedClientId === project.id ? 'Skopírované' : 'Kopírovať link'}
                     </button>
                     <ChevronRight className="hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand sm:block" aria-hidden="true" />
                   </div>

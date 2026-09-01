@@ -5,7 +5,7 @@ import {
   type OnboardingAnswers,
 } from './types'
 
-export const ONBOARDING_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
+export const ONBOARDING_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[A-Za-z0-9_-]{48}\.[A-Za-z0-9_-]{43})$/
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 export const MAX_UPLOAD_FILES = 100
 

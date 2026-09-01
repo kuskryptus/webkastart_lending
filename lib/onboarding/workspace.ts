@@ -15,6 +15,7 @@ import type {
 } from './types'
 import { workspaceSectionKeys } from './types'
 import { sanitizeAnswers } from './validation'
+import { clientIdFromPermanentPortalToken } from './portal-token'
 
 type ClientRecord = {
   id: string
@@ -98,14 +99,22 @@ export function progressForStatus(progress: WorkspaceProgress, status: Onboardin
 export async function findClientByPortalToken(token: string): Promise<ClientRecord | null> {
   const sql = getDatabase()
   const tokenHash = hashOnboardingToken(token)
-  const rows = await sql<ClientRecord[]>`
+  const permanentClientId = clientIdFromPermanentPortalToken(token)
+  if (permanentClientId) {
+    const rows = await sql<ClientRecord[]>`
+      select id, display_name as "displayName", ${tokenHash}::text as "portalTokenHash"
+      from clients where id = ${permanentClientId} limit 1
+    `
+    if (rows[0]) return rows[0]
+  }
+  const savedLinks = await sql<ClientRecord[]>`
     select client.id, client.display_name as "displayName", ${tokenHash}::text as "portalTokenHash"
     from client_portal_links as link
     join clients as client on client.id = link.client_id
     where link.token_hash = ${tokenHash}
     limit 1
   `
-  if (rows[0]) return rows[0]
+  if (savedLinks[0]) return savedLinks[0]
   const legacy = await sql<ClientRecord[]>`
     select id, display_name as "displayName", portal_token_hash as "portalTokenHash"
     from clients where portal_token_hash = ${tokenHash} limit 1
