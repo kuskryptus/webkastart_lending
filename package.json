@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "prestart": "node scripts/onboarding.mjs migrate-if-configured",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

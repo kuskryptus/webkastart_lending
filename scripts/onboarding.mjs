@@ -1,11 +1,18 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { loadEnvConfig } from '@next/env'
+import nextEnv from '@next/env'
 import postgres from 'postgres'
 
+const { loadEnvConfig } = nextEnv
 loadEnvConfig(process.cwd())
 
+const command = process.argv[2]
+
 if (!process.env.DATABASE_URL) {
+  if (command === 'migrate-if-configured') {
+    console.log('DATABASE_URL nie je nastavené; automatická migrácia sa preskakuje.')
+    process.exit(0)
+  }
   console.error('Chýba DATABASE_URL v .env.local.')
   process.exit(1)
 }
@@ -16,19 +23,33 @@ const sql = postgres(process.env.DATABASE_URL, {
   ssl: process.env.DATABASE_SSL === 'false' ? false : 'require',
 })
 
-const command = process.argv[2]
-
 try {
-  if (command === 'migrate') {
+  if (command === 'migrate' || command === 'migrate-if-configured') {
     const migrationsUrl = new URL('../migrations/', import.meta.url)
     const migrations = (await readdir(migrationsUrl))
       .filter((name) => /^\d+.*\.sql$/.test(name))
       .sort()
-    for (const name of migrations) {
-      const migration = await readFile(new URL(name, migrationsUrl), 'utf8')
-      await sql.unsafe(migration)
-      console.log(`Migrácia ${name} je pripravená.`)
-    }
+    await sql.begin(async (transaction) => {
+      await transaction`select pg_advisory_xact_lock(hashtext('webkastart-onboarding-migrations'))`
+      await transaction`
+        create table if not exists onboarding_schema_migrations (
+          name text primary key,
+          applied_at timestamptz not null default now()
+        )
+      `
+
+      for (const name of migrations) {
+        const applied = await transaction`
+          select name from onboarding_schema_migrations where name = ${name}
+        `
+        if (applied[0]) continue
+
+        const migration = await readFile(new URL(name, migrationsUrl), 'utf8')
+        await transaction.unsafe(migration)
+        await transaction`insert into onboarding_schema_migrations (name) values (${name})`
+        console.log(`Migrácia ${name} je pripravená.`)
+      }
+    })
     console.log('Onboarding databáza je pripravená.')
   } else if (command === 'create') {
     const clientLabel = process.argv.slice(3).join(' ').trim()

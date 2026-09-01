@@ -86,6 +86,7 @@ export const projects: Project[] = [
       alt: 'Mobilná stránka New Level Youth',
       hasEmbeddedSystemBar: true,
       imageClassName: 'object-top',
+      systemBarTone: 'light',
     },
   },
   {

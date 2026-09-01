@@ -52,8 +52,9 @@ Onboarding potrebuje PostgreSQL databázu. Vyplnený Core dotazník sa pri odosl
 pošle cez Resend na `CONTACT_TO_EMAIL`. Discovery 2 sa ukladá samostatne podľa
 `client_id`; pôvodné Core odpovede sa migráciou nemenia.
 
-Po každom nasadení spusti migrácie. Runner vykoná všetky SQL súbory v priečinku
-`migrations/` v poradí; príkazy sú pripravené na opakované spustenie:
+Pri `pnpm start` sa čakajúce migrácie spustia automaticky ešte pred štartom webu.
+Runner používa databázový zámok a eviduje už aplikované SQL súbory, takže je bezpečný
+aj pri reštarte. Manuálne ich možno spustiť rovnakým príkazom:
 
 ```bash
 pnpm onboarding:migrate
