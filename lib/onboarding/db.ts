@@ -31,14 +31,29 @@ export async function createOnboardingProject(clientLabel: string) {
   const clientId = randomUUID()
   const rows = await sql.begin(async (transaction) => {
     await transaction`
-      insert into clients (id, display_name)
-      values (${clientId}, ${clientLabel})
+      insert into clients (id, display_name, portal_token_hash)
+      values (${clientId}, ${clientLabel}, ${tokenHash})
     `
-    return transaction<{ createdAt: Date; id: string }[]>`
+    const projects = await transaction<{ createdAt: Date; id: string }[]>`
       insert into onboarding_projects (id, client_id, client_label, token_hash)
       values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
       returning client_id as id, created_at as "createdAt"
     `
+    await transaction`
+      insert into discovery_2_forms (client_id, token_hash)
+      values (${clientId}, ${createHash('sha256').update(randomBytes(32)).digest('hex')})
+    `
+    await transaction`
+      insert into client_workspace_sections (client_id, section_key, client_visible, client_editable)
+      values
+        (${clientId}, 'core', true, true),
+        (${clientId}, 'discovery_2', true, true),
+        (${clientId}, 'files', true, true),
+        (${clientId}, 'creative_strategy', false, false),
+        (${clientId}, 'creative_directions', false, false),
+        (${clientId}, 'internal_notes', false, false)
+    `
+    return projects
   }) as { createdAt: Date; id: string }[]
   const project = rows[0]
   if (!project) throw new Error('Could not create onboarding project')
@@ -78,6 +93,7 @@ export type OnboardingProjectRecord = {
   tokenHash: string
   status: OnboardingStatus
   currentStep: number
+  revision: number
   answers: OnboardingAnswers
   createdAt: Date
   updatedAt: Date
@@ -96,6 +112,7 @@ export async function findOnboardingByToken(token: string): Promise<OnboardingPr
       token_hash as "tokenHash",
       status,
       current_step as "currentStep",
+      revision::int as revision,
       answers,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -118,6 +135,7 @@ export async function findCoreOnboardingByClientId(clientId: string): Promise<On
       token_hash as "tokenHash",
       status,
       current_step as "currentStep",
+      revision::int as revision,
       answers,
       created_at as "createdAt",
       updated_at as "updatedAt",
@@ -139,7 +157,9 @@ export async function listAssets(clientId: string): Promise<OnboardingAsset[]> {
       mime_type as "mimeType",
       size::int as size,
       status,
-      created_at as "createdAt"
+      created_at as "createdAt",
+      uploaded_by as "uploadedBy",
+      client_visible as "clientVisible"
     from onboarding_assets
     where client_id = ${clientId}
     order by created_at asc
@@ -151,10 +171,11 @@ export async function saveOnboarding(
   answers: OnboardingAnswers,
   currentStep: number,
   reopen = false,
+  expectedRevision?: number,
 ) {
   const sql = getDatabase()
-  await sql.begin(async (transaction) => {
-    const rows = await transaction<{ clientId: string }[]>`
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string; revision: number }[]>`
       update onboarding_projects
       set
         answers = ${transaction.json(answers as unknown as postgres.JSONValue)},
@@ -165,32 +186,38 @@ export async function saveOnboarding(
           else status
         end,
         submitted_at = case when ${reopen} then null else submitted_at end,
+        revision = revision + 1,
         updated_at = now(),
         last_activity_at = now()
       where id = ${projectId}
-      returning client_id as "clientId"
+        and (${expectedRevision ?? null}::bigint is null or revision = ${expectedRevision ?? null})
+      returning client_id as "clientId", revision::int as revision
     `
     if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
-  })
+    return rows[0] ?? null
+  }) as Promise<{ clientId: string; revision: number } | null>
 }
 
-export async function submitOnboarding(projectId: string, answers: OnboardingAnswers) {
+export async function submitOnboarding(projectId: string, answers: OnboardingAnswers, expectedRevision?: number) {
   const sql = getDatabase()
-  await sql.begin(async (transaction) => {
-    const rows = await transaction<{ clientId: string }[]>`
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string; revision: number }[]>`
       update onboarding_projects
       set
         answers = ${transaction.json(answers as unknown as postgres.JSONValue)},
         current_step = 6,
         status = 'submitted',
         submitted_at = coalesce(submitted_at, now()),
+        revision = revision + 1,
         updated_at = now(),
         last_activity_at = now()
       where id = ${projectId}
-      returning client_id as "clientId"
+        and (${expectedRevision ?? null}::bigint is null or revision = ${expectedRevision ?? null})
+      returning client_id as "clientId", revision::int as revision
     `
     if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
-  })
+    return rows[0] ?? null
+  }) as Promise<{ clientId: string; revision: number } | null>
 }
 
 export async function checkRateLimit(options: {

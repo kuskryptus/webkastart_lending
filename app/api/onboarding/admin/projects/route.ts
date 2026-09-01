@@ -62,7 +62,7 @@ export async function POST(request: Request) {
         status: 'not_started',
         submittedAt: null,
       },
-      url: `${siteUrl}/start/${project.token}`,
+      url: `${siteUrl}/portal/${project.token}`,
     }, { status: 201 })
   } catch (error) {
     return apiError(error, { exposeDetails: true })

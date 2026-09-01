@@ -60,6 +60,57 @@ export type OnboardingAsset = {
   size: number
   status: 'pending' | 'uploaded'
   createdAt: string
+  uploadedBy?: 'client' | 'admin'
+  clientVisible?: boolean
+}
+
+export const workspaceSectionKeys = [
+  'core',
+  'discovery_2',
+  'files',
+  'creative_strategy',
+  'creative_directions',
+  'internal_notes',
+] as const
+
+export type WorkspaceSectionKey = typeof workspaceSectionKeys[number]
+
+export type WorkspaceSection = {
+  key: WorkspaceSectionKey
+  clientVisible: boolean
+  clientEditable: boolean
+  content: string
+  updatedAt: string
+}
+
+export type WorkspaceProgress = {
+  completed: boolean
+  completedItems: number
+  percentage: number
+  totalItems: number
+}
+
+export type ClientWorkspaceResponse = {
+  clientLabel: string
+  overallProgress: number
+  sections: WorkspaceSection[]
+  core: {
+    answers: OnboardingAnswers
+    currentStep: number
+    progress: WorkspaceProgress
+    revision: number
+    status: OnboardingStatus
+    updatedAt: string
+  } | null
+  discovery2: {
+    answers: Discovery2Answers
+    currentStep: number
+    progress: WorkspaceProgress
+    revision: number
+    status: OnboardingStatus
+    updatedAt: string
+  } | null
+  assets: OnboardingAsset[]
 }
 
 export type OnboardingProjectResponse = {
@@ -67,6 +118,7 @@ export type OnboardingProjectResponse = {
   assets: OnboardingAsset[]
   clientLabel: string
   currentStep: number
+  revision: number
   status: OnboardingStatus
   updatedAt: string
 }
@@ -75,6 +127,7 @@ export type Discovery2Response = {
   answers: Discovery2Answers
   clientLabel: string
   currentStep: number
+  revision: number
   status: OnboardingStatus
   updatedAt: string
 }

@@ -10,6 +10,7 @@ export type Discovery2Record = Discovery2Answers & {
   tokenHash: string
   status: OnboardingStatus
   currentStep: number
+  revision: number
   createdAt: Date
   updatedAt: Date
   lastActivityAt: Date
@@ -23,6 +24,7 @@ const discoveryReturning = `
   token_hash as "tokenHash",
   status,
   current_step as "currentStep",
+  revision::int as revision,
   order_process,
   primary_products_and_prices,
   personalization_options,
@@ -40,6 +42,7 @@ const discoverySelect = `
   form.token_hash as "tokenHash",
   form.status,
   form.current_step as "currentStep",
+  form.revision::int as revision,
   form.order_process,
   form.primary_products_and_prices,
   form.personalization_options,
@@ -97,10 +100,11 @@ export async function saveDiscovery2(
   answers: Discovery2Answers,
   currentStep: number,
   reopen = false,
+  expectedRevision?: number,
 ) {
   const sql = getDatabase()
-  await sql.begin(async (transaction) => {
-    const rows = await transaction<{ clientId: string }[]>`
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string; revision: number }[]>`
       update discovery_2_forms
       set
         order_process = ${answers.order_process},
@@ -115,19 +119,22 @@ export async function saveDiscovery2(
           else status
         end,
         submitted_at = case when ${reopen} then null else submitted_at end,
+        revision = revision + 1,
         updated_at = now(),
         last_activity_at = now()
       where id = ${formId}
-      returning client_id as "clientId"
+        and (${expectedRevision ?? null}::bigint is null or revision = ${expectedRevision ?? null})
+      returning client_id as "clientId", revision::int as revision
     `
     if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
-  })
+    return rows[0] ?? null
+  }) as Promise<{ clientId: string; revision: number } | null>
 }
 
-export async function submitDiscovery2(formId: string, answers: Discovery2Answers) {
+export async function submitDiscovery2(formId: string, answers: Discovery2Answers, expectedRevision?: number) {
   const sql = getDatabase()
-  await sql.begin(async (transaction) => {
-    const rows = await transaction<{ clientId: string }[]>`
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string; revision: number }[]>`
       update discovery_2_forms
       set
         order_process = ${answers.order_process},
@@ -138,11 +145,14 @@ export async function submitDiscovery2(formId: string, answers: Discovery2Answer
         current_step = 5,
         status = 'submitted',
         submitted_at = coalesce(submitted_at, now()),
+        revision = revision + 1,
         updated_at = now(),
         last_activity_at = now()
       where id = ${formId}
-      returning client_id as "clientId"
+        and (${expectedRevision ?? null}::bigint is null or revision = ${expectedRevision ?? null})
+      returning client_id as "clientId", revision::int as revision
     `
     if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
-  })
+    return rows[0] ?? null
+  }) as Promise<{ clientId: string; revision: number } | null>
 }

@@ -259,6 +259,7 @@ export function OnboardingWizard({
   const [reopenError, setReopenError] = useState('')
   const [completed, setCompleted] = useState(false)
   const hydratedRef = useRef(false)
+  const revisionRef = useRef(1)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const backupKey = `webkastart-onboarding-${token}`
 
@@ -290,6 +291,7 @@ export function OnboardingWizard({
         setAssets(data.assets)
         setStep(Math.min(TOTAL_STEPS, Math.max(1, nextStep)))
         setCompleted(data.status === 'submitted')
+        revisionRef.current = data.revision
         hydratedRef.current = true
       } catch (error) {
         if (!cancelled) setFatalError(error instanceof Error ? error.message : 'Tento odkaz sa nepodarilo otvoriť.')
@@ -307,11 +309,13 @@ export function OnboardingWizard({
       .catch(() => undefined)
       .then(async () => {
         const response = await fetch(`/api/onboarding/${token}`, {
-          body: JSON.stringify({ answers: nextAnswers, currentStep: nextStep }),
+          body: JSON.stringify({ answers: nextAnswers, currentStep: nextStep, revision: revisionRef.current }),
           headers: { 'Content-Type': 'application/json' },
           method: 'PATCH',
         })
         if (!response.ok) throw new Error(await responseError(response))
+        const saved = await response.json() as { revision: number }
+        revisionRef.current = saved.revision
         setSaveState('saved')
       })
       .catch(() => setSaveState('offline'))
@@ -362,11 +366,13 @@ export function OnboardingWizard({
     try {
       await saveQueueRef.current
       const response = await fetch(`/api/onboarding/${token}/submit`, {
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers, revision: revisionRef.current }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       })
       if (!response.ok) throw new Error(await responseError(response))
+      const saved = await response.json() as { revision: number }
+      revisionRef.current = saved.revision
       localStorage.removeItem(backupKey)
       setCompleted(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -382,11 +388,13 @@ export function OnboardingWizard({
     setReopenError('')
     try {
       const response = await fetch(`/api/onboarding/${token}`, {
-        body: JSON.stringify({ answers, currentStep: step, reopen: true }),
+        body: JSON.stringify({ answers, currentStep: step, reopen: true, revision: revisionRef.current }),
         headers: { 'Content-Type': 'application/json' },
         method: 'PATCH',
       })
       if (!response.ok) throw new Error(await responseError(response))
+      const saved = await response.json() as { revision: number }
+      revisionRef.current = saved.revision
       setCompleted(false)
       setSaveState('saved')
       window.scrollTo({ top: 0, behavior: 'smooth' })

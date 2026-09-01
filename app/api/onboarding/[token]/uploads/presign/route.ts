@@ -3,6 +3,7 @@ import { checkRateLimit, findOnboardingByToken, getDatabase } from '@/lib/onboar
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { createUploadUrl } from '@/lib/onboarding/storage'
 import { MAX_UPLOAD_FILES, safeStorageFileName, validateUpload } from '@/lib/onboarding/validation'
+import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
 
@@ -15,6 +16,10 @@ export async function POST(request: Request, { params }: Context) {
 
     const project = await findOnboardingByToken(token)
     if (!project) return privateJson({ error: 'Tento odkaz nie je platný.' }, { status: 404 })
+    const permission = await getWorkspaceSection(project.clientId, 'files')
+    if (!permission?.clientVisible || !permission.clientEditable) {
+      return privateJson({ error: 'Nahrávanie súborov nie je povolené.' }, { status: 403 })
+    }
 
     const allowed = await checkRateLimit({
       action: 'upload',
@@ -42,6 +47,7 @@ export async function POST(request: Request, { params }: Context) {
         select id, storage_key as "objectKey"
         from onboarding_assets
         where id = ${retryUploadId} and client_id = ${project.clientId} and status = 'pending'
+          and uploaded_by = 'client'
           and original_filename = ${String(body.name)} and mime_type = ${String(body.mimeType)}
           and size = ${Number(body.size)}
         limit 1
@@ -60,8 +66,8 @@ export async function POST(request: Request, { params }: Context) {
         const fileName = safeStorageFileName(String(body.name), validation.extension)
         const objectKey = `clients/${project.clientId}/uploads/${randomUUID()}-${fileName}`
         return transaction<{ id: string; objectKey: string }[]>`
-          insert into onboarding_assets (project_id, client_id, storage_key, original_filename, mime_type, size)
-          values (${project.id}, ${project.clientId}, ${objectKey}, ${String(body.name)}, ${String(body.mimeType)}, ${Number(body.size)})
+          insert into onboarding_assets (project_id, client_id, storage_key, original_filename, mime_type, size, uploaded_by, client_visible)
+          values (${project.id}, ${project.clientId}, ${objectKey}, ${String(body.name)}, ${String(body.mimeType)}, ${Number(body.size)}, 'client', true)
           returning id, storage_key as "objectKey"
         `
       }) as { id: string; objectKey: string }[]

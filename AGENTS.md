@@ -16,15 +16,16 @@ and pnpm.
 
 - Public landing page: `app/page.tsx` and `components/`.
 - Contact API: `app/api/contact/route.ts`.
-- Core onboarding wizard: `app/start/[token]`, `components/onboarding/`, and
-  `app/api/onboarding/[token]`. Discovery 2 uses `/start/discovery/[token]` and
-  `/api/onboarding/discovery/[token]`.
+- Shared client workspace: the permanent bearer link is `/portal/[token]`, backed
+  by `/api/portal/[token]`. Core, Discovery 2, and files use the same records as
+  admin; legacy `/start/[token]` and Discovery links remain compatible.
 - Password-protected onboarding management: `app/start`, with project details at
   `app/start/admin/[projectId]` and admin APIs under `app/api/onboarding/admin`.
 - Onboarding persistence, validation, auth, and storage boundaries:
   `lib/onboarding/`.
-- PostgreSQL schema: ordered migrations under `migrations/`; migration 002 adds
-  clients, client-level assets, and Discovery 2 without rewriting Core answers.
+- PostgreSQL schema: ordered migrations under `migrations/`; migration 003 adds
+  the permanent portal token, optimistic revisions, section permissions/content,
+  and shared-file visibility/uploader metadata.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -35,8 +36,13 @@ and pnpm.
   verify the HttpOnly admin session server-side.
 - Uploads stay private, keep original bytes, use UUID object keys, and use
   short-lived signed URLs. The server validates type, size, count, and signature.
-- A client may own multiple forms. Core and Discovery 2 have separate bearer
-  tokens and persistence; never merge or overwrite one form's answers with another.
+- A client may own multiple forms. Core and Discovery 2 keep separate persistence
+  (and legacy form-specific tokens) behind the shared portal token; never merge or
+  overwrite one form's answers with another.
+- Admin and portal are presentations over the same Core, Discovery, and asset
+  rows. Respect `client_workspace_sections`; internal notes are never client-visible.
+- Core and Discovery writes use their monotonic `revision` for optimistic locking.
+  A stale writer must receive 409 and must never overwrite a newer record.
 - Answers remain structured according to their form types; sanitize all writes at
   the API boundary so the future AI boundary remains stable.
 

@@ -48,9 +48,11 @@ Ak nginx vracia `405 Not Allowed` pri odoslaní formulára, znamená to, že req
 
 ## Klientsky onboarding
 
-Onboarding potrebuje PostgreSQL databázu. Vyplnený Core dotazník sa pri odoslaní
-pošle cez Resend na `CONTACT_TO_EMAIL`. Discovery 2 sa ukladá samostatne podľa
-`client_id`; pôvodné Core odpovede sa migráciou nemenia.
+Onboarding potrebuje PostgreSQL databázu. Klient používa jeden permanentný link
+`/portal/{token}`. Portál a admin čítajú a upravujú tie isté Core, Discovery 2 a
+súborové záznamy; sekcie a súbory sa klientovi zobrazujú podľa visibility.
+Legacy Core a Discovery linky zostávajú funkčné. Vyplnený Core dotazník sa pri
+odoslaní cez legacy flow pošle cez Resend na `CONTACT_TO_EMAIL`.
 
 Pri `pnpm start` sa čakajúce migrácie spustia automaticky ešte pred štartom webu.
 Runner používa databázový zámok a eviduje už aplikované SQL súbory, takže je bezpečný

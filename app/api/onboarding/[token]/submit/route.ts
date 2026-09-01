@@ -3,6 +3,7 @@ import { checkRateLimit, findOnboardingByToken, submitOnboarding } from '@/lib/o
 import { createOnboardingEmail } from '@/lib/onboarding/email'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
+import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
 
@@ -15,6 +16,10 @@ export async function POST(request: Request, { params }: Context) {
 
     const project = await findOnboardingByToken(token)
     if (!project) return privateJson({ error: 'Tento odkaz nie je platný.' }, { status: 404 })
+    const permission = await getWorkspaceSection(project.clientId, 'core')
+    if (!permission?.clientVisible || !permission.clientEditable) {
+      return privateJson({ error: 'Tento formulár nie je možné odoslať.' }, { status: 403 })
+    }
 
     const allowed = await checkRateLimit({
       action: 'submit',
@@ -33,6 +38,13 @@ export async function POST(request: Request, { params }: Context) {
     }
 
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+    const revision = Number(body.revision)
+    if (!Number.isSafeInteger(revision) || revision < 1) {
+      return privateJson({ error: 'Obnovte stránku a skúste odoslanie znova.' }, { status: 422 })
+    }
+    if (revision !== project.revision) {
+      return privateJson({ error: 'Údaje sa medzitým zmenili. Obnovte stránku.', reason: 'conflict' }, { status: 409 })
+    }
     const answers = sanitizeAnswers(body.answers)
     const errors = validateContact(answers)
     if (Object.keys(errors).length) {
@@ -75,8 +87,9 @@ export async function POST(request: Request, { params }: Context) {
       )
     }
 
-    await submitOnboarding(project.id, answers)
-    return privateJson({ ok: true })
+    const saved = await submitOnboarding(project.id, answers, revision)
+    if (!saved) return privateJson({ error: 'Údaje sa medzitým zmenili. Obnovte stránku.', reason: 'conflict' }, { status: 409 })
+    return privateJson({ ok: true, revision: saved.revision })
   } catch (error) {
     return apiError(error)
   }

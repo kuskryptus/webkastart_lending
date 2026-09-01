@@ -60,19 +60,35 @@ try {
     const clientId = randomUUID()
     const [project] = await sql.begin(async (transaction) => {
       await transaction`
-        insert into clients (id, display_name) values (${clientId}, ${clientLabel})
+        insert into clients (id, display_name, portal_token_hash)
+        values (${clientId}, ${clientLabel}, ${tokenHash})
       `
-      return transaction`
+      const projects = await transaction`
         insert into onboarding_projects (id, client_id, client_label, token_hash)
         values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
         returning id, created_at as "createdAt"
       `
+      await transaction`
+        insert into discovery_2_forms (client_id, token_hash)
+        values (${clientId}, ${createHash('sha256').update(randomBytes(32)).digest('hex')})
+      `
+      await transaction`
+        insert into client_workspace_sections (client_id, section_key, client_visible, client_editable)
+        values
+          (${clientId}, 'core', true, true),
+          (${clientId}, 'discovery_2', true, true),
+          (${clientId}, 'files', true, true),
+          (${clientId}, 'creative_strategy', false, false),
+          (${clientId}, 'creative_directions', false, false),
+          (${clientId}, 'internal_notes', false, false)
+      `
+      return projects
     })
     const siteUrl = (process.env.SITE_URL || 'https://webkastart.sk').replace(/\/$/, '')
 
     console.log(`Klient: ${clientLabel}`)
     console.log(`Projekt ID: ${project.id}`)
-    console.log(`Osobný link: ${siteUrl}/start/${token}`)
+    console.log(`Osobný link: ${siteUrl}/portal/${token}`)
     console.log('Link si teraz bezpečne uložte; v databáze je iba jeho hash.')
   } else if (command === 'list') {
     const rows = await sql`

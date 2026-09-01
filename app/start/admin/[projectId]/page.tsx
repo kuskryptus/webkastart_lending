@@ -1,10 +1,8 @@
 import { cookies } from 'next/headers'
 import { notFound, redirect } from 'next/navigation'
-import { OnboardingProjectDetail } from '@/components/onboarding/onboarding-project-detail'
+import { AdminClientWorkspace } from '@/components/onboarding/admin-client-workspace'
 import { ADMIN_COOKIE_NAME, isAdminCookie } from '@/lib/onboarding/admin-auth'
-import { findCoreOnboardingByClientId, listAssets } from '@/lib/onboarding/db'
-import { findDiscovery2ByClientId } from '@/lib/onboarding/discovery'
-import { sanitizeAnswers } from '@/lib/onboarding/validation'
+import { getClientWorkspace } from '@/lib/onboarding/workspace'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,19 +19,7 @@ export default async function OnboardingProjectPage({
   const { projectId } = await params
   if (!UUID_PATTERN.test(projectId)) notFound()
 
-  const project = await findCoreOnboardingByClientId(projectId)
-  if (!project) notFound()
-  const [assets, discovery] = await Promise.all([
-    listAssets(project.clientId),
-    findDiscovery2ByClientId(project.clientId),
-  ])
-
-  return (
-    <OnboardingProjectDetail
-      answers={sanitizeAnswers(project.answers)}
-      assets={assets}
-      discovery={discovery}
-      project={project}
-    />
-  )
+  const workspace = await getClientWorkspace(projectId)
+  if (!workspace) notFound()
+  return <AdminClientWorkspace clientId={projectId} initialWorkspace={workspace} />
 }

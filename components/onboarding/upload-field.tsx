@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, FileText, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
+import Image from 'next/image'
+import { Check, ExternalLink, FileText, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
 import { allowedUploadTypes, MAX_UPLOAD_BYTES, MAX_UPLOAD_FILES } from '@/lib/onboarding/validation'
 
@@ -27,13 +28,25 @@ async function errorMessage(response: Response) {
 }
 
 export function UploadField({
+  apiBasePath,
   assets,
+  canDeleteAsset = () => true,
+  getAssetUrl,
+  newAssetMetadata,
+  onClientVisibilityChange,
   onAssetsChange,
+  showAdminMetadata = false,
   token,
 }: {
+  apiBasePath?: string
   assets: OnboardingAsset[]
+  canDeleteAsset?: (asset: OnboardingAsset) => boolean
+  getAssetUrl?: (asset: OnboardingAsset) => string
+  newAssetMetadata?: Pick<OnboardingAsset, 'clientVisible' | 'uploadedBy'>
+  onClientVisibilityChange?: (asset: OnboardingAsset, visible: boolean) => void
   onAssetsChange: (assets: OnboardingAsset[]) => void
-  token: string
+  showAdminMetadata?: boolean
+  token?: string
 }) {
   const [items, setItems] = useState<LocalUpload[]>([])
   const [dragging, setDragging] = useState(false)
@@ -42,6 +55,7 @@ export function UploadField({
   const queueRef = useRef<QueueItem[]>([])
   const activeRef = useRef(0)
   const assetsRef = useRef(assets)
+  const endpoint = apiBasePath || `/api/onboarding/${token}/uploads`
 
   useEffect(() => {
     assetsRef.current = assets
@@ -72,7 +86,7 @@ export function UploadField({
     updateItem(id, { error: undefined, progress: 0, status: 'uploading' })
 
     try {
-      const presignResponse = await fetch(`/api/onboarding/${token}/uploads/presign`, {
+      const presignResponse = await fetch(`${endpoint}/presign`, {
         body: JSON.stringify({
           mimeType: file.type,
           name: file.name,
@@ -88,7 +102,7 @@ export function UploadField({
 
       await putFile(presign.uploadUrl, file, (progress) => updateItem(id, { progress }))
       const completeResponse = await fetch(
-        `/api/onboarding/${token}/uploads/${presign.uploadId}/complete`,
+        `${endpoint}/${presign.uploadId}/complete`,
         { method: 'POST' },
       )
       if (!completeResponse.ok) throw new Error(await errorMessage(completeResponse))
@@ -102,6 +116,7 @@ export function UploadField({
           name: file.name,
           size: file.size,
           status: 'uploaded',
+          ...newAssetMetadata,
         },
       ]
       assetsRef.current = nextAssets
@@ -170,7 +185,7 @@ export function UploadField({
     const nextAssets = previousAssets.filter((item) => item.id !== asset.id)
     assetsRef.current = nextAssets
     onAssetsChange(nextAssets)
-    const response = await fetch(`/api/onboarding/${token}/uploads/${asset.id}`, { method: 'DELETE' })
+    const response = await fetch(`${endpoint}/${asset.id}`, { method: 'DELETE' })
     if (!response.ok) {
       assetsRef.current = previousAssets
       onAssetsChange(previousAssets)
@@ -230,22 +245,36 @@ export function UploadField({
         <ul className="divide-y divide-border/70" aria-label="Nahrávané súbory">
           {assets.map((asset) => (
             <li key={asset.id} className="flex items-center gap-3 py-3.5">
-              <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+              {getAssetUrl && asset.mimeType.startsWith('image/') ? (
+                <Image unoptimized width={44} height={44} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
+              ) : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-medium">{asset.name}</span>
+                {getAssetUrl ? (
+                  <a href={getAssetUrl(asset)} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-sm font-medium hover:text-brand hover:underline">
+                    <span className="truncate">{asset.name}</span><ExternalLink className="size-3.5 shrink-0" />
+                  </a>
+                ) : <span className="block truncate text-sm font-medium">{asset.name}</span>}
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Check className="size-3.5 text-emerald-600" aria-hidden="true" />
-                  Nahrané · {formatBytes(Number(asset.size))}
+                  Nahrané · {formatBytes(Number(asset.size))}{showAdminMetadata && ` · ${asset.uploadedBy === 'admin' ? 'admin' : 'klient'} · ${new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}`}
                 </span>
               </span>
-              <button
-                type="button"
-                onClick={() => void removeAsset(asset)}
-                className="grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                aria-label={`Odstrániť ${asset.name}`}
-              >
-                <Trash2 className="size-4" aria-hidden="true" />
-              </button>
+              {onClientVisibilityChange && (
+                <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+                  <input type="checkbox" checked={asset.clientVisible === true} onChange={(event) => onClientVisibilityChange(asset, event.target.checked)} className="size-4 accent-[var(--brand)]" />
+                  Vidí klient
+                </label>
+              )}
+              {canDeleteAsset(asset) && (
+                <button
+                  type="button"
+                  onClick={() => void removeAsset(asset)}
+                  className="grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                  aria-label={`Odstrániť ${asset.name}`}
+                >
+                  <Trash2 className="size-4" aria-hidden="true" />
+                </button>
+              )}
             </li>
           ))}
           {items.map((item) => (

@@ -69,6 +69,7 @@ export function Discovery2Wizard({ token }: { token: string }) {
   const [submitting, setSubmitting] = useState(false)
   const [reopening, setReopening] = useState(false)
   const hydratedRef = useRef(false)
+  const revisionRef = useRef(1)
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
   const backupKey = `webkastart-discovery-2-${token}`
 
@@ -100,6 +101,7 @@ export function Discovery2Wizard({ token }: { token: string }) {
         setClientLabel(data.clientLabel)
         setStep(Math.min(TOTAL_STEPS, Math.max(1, nextStep)))
         setCompleted(data.status === 'submitted')
+        revisionRef.current = data.revision
         hydratedRef.current = true
       } catch (error) {
         if (!cancelled) setFatalError(error instanceof Error ? error.message : 'Tento odkaz sa nepodarilo otvoriť.')
@@ -117,11 +119,13 @@ export function Discovery2Wizard({ token }: { token: string }) {
       .catch(() => undefined)
       .then(async () => {
         const response = await fetch(`/api/onboarding/discovery/${token}`, {
-          body: JSON.stringify({ answers: nextAnswers, currentStep: nextStep }),
+          body: JSON.stringify({ answers: nextAnswers, currentStep: nextStep, revision: revisionRef.current }),
           headers: { 'Content-Type': 'application/json' },
           method: 'PATCH',
         })
         if (!response.ok) throw new Error(await responseError(response))
+        const saved = await response.json() as { revision: number }
+        revisionRef.current = saved.revision
         setSaveState('saved')
       })
       .catch(() => setSaveState('offline'))
@@ -156,11 +160,13 @@ export function Discovery2Wizard({ token }: { token: string }) {
     try {
       await saveQueueRef.current
       const response = await fetch(`/api/onboarding/discovery/${token}/submit`, {
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers, revision: revisionRef.current }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       })
       if (!response.ok) throw new Error(await responseError(response))
+      const saved = await response.json() as { revision: number }
+      revisionRef.current = saved.revision
       localStorage.removeItem(backupKey)
       setCompleted(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -176,11 +182,13 @@ export function Discovery2Wizard({ token }: { token: string }) {
     setSubmitError('')
     try {
       const response = await fetch(`/api/onboarding/discovery/${token}`, {
-        body: JSON.stringify({ answers, currentStep: step, reopen: true }),
+        body: JSON.stringify({ answers, currentStep: step, reopen: true, revision: revisionRef.current }),
         headers: { 'Content-Type': 'application/json' },
         method: 'PATCH',
       })
       if (!response.ok) throw new Error(await responseError(response))
+      const saved = await response.json() as { revision: number }
+      revisionRef.current = saved.revision
       setCompleted(false)
       setSaveState('saved')
     } catch (error) {
