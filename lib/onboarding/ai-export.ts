@@ -1,4 +1,11 @@
-import type { ClientWorkspaceResponse, Discovery2Answers, OnboardingAnswers } from './types'
+import {
+  emptyDiscovery2Answers,
+  emptyOnboardingAnswers,
+  type ClientWorkspaceResponse,
+  type Discovery2Answers,
+  type OnboardingAnswers,
+  type WorkspaceSectionKey,
+} from './types'
 
 type AiAnswer = string | string[]
 
@@ -6,6 +13,7 @@ type AiResponse = {
   key: string
   question: string
   answer: AiAnswer
+  answered: boolean
 }
 
 function cleanText(value: string) {
@@ -16,13 +24,9 @@ function cleanList(values: string[]) {
   return values.map(cleanText).filter(Boolean)
 }
 
-function response(key: string, question: string, answer: AiAnswer): AiResponse | null {
+function response(key: string, question: string, answer: AiAnswer): AiResponse {
   const cleaned = Array.isArray(answer) ? cleanList(answer) : cleanText(answer)
-  return cleaned.length ? { key, question, answer: cleaned } : null
-}
-
-function responses(items: Array<AiResponse | null>) {
-  return items.filter((item): item is AiResponse => item !== null)
+  return { key, question, answer: cleaned, answered: cleaned.length > 0 }
 }
 
 function coreSections(answers: OnboardingAnswers) {
@@ -30,72 +34,72 @@ function coreSections(answers: OnboardingAnswers) {
     {
       id: 'business',
       title: 'O klientovi a podnikaní',
-      responses: responses([
+      responses: [
         response('display_name', 'Meno alebo názov podnikania', answers.client.displayName),
         response('business_area', 'Čomu sa klient venuje', answers.business.area),
         response('business_description', 'Ako klient opisuje svoju prácu', answers.business.description),
         response('existing_website', 'Existujúci web', answers.existingWebsite),
         response('social_links', 'Sociálne siete', answers.socialLinks),
-      ]),
+      ],
     },
     {
       id: 'audience_and_goal',
       title: 'Zákazníci a cieľ webu',
-      responses: responses([
+      responses: [
         response('target_audience', 'Komu klient najčastejšie pomáha', answers.targetAudience),
         response('website_goal', 'Čo sa má návštevník dozvedieť', answers.websiteGoal),
         response('desired_actions', 'Čo má návštevník urobiť', answers.desiredActions),
         response('services', 'Služby alebo ponuka', answers.services),
-      ]),
+      ],
     },
     {
       id: 'website_content',
       title: 'Obsah stránky',
-      responses: responses([
+      responses: [
         response('sections', 'Požadované časti stránky', answers.sections),
         response('future_features', 'Budúce rozšírenia', answers.futureFeatures),
         response('other_sections', 'Ďalšie požiadavky', answers.otherSections),
-      ]),
+      ],
     },
     {
       id: 'visual_direction',
       title: 'Vizuálny smer',
-      responses: responses([
+      responses: [
         response('design_preferences', 'Ako má web pôsobiť', answers.designPreferences),
         response('design_other', 'Ďalší vizuálny smer', answers.designOther),
         response('inspiration_urls', 'Inšpirácie', answers.inspirationUrls),
         response('dislikes', 'Čomu sa vyhnúť', answers.dislikes),
-      ]),
+      ],
     },
     {
       id: 'contact',
       title: 'Kontakt',
-      responses: responses([
+      responses: [
         response('contact_name', 'Kontaktná osoba', answers.contact.name),
         response('contact_email', 'E-mail', answers.contact.email),
         response('contact_phone', 'Telefón', answers.contact.phone),
         response('preferred_contact', 'Preferovaný spôsob kontaktu', answers.contact.preferredMethod),
-      ]),
+      ],
     },
     {
       id: 'billing',
       title: 'Fakturačné údaje',
-      responses: responses([
+      responses: [
         response('company_name', 'Fakturačný názov', answers.billing.companyName),
         response('company_id', 'IČO', answers.billing.companyId),
         response('tax_id', 'DIČ', answers.billing.taxId),
         response('vat_id', 'IČ DPH', answers.billing.vatId),
         response('billing_address', 'Fakturačná adresa', answers.billing.address),
-      ]),
+      ],
     },
     {
       id: 'additional_notes',
       title: 'Ďalšie poznámky klienta',
-      responses: responses([
+      responses: [
         response('additional_notes', 'Ďalšie poznámky', answers.additionalNotes),
-      ]),
+      ],
     },
-  ].filter((section) => section.responses.length > 0)
+  ]
 }
 
 const discoveryQuestions: Array<[keyof Discovery2Answers, string]> = [
@@ -106,30 +110,40 @@ const discoveryQuestions: Array<[keyof Discovery2Answers, string]> = [
   ['must_show_on_website', 'Čo chce klient na novom webe určite ukázať?'],
 ]
 
-export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
-  const forms: Array<Record<string, unknown>> = []
+const workspaceSectionTitles: Record<WorkspaceSectionKey, string> = {
+  core: 'Základný formulár',
+  discovery_2: 'Doplňujúce otázky',
+  files: 'Súbory a fotografie',
+  creative_strategy: 'Kreatívna stratégia',
+  creative_directions: 'Kreatívne smery',
+  internal_notes: 'Interné poznámky',
+}
 
-  if (workspace.core) {
-    forms.push({
+export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
+  const core = workspace.core
+  const discovery = workspace.discovery2
+  const forms = [
+    {
       id: 'basic_form',
       title: 'Základný formulár',
-      completion_percent: workspace.core.progress.percentage,
-      status: workspace.core.status,
-      updated_at: workspace.core.updatedAt,
-      sections: coreSections(workspace.core.answers),
-    })
-  }
-
-  if (workspace.discovery2) {
-    forms.push({
+      completion: core?.progress || { completed: false, completedItems: 0, percentage: 0, totalItems: 0 },
+      current_step: core?.currentStep || 1,
+      revision: core?.revision || null,
+      status: core?.status || 'not_started',
+      updated_at: core?.updatedAt || null,
+      sections: coreSections(core?.answers || emptyOnboardingAnswers),
+    },
+    {
       id: 'additional_questions',
       title: 'Doplňujúce otázky',
-      completion_percent: workspace.discovery2.progress.percentage,
-      status: workspace.discovery2.status,
-      updated_at: workspace.discovery2.updatedAt,
-      responses: responses(discoveryQuestions.map(([key, question]) => response(key, question, workspace.discovery2!.answers[key]))),
-    })
-  }
+      completion: discovery?.progress || { completed: false, completedItems: 0, percentage: 0, totalItems: discoveryQuestions.length },
+      current_step: discovery?.currentStep || 1,
+      revision: discovery?.revision || null,
+      status: discovery?.status || 'not_started',
+      updated_at: discovery?.updatedAt || null,
+      responses: discoveryQuestions.map(([key, question]) => response(key, question, (discovery?.answers || emptyDiscovery2Answers)[key])),
+    },
+  ]
 
   return {
     format: 'webkastart_ai_client_brief',
@@ -140,12 +154,21 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
       overall_completion_percent: workspace.overallProgress,
     },
     forms,
+    workspace_sections: workspace.sections.map((section) => ({
+      id: section.key,
+      title: workspaceSectionTitles[section.key],
+      client_visible: section.clientVisible,
+      client_editable: section.clientEditable,
+      content: section.content,
+      updated_at: section.updatedAt,
+    })),
     materials: workspace.assets
-      .filter((asset) => asset.status === 'uploaded')
       .map((asset) => ({
         filename: asset.name,
         mime_type: asset.mimeType,
         size_bytes: Number(asset.size),
+        status: asset.status,
+        created_at: asset.createdAt,
         uploaded_by: asset.uploadedBy || 'unknown',
         visible_to_client: asset.clientVisible === true,
       })),
