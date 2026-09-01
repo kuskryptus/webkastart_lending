@@ -256,7 +256,7 @@ export function UploadField({
                 ) : <span className="block truncate text-sm font-medium">{asset.name}</span>}
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Check className="size-3.5 text-emerald-600" aria-hidden="true" />
-                  Nahrané · {formatBytes(Number(asset.size))}{showAdminMetadata && ` · ${asset.uploadedBy === 'admin' ? 'admin' : 'klient'} · ${new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}`}
+                  Nahrané · {formatBytes(Number(asset.size))}{showAdminMetadata && ` · ${asset.uploadedBy === 'admin' ? 'správca' : 'klient'} · ${new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}`}
                 </span>
               </span>
               {onClientVisibilityChange && (

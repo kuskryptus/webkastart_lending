@@ -14,11 +14,11 @@ const statusLabel: Record<OnboardingStatus, string> = {
 
 const navigation = [
   ['overview', 'Prehľad'],
-  ['core', 'Core formulár'],
-  ['discovery-2', 'Discovery 2'],
+  ['core', 'Základný formulár'],
+  ['discovery-2', 'Doplňujúce otázky'],
   ['files', 'Súbory / fotografie'],
-  ['creative-strategy', 'Creative Strategy'],
-  ['creative-directions', 'Creative Directions'],
+  ['creative-strategy', 'Kreatívna stratégia'],
+  ['creative-directions', 'Kreatívne smery'],
   ['notes', 'Poznámky'],
 ] as const
 
@@ -120,7 +120,7 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Detail klienta</p>
         <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0"><h1 className="break-words text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{project.clientLabel}</h1><p className="mt-3 text-sm text-muted-foreground">Posledná aktivita {formatDate(project.lastActivityAt)}</p></div>
-          <div className={`inline-flex shrink-0 items-center gap-2 text-sm font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}><span className="size-2 rounded-full bg-current" />Core: {statusLabel[project.status]}</div>
+          <div className={`inline-flex shrink-0 items-center gap-2 text-sm font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}><span className="size-2 rounded-full bg-current" />Základný formulár: {statusLabel[project.status]}</div>
         </div>
 
         <nav aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8">
@@ -130,13 +130,13 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
         <PageSection id="overview" title="Prehľad">
           <dl className="grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
             <Answer label="Vytvorené">{formatDate(project.createdAt)}</Answer>
-            <Answer label="Core formulár">{statusLabel[project.status]} · {progress} %</Answer>
-            <Answer label="Discovery 2">{discovery ? `${statusLabel[discovery.status]} · ${discovery.currentStep}. krok z 5` : 'Link ešte nebol vytvorený'}</Answer>
+            <Answer label="Základný formulár">{statusLabel[project.status]} · {progress} %</Answer>
+            <Answer label="Doplňujúce otázky">{discovery ? `${statusLabel[discovery.status]} · ${discovery.currentStep}. krok z 5` : 'Link ešte nebol vytvorený'}</Answer>
             <Answer label="Súbory">{uploadedAssets.length ? `${uploadedAssets.length} nahraných` : 'Žiadne nahrané súbory'}</Answer>
           </dl>
         </PageSection>
 
-        <PageSection id="core" title="Core formulár" text="Pôvodný onboarding klienta. Existujúce otázky a odpovede zostávajú zachované.">
+        <PageSection id="core" title="Základný formulár" text="Pôvodný onboarding klienta. Existujúce otázky a odpovede zostávajú zachované.">
           <CoreStep number={1} title="O klientovi">
             <Answer label="Meno / názov podnikania">{answers.client.displayName}</Answer><Answer label="Čomu sa venuje">{answers.business.area}</Answer>
             <div className="sm:col-span-2"><Answer label="Ako opisuje svoju prácu">{answers.business.description}</Answer></div>
@@ -163,7 +163,7 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
           </CoreStep>
         </PageSection>
 
-        <PageSection id="discovery-2" title="Discovery 2" text="Samostatný doplňujúci formulár s vlastným osobným linkom.">
+        <PageSection id="discovery-2" title="Doplňujúce otázky" text="Samostatný doplňujúci formulár s vlastným osobným linkom.">
           <Discovery2Admin clientId={project.id} exists={Boolean(discovery)} />
           {discovery && <dl className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2"><div className="sm:col-span-2"><Answer label="Ako dnes zákazník objednáva a ako celý proces objednávky prebieha?">{discovery.order_process}</Answer></div><div className="sm:col-span-2"><Answer label="Aké produkty chcete cez web primárne ponúkať a v akých cenách?">{discovery.primary_products_and_prices}</Answer></div><Answer label="Čo všetko môže zákazník personalizovať?">{discovery.personalization_options}</Answer><Answer label="Čo podľa vás zákazníci na vašej tvorbe najviac oceňujú?">{discovery.customer_appreciation}</Answer><div className="sm:col-span-2"><Answer label="Je niečo, čo chcete na novom webe určite ukázať?">{discovery.must_show_on_website}</Answer></div></dl>}
         </PageSection>
@@ -174,9 +174,9 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
           {!uploadedAssets.length && <div className="flex items-center gap-3 text-sm text-muted-foreground"><ImageIcon className="size-5" />Klient zatiaľ nenahral žiadne súbory.</div>}
         </PageSection>
 
-        <PageSection id="creative-strategy" title="Creative Strategy"><EmptySection>Priestor je pripravený. Creative Strategy zatiaľ nemá pridaný obsah.</EmptySection></PageSection>
-        <PageSection id="creative-directions" title="Creative Directions"><EmptySection>Priestor je pripravený. Creative Directions zatiaľ nemajú pridaný obsah.</EmptySection></PageSection>
-        <PageSection id="notes" title="Poznámky"><EmptySection>Poznámky zatiaľ nemajú samostatný obsah. Pôvodné poznámky z Core formulára zostávajú zobrazené v jeho poslednom kroku.</EmptySection></PageSection>
+        <PageSection id="creative-strategy" title="Kreatívna stratégia"><EmptySection>Priestor je pripravený. Kreatívna stratégia zatiaľ nemá pridaný obsah.</EmptySection></PageSection>
+        <PageSection id="creative-directions" title="Kreatívne smery"><EmptySection>Priestor je pripravený. Kreatívne smery zatiaľ nemajú pridaný obsah.</EmptySection></PageSection>
+        <PageSection id="notes" title="Poznámky"><EmptySection>Poznámky zatiaľ nemajú samostatný obsah. Pôvodné poznámky zo základného formulára zostávajú zobrazené v jeho poslednom kroku.</EmptySection></PageSection>
       </div>
     </main>
   )

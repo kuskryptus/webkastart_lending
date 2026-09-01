@@ -238,7 +238,7 @@ export function Discovery2Wizard({ token }: { token: string }) {
 
       <div className="mx-auto max-w-3xl px-5 pb-32 pt-3 sm:px-8 sm:pt-7">
         <div className="mb-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Discovery 2{clientLabel ? ` · ${clientLabel}` : ''}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Doplňujúce otázky{clientLabel ? ` · ${clientLabel}` : ''}</p>
           <div className="mt-3 flex items-end justify-between gap-4">
             <div><h1 className="text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">Poďme trochu viac do hĺbky</h1><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">Odpovede sa priebežne ukladajú. Ak pri niečom neviete odpovedať, otázku môžete preskočiť.</p></div>
             <p className="shrink-0 text-sm font-semibold tabular-nums">{step} z {TOTAL_STEPS}</p>

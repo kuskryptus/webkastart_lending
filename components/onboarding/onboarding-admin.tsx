@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Check, ChevronRight, Copy, Loader2, LockKeyhole, LogOut, Plus, Search, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import type { OnboardingStatus } from '@/lib/onboarding/types'
@@ -16,6 +16,18 @@ type Project = {
   submittedAt: string | null
 }
 
+type ManualCopy = {
+  details: string
+  url: string
+}
+
+class ClipboardWriteError extends Error {
+  constructor(details: string) {
+    super(details)
+    this.name = 'ClipboardWriteError'
+  }
+}
+
 const statusLabel: Record<OnboardingStatus, string> = {
   not_started: 'Nezačaté',
   in_progress: 'Rozpracované',
@@ -28,8 +40,27 @@ async function getError(response: Response) {
   return data?.details ? `${message}\n${data.details}` : message
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric',
+  hour: 'numeric',
+  hourCycle: 'h23',
+  minute: '2-digit',
+  month: 'numeric',
+  timeZone: 'Europe/Bratislava',
+  year: 'numeric',
+})
+
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  const parts = Object.fromEntries(dateFormatter.formatToParts(date).map((part) => [part.type, part.value]))
+  return `${parts.day}. ${parts.month}. ${parts.year}, ${parts.hour}:${parts.minute}`
+}
+
+function describeError(error: unknown) {
+  if (error instanceof DOMException) return `${error.name}: ${error.message || 'bez ďalšieho popisu'}`
+  if (error instanceof Error) return `${error.name}: ${error.message}`
+  return String(error)
 }
 
 function searchable(value: string) {
@@ -58,11 +89,19 @@ export function OnboardingAdmin({
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(initialError)
+  const [manualCopy, setManualCopy] = useState<ManualCopy | null>(null)
   const [search, setSearch] = useState('')
+  const manualCopyInputRef = useRef<HTMLInputElement>(null)
   const filteredProjects = useMemo(() => {
     const query = searchable(search.trim())
     return query ? projects.filter((project) => searchable(project.clientLabel).includes(query)) : projects
   }, [projects, search])
+
+  useEffect(() => {
+    if (!manualCopy) return
+    manualCopyInputRef.current?.focus({ preventScroll: true })
+    manualCopyInputRef.current?.select()
+  }, [manualCopy])
 
   const loadProjects = useCallback(async function loadProjects() {
     try {
@@ -107,6 +146,7 @@ export function OnboardingAdmin({
     event.preventDefault()
     setSubmitting(true)
     setError('')
+    setManualCopy(null)
     setCreatedUrl('')
     try {
       const response = await fetch('/api/onboarding/admin/projects', {
@@ -127,44 +167,81 @@ export function OnboardingAdmin({
   }
 
   async function writeClipboard(value: string) {
-    try {
-      await navigator.clipboard.writeText(value)
-    } catch {
-      const input = document.createElement('textarea')
-      input.value = value
-      input.style.position = 'fixed'
-      input.style.opacity = '0'
-      document.body.appendChild(input)
-      input.select()
-      const copiedSuccessfully = document.execCommand('copy')
-      input.remove()
-      if (!copiedSuccessfully) throw new Error('COPY_FAILED')
+    const failures: string[] = []
+    if (!window.isSecureContext) {
+      failures.push('Clipboard API nie je dostupné mimo zabezpečeného HTTPS kontextu.')
+    } else if (!navigator.clipboard?.writeText) {
+      failures.push('Prehliadač neposkytuje Clipboard API.')
+    } else {
+      try {
+        await navigator.clipboard.writeText(value)
+        return
+      } catch (clipboardError) {
+        failures.push(`Clipboard API: ${describeError(clipboardError)}`)
+      }
     }
+
+    const input = document.createElement('textarea')
+    input.value = value
+    input.setAttribute('readonly', '')
+    input.style.position = 'fixed'
+    input.style.left = '0'
+    input.style.top = '0'
+    input.style.width = '1px'
+    input.style.height = '1px'
+    input.style.opacity = '0.01'
+    document.body.appendChild(input)
+    try {
+      input.focus({ preventScroll: true })
+      input.select()
+      input.setSelectionRange(0, value.length)
+      if (document.execCommand('copy')) return
+      failures.push('Záložné kopírovanie vrátilo výsledok false.')
+    } catch (fallbackError) {
+      failures.push(`Záložné kopírovanie: ${describeError(fallbackError)}`)
+    } finally {
+      input.remove()
+    }
+
+    throw new ClipboardWriteError(failures.join('\n'))
   }
 
   async function copyLink() {
+    setError('')
+    setManualCopy(null)
     try {
       await writeClipboard(createdUrl)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
-    } catch {
-      setError('Link označte a skopírujte ručne.')
+    } catch (copyError) {
+      const details = copyError instanceof Error ? copyError.message : describeError(copyError)
+      setError('Automatické kopírovanie zablokoval prehliadač. Link je označený nižšie na ručné skopírovanie.')
+      setManualCopy({ details, url: createdUrl })
     }
   }
 
   async function copyProjectLink(project: Project) {
     setLinkLoadingClientId(project.id)
     setError('')
+    setManualCopy(null)
+    let url = ''
     try {
       const endpoint = `/api/onboarding/admin/clients/${project.id}/portal-link`
       const response = await fetch(endpoint, { method: 'GET' })
-      if (!response.ok) throw new Error(await getError(response))
+      if (!response.ok) throw new Error(`${await getError(response)}\nHTTP ${response.status} ${response.statusText || 'Error'}`)
       const data = await response.json() as { url: string }
-      await writeClipboard(data.url)
+      url = data.url
+      await writeClipboard(url)
       setCopiedClientId(project.id)
       window.setTimeout(() => setCopiedClientId((current) => current === project.id ? '' : current), 2000)
     } catch (copyError) {
-      setError(copyError instanceof Error ? copyError.message : 'Link sa nepodarilo skopírovať.')
+      const details = copyError instanceof Error ? copyError.message : describeError(copyError)
+      if (url) {
+        setError('Automatické kopírovanie zablokoval prehliadač. Link je označený nižšie na ručné skopírovanie.')
+        setManualCopy({ details, url })
+      } else {
+        setError(`Link sa nepodarilo načítať.\n${details}`)
+      }
     } finally {
       setLinkLoadingClientId('')
     }
@@ -231,6 +308,24 @@ export function OnboardingAdmin({
           </button>
         </form>
         {error && <p role="alert" className="mt-4 whitespace-pre-wrap break-words text-sm text-destructive">{error}</p>}
+        {manualCopy && (
+          <div className="mt-4 border-l-2 border-destructive/50 pl-4" role="alert">
+            <label className="block text-xs font-semibold text-foreground" htmlFor="manual-copy-link">Permanentný link</label>
+            <input
+              id="manual-copy-link"
+              ref={manualCopyInputRef}
+              readOnly
+              value={manualCopy.url}
+              onFocus={(event) => event.currentTarget.select()}
+              className="mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2 text-sm text-foreground outline-none focus:border-brand"
+            />
+            <p className="mt-2 text-xs text-muted-foreground">Stlačte ⌘C na Macu alebo Ctrl+C na Windows.</p>
+            <details className="mt-2 text-xs text-muted-foreground">
+              <summary className="cursor-pointer font-medium text-foreground">Technické detaily chyby</summary>
+              <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-5">{manualCopy.details}</pre>
+            </details>
+          </div>
+        )}
 
         {createdUrl && (
           <div className="mt-8 bg-brand-soft px-5 py-5 sm:px-6">

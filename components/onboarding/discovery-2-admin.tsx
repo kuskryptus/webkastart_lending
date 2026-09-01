@@ -46,14 +46,14 @@ export function Discovery2Admin({ clientId, exists }: { clientId: string; exists
     <div>
       <button type="button" onClick={() => void createLink()} disabled={loading} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-60">
         {loading ? <Loader2 className="size-4 animate-spin" /> : hasForm ? <RefreshCw className="size-4" /> : <Link2 className="size-4" />}
-        {hasForm ? 'Vygenerovať nový link' : 'Vytvoriť link Discovery 2'}
+        {hasForm ? 'Vygenerovať nový link' : 'Vytvoriť link k doplňujúcim otázkam'}
       </button>
       {hasForm && !url && <p className="mt-2 text-xs leading-5 text-muted-foreground">Odpovede sú uložené. Z bezpečnostných dôvodov sa existujúci link nezobrazuje; môžete vytvoriť nový.</p>}
       {url && (
         <div className="mt-4 border-l-2 border-brand pl-4">
           <p className="text-sm font-semibold text-brand">Link je pripravený</p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} aria-label="Discovery 2 link" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+            <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} aria-label="Link k doplňujúcim otázkam" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
             <button type="button" onClick={() => void copyLink()} className="inline-flex min-h-9 shrink-0 items-center justify-center gap-2 px-2 text-sm font-semibold text-brand">
               {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? 'Skopírované' : 'Kopírovať'}
             </button>

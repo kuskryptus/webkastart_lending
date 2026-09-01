@@ -11,8 +11,8 @@ const sectionCopy: Record<WorkspaceSectionKey, { title: string; description: str
   core: { title: 'O vás a vašom podnikaní', description: 'Základné informácie pre váš web a spoluprácu.' },
   discovery_2: { title: 'Doplňujúce otázky', description: 'Podrobnosti o ponuke, zákazníkoch a objednávkach.' },
   files: { title: 'Fotografie a materiály', description: 'Logá, fotografie, dokumenty a ďalšie podklady.' },
-  creative_strategy: { title: 'Creative Strategy', description: 'Strategické smerovanie pripravené pre váš projekt.' },
-  creative_directions: { title: 'Návrhy / schválenia', description: 'Kreatívne smery a návrhy zdieľané na kontrolu.' },
+  creative_strategy: { title: 'Kreatívna stratégia', description: 'Strategické smerovanie pripravené pre váš projekt.' },
+  creative_directions: { title: 'Kreatívne smery a schválenia', description: 'Kreatívne smery a návrhy zdieľané na kontrolu.' },
   internal_notes: { title: 'Poznámky', description: '' },
 }
 
@@ -134,7 +134,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
         <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">Podklady k vášmu webu máte na jednom mieste. Odpovede môžete priebežne upravovať a fotografie dopĺňať kedykoľvek.</p>
         <div className="mt-9 flex items-center gap-5 border-y border-border/70 py-5">
           <div className="min-w-0 flex-1"><div className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${workspace.overallProgress}%` }} /></div></div>
-          <p className="shrink-0 text-sm font-semibold tabular-nums">Celkový progress: {workspace.overallProgress} %</p>
+          <p className="shrink-0 text-sm font-semibold tabular-nums">Celkový postup: {workspace.overallProgress} %</p>
         </div>
 
         <div className="mt-10 divide-y divide-border">
