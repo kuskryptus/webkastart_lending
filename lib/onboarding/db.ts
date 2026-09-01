@@ -3,6 +3,7 @@ import 'server-only'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import postgres, { type Sql } from 'postgres'
 import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus } from './types'
+import { encryptPortalToken } from './portal-token'
 
 let database: Sql | undefined
 
@@ -28,11 +29,16 @@ export async function createOnboardingProject(clientLabel: string) {
   const sql = getDatabase()
   const token = randomBytes(32).toString('base64url')
   const tokenHash = hashOnboardingToken(token)
+  const encryptedToken = encryptPortalToken(token)
   const clientId = randomUUID()
   const rows = await sql.begin(async (transaction) => {
     await transaction`
       insert into clients (id, display_name, portal_token_hash)
       values (${clientId}, ${clientLabel}, ${tokenHash})
+    `
+    await transaction`
+      insert into client_portal_links (client_id, token_hash, encrypted_token)
+      values (${clientId}, ${tokenHash}, ${encryptedToken})
     `
     const projects = await transaction<{ createdAt: Date; id: string }[]>`
       insert into onboarding_projects (id, client_id, client_label, token_hash)
@@ -57,7 +63,7 @@ export async function createOnboardingProject(clientLabel: string) {
   }) as { createdAt: Date; id: string }[]
   const project = rows[0]
   if (!project) throw new Error('Could not create onboarding project')
-  return { ...project, token }
+  return { ...project, portalLinkAvailable: Boolean(encryptedToken), token }
 }
 
 export async function listOnboardingProjects() {
@@ -68,6 +74,7 @@ export async function listOnboardingProjects() {
     currentStep: number
     id: string
     lastActivityAt: Date
+    portalLinkAvailable: boolean
     status: OnboardingStatus
     submittedAt: Date | null
   }[]>`
@@ -78,6 +85,10 @@ export async function listOnboardingProjects() {
       project.current_step as "currentStep",
       client.created_at as "createdAt",
       client.updated_at as "lastActivityAt",
+      exists (
+        select 1 from client_portal_links as link
+        where link.client_id = client.id and link.encrypted_token is not null
+      ) as "portalLinkAvailable",
       project.submitted_at as "submittedAt"
     from clients as client
     join onboarding_projects as project on project.client_id = client.id

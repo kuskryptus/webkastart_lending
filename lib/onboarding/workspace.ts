@@ -97,13 +97,20 @@ export function progressForStatus(progress: WorkspaceProgress, status: Onboardin
 
 export async function findClientByPortalToken(token: string): Promise<ClientRecord | null> {
   const sql = getDatabase()
+  const tokenHash = hashOnboardingToken(token)
   const rows = await sql<ClientRecord[]>`
-    select id, display_name as "displayName", portal_token_hash as "portalTokenHash"
-    from clients
-    where portal_token_hash = ${hashOnboardingToken(token)}
+    select client.id, client.display_name as "displayName", ${tokenHash}::text as "portalTokenHash"
+    from client_portal_links as link
+    join clients as client on client.id = link.client_id
+    where link.token_hash = ${tokenHash}
     limit 1
   `
-  return rows[0] ?? null
+  if (rows[0]) return rows[0]
+  const legacy = await sql<ClientRecord[]>`
+    select id, display_name as "displayName", portal_token_hash as "portalTokenHash"
+    from clients where portal_token_hash = ${tokenHash} limit 1
+  `
+  return legacy[0] ?? null
 }
 
 export async function listWorkspaceSections(clientId: string): Promise<SectionRecord[]> {

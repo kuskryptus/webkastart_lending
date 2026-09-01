@@ -64,6 +64,12 @@ pnpm onboarding:migrate
 
 Vytvorenie osobného linku pre klienta:
 
+Nastavte stabilnú hodnotu `ONBOARDING_LINK_ENCRYPTION_SECRET` s dĺžkou aspoň
+16 znakov. Token sa naďalej vyhľadáva iba podľa SHA-256 hashu; jeho šifrovaná
+kópia umožní prihlásenému adminovi link neskôr znovu skopírovať. Ak premenná
+chýba, používa sa `ONBOARDING_ADMIN_SECRET`. Zmena použitého secretu znemožní
+dešifrovanie starších linkov, samotné už odoslané linky však zostanú funkčné.
+
 Po nasadení otvorte `https://webkastart.sk/start`, prihláste sa hodnotou
 `ONBOARDING_ADMIN_SECRET`, napíšte názov klienta a kliknite na „Vytvoriť link“.
 Toto je odporúčaný bežný spôsob.

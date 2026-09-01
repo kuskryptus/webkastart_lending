@@ -59,6 +59,7 @@ export async function POST(request: Request) {
         currentStep: 1,
         id: project.id,
         lastActivityAt: project.createdAt.toISOString(),
+        portalLinkAvailable: project.portalLinkAvailable,
         status: 'not_started',
         submittedAt: null,
       },

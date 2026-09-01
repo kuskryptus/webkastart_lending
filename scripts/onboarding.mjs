@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises'
-import { createHash, randomBytes, randomUUID } from 'node:crypto'
+import { createCipheriv, createHash, randomBytes, randomUUID } from 'node:crypto'
 import nextEnv from '@next/env'
 import postgres from 'postgres'
 
@@ -7,6 +7,16 @@ const { loadEnvConfig } = nextEnv
 loadEnvConfig(process.cwd())
 
 const command = process.argv[2]
+
+function encryptPortalToken(token) {
+  const secret = process.env.ONBOARDING_LINK_ENCRYPTION_SECRET || process.env.ONBOARDING_ADMIN_SECRET
+  if (!secret || secret.length < 16) return null
+  const key = createHash('sha256').update(`webkastart-portal-link-v1:${secret}`).digest()
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', key, iv)
+  const encrypted = Buffer.concat([cipher.update(token, 'utf8'), cipher.final()])
+  return ['v1', iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.')
+}
 
 if (!process.env.DATABASE_URL) {
   if (command === 'migrate-if-configured') {
@@ -57,11 +67,16 @@ try {
 
     const token = randomBytes(32).toString('base64url')
     const tokenHash = createHash('sha256').update(token).digest('hex')
+    const encryptedToken = encryptPortalToken(token)
     const clientId = randomUUID()
     const [project] = await sql.begin(async (transaction) => {
       await transaction`
         insert into clients (id, display_name, portal_token_hash)
         values (${clientId}, ${clientLabel}, ${tokenHash})
+      `
+      await transaction`
+        insert into client_portal_links (client_id, token_hash, encrypted_token)
+        values (${clientId}, ${tokenHash}, ${encryptedToken})
       `
       const projects = await transaction`
         insert into onboarding_projects (id, client_id, client_label, token_hash)

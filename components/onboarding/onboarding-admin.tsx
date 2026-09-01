@@ -12,6 +12,7 @@ type Project = {
   currentStep: number
   id: string
   lastActivityAt: string
+  portalLinkAvailable: boolean
   status: OnboardingStatus
   submittedAt: string | null
 }
@@ -53,6 +54,8 @@ export function OnboardingAdmin({
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [createdUrl, setCreatedUrl] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copiedClientId, setCopiedClientId] = useState('')
+  const [linkLoadingClientId, setLinkLoadingClientId] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(initialError)
@@ -124,13 +127,51 @@ export function OnboardingAdmin({
     }
   }
 
+  async function writeClipboard(value: string) {
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = value
+      input.style.position = 'fixed'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+      input.select()
+      const copiedSuccessfully = document.execCommand('copy')
+      input.remove()
+      if (!copiedSuccessfully) throw new Error('COPY_FAILED')
+    }
+  }
+
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(createdUrl)
+      await writeClipboard(createdUrl)
       setCopied(true)
       window.setTimeout(() => setCopied(false), 2000)
     } catch {
       setError('Link označte a skopírujte ručne.')
+    }
+  }
+
+  async function copyProjectLink(project: Project) {
+    setLinkLoadingClientId(project.id)
+    setError('')
+    try {
+      const endpoint = `/api/onboarding/admin/clients/${project.id}/portal-link`
+      let response = await fetch(endpoint, { method: project.portalLinkAvailable ? 'GET' : 'POST' })
+      if (response.status === 404 && project.portalLinkAvailable) {
+        response = await fetch(endpoint, { method: 'POST' })
+      }
+      if (!response.ok) throw new Error(await getError(response))
+      const data = await response.json() as { url: string }
+      await writeClipboard(data.url)
+      setProjects((current) => current.map((item) => item.id === project.id ? { ...item, portalLinkAvailable: true } : item))
+      setCopiedClientId(project.id)
+      window.setTimeout(() => setCopiedClientId((current) => current === project.id ? '' : current), 2000)
+    } catch (copyError) {
+      setError(copyError instanceof Error ? copyError.message : 'Link sa nepodarilo skopírovať.')
+    } finally {
+      setLinkLoadingClientId('')
     }
   }
 
@@ -205,7 +246,7 @@ export function OnboardingAdmin({
                 {copied ? <Check className="size-4 text-emerald-600" /> : <Copy className="size-4" />} {copied ? 'Skopírované' : 'Kopírovať'}
               </button>
             </div>
-            <p className="mt-3 text-xs leading-5 text-muted-foreground">Tento link si teraz skopírujte. Z bezpečnostných dôvodov sa celý token neskôr už nezobrazuje.</p>
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">Link môžete kedykoľvek znova skopírovať aj pri klientovi v zozname nižšie.</p>
           </div>
         )}
 
@@ -229,17 +270,31 @@ export function OnboardingAdmin({
           ) : (
             <ul className="mt-5 divide-y divide-border/80">
               {filteredProjects.map((project) => (
-                <li key={project.id}>
+                <li key={project.id} className="group relative">
                   <Link
                     href={`/start/admin/${project.id}`}
                     aria-label={`Otvoriť onboarding: ${project.clientLabel}`}
-                    className="group grid gap-2 py-4 outline-none transition-colors hover:text-brand focus-visible:text-brand sm:grid-cols-[1fr_auto_auto_1.5rem] sm:items-center sm:gap-7"
-                  >
-                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-foreground">{project.clientLabel}</p><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
+                    className="absolute inset-0 z-0 outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
+                  />
+                  <div className="pointer-events-none grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_1.5rem] sm:items-center sm:gap-6">
+                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-brand">{project.clientLabel}</p><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
                     <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? `${project.currentStep}. krok zo 6` : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
                     <span className={`text-xs font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}>{statusLabel[project.status]}</span>
+                    <button
+                      type="button"
+                      onClick={() => void copyProjectLink(project)}
+                      disabled={linkLoadingClientId === project.id}
+                      className="pointer-events-auto relative z-10 inline-flex min-h-9 items-center justify-center gap-1.5 justify-self-start rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60 sm:justify-self-end"
+                    >
+                      {linkLoadingClientId === project.id
+                        ? <Loader2 className="size-3.5 animate-spin" />
+                        : copiedClientId === project.id
+                          ? <Check className="size-3.5 text-emerald-600" />
+                          : <Copy className="size-3.5" />}
+                      {copiedClientId === project.id ? 'Skopírované' : project.portalLinkAvailable ? 'Kopírovať link' : 'Vytvoriť nový link'}
+                    </button>
                     <ChevronRight className="hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand sm:block" aria-hidden="true" />
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>
