@@ -5,17 +5,39 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 let storage: S3Client | undefined
 
-function storageConfig() {
-  const bucket = process.env.S3_BUCKET
-  const region = process.env.S3_REGION
-  const accessKeyId = process.env.S3_ACCESS_KEY_ID
-  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY
+export class StorageConfigurationError extends Error {
+  readonly missingVariables: string[]
 
-  if (!bucket || !region || !accessKeyId || !secretAccessKey) {
-    throw new Error('S3 storage is not configured')
+  constructor(missingVariables: string[]) {
+    super(`S3 storage is not configured. Missing environment variables: ${missingVariables.join(', ')}`)
+    this.name = 'StorageConfigurationError'
+    this.missingVariables = missingVariables
   }
+}
 
-  return { accessKeyId, bucket, region, secretAccessKey }
+function storageConfig() {
+  const values = {
+    S3_ACCESS_KEY_ID: process.env.S3_ACCESS_KEY_ID,
+    S3_BUCKET: process.env.S3_BUCKET,
+    S3_REGION: process.env.S3_REGION,
+    S3_SECRET_ACCESS_KEY: process.env.S3_SECRET_ACCESS_KEY,
+  }
+  const missingVariables = Object.entries(values)
+    .filter(([, value]) => !value)
+    .map(([name]) => name)
+
+  if (missingVariables.length) throw new StorageConfigurationError(missingVariables)
+
+  return {
+    accessKeyId: values.S3_ACCESS_KEY_ID!,
+    bucket: values.S3_BUCKET!,
+    region: values.S3_REGION!,
+    secretAccessKey: values.S3_SECRET_ACCESS_KEY!,
+  }
+}
+
+export function assertStorageConfigured() {
+  storageConfig()
 }
 
 function getStorage() {

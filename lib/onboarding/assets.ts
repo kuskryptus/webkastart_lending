@@ -2,7 +2,7 @@ import 'server-only'
 
 import { randomUUID } from 'node:crypto'
 import { getDatabase } from './db'
-import { createUploadUrl, deleteUploadedObject, verifyUploadedObject } from './storage'
+import { assertStorageConfigured, createUploadUrl, deleteUploadedObject, verifyUploadedObject } from './storage'
 import { MAX_UPLOAD_FILES, safeStorageFileName, validateUpload } from './validation'
 
 export type AssetActor = 'client' | 'admin'
@@ -17,6 +17,7 @@ export async function createPendingAsset(options: {
   const validation = validateUpload(options.body.name, options.body.mimeType, options.body.size)
   if ('error' in validation) return { error: validation.error } as const
 
+  assertStorageConfigured()
   const sql = getDatabase()
   const retryUploadId = typeof options.body.retryUploadId === 'string' ? options.body.retryUploadId : ''
   let upload: { id: string; objectKey: string } | undefined

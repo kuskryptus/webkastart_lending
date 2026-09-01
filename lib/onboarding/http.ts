@@ -32,6 +32,7 @@ function redactSecrets(value: string) {
   const secretNames = [
     'DATABASE_URL',
     'ONBOARDING_ADMIN_SECRET',
+    'ONBOARDING_PORTAL_LINK_SECRET',
     'ONBOARDING_RATE_LIMIT_SECRET',
     'RESEND_API_KEY',
     'S3_ACCESS_KEY_ID',
@@ -79,18 +80,40 @@ export function getErrorDetails(error: unknown) {
 }
 
 export function apiError(error: unknown, options: { exposeDetails?: boolean } = {}) {
-  console.error('[onboarding]', error)
+  const errorRecord = error instanceof Error
+    ? error as Error & { missingVariables?: unknown }
+    : null
+  const missingConfiguration = Array.isArray(errorRecord?.missingVariables)
+    ? errorRecord.missingVariables.filter((value): value is string => typeof value === 'string')
+    : errorRecord?.message.includes('DATABASE_URL')
+      ? ['DATABASE_URL']
+      : []
+
+  if (missingConfiguration.length) {
+    console.error(`[onboarding:configuration] Chýba: ${missingConfiguration.join(', ')}`)
+  } else {
+    console.error('[onboarding]', error)
+  }
+  const storageConfigurationError =
+    error instanceof Error && error.name === 'StorageConfigurationError'
   const configurationError =
     error instanceof Error &&
     (error.message.includes('not configured') || error.message.includes('DATABASE_URL'))
 
   return privateJson(
     {
-      error: configurationError
-        ? 'Onboarding ešte nie je nakonfigurovaný.'
-        : 'Niečo sa nepodarilo. Skúste to prosím znova.',
+      error: storageConfigurationError
+        ? 'Nahrávanie súborov momentálne nie je dostupné. Kontaktujte správcu projektu.'
+        : configurationError
+          ? 'Onboarding ešte nie je nakonfigurovaný.'
+          : 'Niečo sa nepodarilo. Skúste to prosím znova.',
       details: options.exposeDetails ? getErrorDetails(error) : undefined,
-      reason: configurationError ? 'not_configured' : 'server_error',
+      configuration: missingConfiguration.length ? { missing: missingConfiguration } : undefined,
+      reason: storageConfigurationError
+        ? 'storage_not_configured'
+        : configurationError
+          ? 'not_configured'
+          : 'server_error',
     },
     { status: configurationError ? 503 : 500 },
   )

@@ -23,8 +23,21 @@ function formatBytes(bytes: number) {
 }
 
 async function errorMessage(response: Response) {
-  const data = await response.json().catch(() => null) as { error?: string } | null
-  return data?.error || 'Súbor sa nepodarilo nahrať.'
+  const data = await response.json().catch(() => null) as {
+    configuration?: { missing?: string[] }
+    details?: string
+    error?: string
+    reason?: string
+  } | null
+  console.error('[nahrávanie súboru]', {
+    chýbaKonfigurácia: data?.configuration?.missing || [],
+    detail: data?.details,
+    dôvod: data?.reason || 'unknown',
+    httpStav: response.status,
+    správa: data?.error || response.statusText,
+  })
+  const message = data?.error || 'Súbor sa nepodarilo nahrať.'
+  return data?.details ? `${message}\n${data.details}` : message
 }
 
 export function UploadField({
@@ -285,7 +298,7 @@ export function UploadField({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{item.file.name}</span>
                 {item.status === 'error' ? (
-                  <span className="mt-0.5 block text-xs text-destructive">{item.error}</span>
+                  <span className="mt-0.5 block whitespace-pre-wrap text-xs text-destructive">{item.error}</span>
                 ) : (
                   <span className="mt-1.5 block h-1 overflow-hidden rounded-full bg-secondary">
                     <span className="block h-full rounded-full bg-brand transition-[width]" style={{ width: `${item.progress}%` }} />
