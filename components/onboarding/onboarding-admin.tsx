@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useState } from 'react'
-import { Check, Copy, Loader2, LockKeyhole, LogOut, Plus } from 'lucide-react'
+import Link from 'next/link'
+import { useCallback, useMemo, useState } from 'react'
+import { Check, ChevronRight, Copy, Loader2, LockKeyhole, LogOut, Plus, Search, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import type { OnboardingStatus } from '@/lib/onboarding/types'
 
@@ -31,6 +32,10 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
+function searchable(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('sk')
+}
+
 export function OnboardingAdmin({
   configured,
   initialAuthenticated,
@@ -51,6 +56,11 @@ export function OnboardingAdmin({
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(initialError)
+  const [search, setSearch] = useState('')
+  const filteredProjects = useMemo(() => {
+    const query = searchable(search.trim())
+    return query ? projects.filter((project) => searchable(project.clientLabel).includes(query)) : projects
+  }, [projects, search])
 
   const loadProjects = useCallback(async function loadProjects() {
     try {
@@ -201,20 +211,35 @@ export function OnboardingAdmin({
 
         <section className="mt-16">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold tracking-[-0.025em]">Posledné onboardingy</h2>
-            <span className="text-sm text-muted-foreground">{projects.length}</span>
+            <h2 className="text-xl font-semibold tracking-[-0.025em]">Klienti</h2>
+            <span className="text-sm text-muted-foreground">{filteredProjects.length}{search ? ` z ${projects.length}` : ''}</span>
           </div>
+          <label className="relative mt-6 block">
+            <span className="sr-only">Vyhľadať klienta</span>
+            <Search className="pointer-events-none absolute left-0 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Vyhľadať klienta…" className="w-full border-0 border-b border-border bg-transparent py-3 pl-7 pr-10 text-sm outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
+            {search && <button type="button" onClick={() => setSearch('')} aria-label="Vymazať vyhľadávanie" className="absolute right-0 top-1/2 grid size-8 -translate-y-1/2 place-items-center text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
+          </label>
           {loading ? (
             <p className="mt-8 inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Načítavam…</p>
           ) : projects.length === 0 ? (
             <p className="mt-8 text-sm text-muted-foreground">Zatiaľ tu nie je žiadny klientsky onboarding.</p>
+          ) : filteredProjects.length === 0 ? (
+            <p className="mt-8 text-sm text-muted-foreground">Pre „{search}“ sa nenašiel žiadny klient.</p>
           ) : (
             <ul className="mt-5 divide-y divide-border/80">
-              {projects.map((project) => (
-                <li key={project.id} className="grid gap-2 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-7">
-                  <div className="min-w-0"><p className="truncate text-sm font-semibold">{project.clientLabel}</p><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
-                  <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? `${project.currentStep}. krok zo 6` : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
-                  <span className={`text-xs font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}>{statusLabel[project.status]}</span>
+              {filteredProjects.map((project) => (
+                <li key={project.id}>
+                  <Link
+                    href={`/start/admin/${project.id}`}
+                    aria-label={`Otvoriť onboarding: ${project.clientLabel}`}
+                    className="group grid gap-2 py-4 outline-none transition-colors hover:text-brand focus-visible:text-brand sm:grid-cols-[1fr_auto_auto_1.5rem] sm:items-center sm:gap-7"
+                  >
+                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-foreground">{project.clientLabel}</p><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
+                    <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? `${project.currentStep}. krok zo 6` : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
+                    <span className={`text-xs font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}>{statusLabel[project.status]}</span>
+                    <ChevronRight className="hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand sm:block" aria-hidden="true" />
+                  </Link>
                 </li>
               ))}
             </ul>

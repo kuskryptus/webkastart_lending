@@ -47,6 +47,20 @@ export async function createUploadUrl(options: {
   return getSignedUrl(client, command, { expiresIn: 10 * 60 })
 }
 
+export async function createDownloadUrl(
+  key: string,
+  originalName: string,
+  disposition: 'attachment' | 'inline' = 'attachment',
+) {
+  const { bucket, client } = getStorage()
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+    ResponseContentDisposition: `${disposition}; filename*=UTF-8''${encodeURIComponent(originalName)}`,
+  })
+  return getSignedUrl(client, command, { expiresIn: 5 * 60 })
+}
+
 function matchesFileSignature(bytes: Uint8Array, mimeType: string) {
   const startsWith = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte)
   const headerText = new TextDecoder('utf-8', { fatal: false }).decode(bytes).replace(/^\uFEFF/, '').trimStart()

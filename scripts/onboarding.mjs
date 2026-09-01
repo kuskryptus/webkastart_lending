@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises'
-import { createHash, randomBytes } from 'node:crypto'
+import { readdir, readFile } from 'node:fs/promises'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { loadEnvConfig } from '@next/env'
 import postgres from 'postgres'
 
@@ -20,8 +20,15 @@ const command = process.argv[2]
 
 try {
   if (command === 'migrate') {
-    const migration = await readFile(new URL('../migrations/001_onboarding.sql', import.meta.url), 'utf8')
-    await sql.unsafe(migration)
+    const migrationsUrl = new URL('../migrations/', import.meta.url)
+    const migrations = (await readdir(migrationsUrl))
+      .filter((name) => /^\d+.*\.sql$/.test(name))
+      .sort()
+    for (const name of migrations) {
+      const migration = await readFile(new URL(name, migrationsUrl), 'utf8')
+      await sql.unsafe(migration)
+      console.log(`Migrácia ${name} je pripravená.`)
+    }
     console.log('Onboarding databáza je pripravená.')
   } else if (command === 'create') {
     const clientLabel = process.argv.slice(3).join(' ').trim()
@@ -29,11 +36,17 @@ try {
 
     const token = randomBytes(32).toString('base64url')
     const tokenHash = createHash('sha256').update(token).digest('hex')
-    const [project] = await sql`
-      insert into onboarding_projects (client_label, token_hash)
-      values (${clientLabel}, ${tokenHash})
-      returning id, created_at as "createdAt"
-    `
+    const clientId = randomUUID()
+    const [project] = await sql.begin(async (transaction) => {
+      await transaction`
+        insert into clients (id, display_name) values (${clientId}, ${clientLabel})
+      `
+      return transaction`
+        insert into onboarding_projects (id, client_id, client_label, token_hash)
+        values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
+        returning id, created_at as "createdAt"
+      `
+    })
     const siteUrl = (process.env.SITE_URL || 'https://webkastart.sk').replace(/\/$/, '')
 
     console.log(`Klient: ${clientLabel}`)
@@ -42,9 +55,11 @@ try {
     console.log('Link si teraz bezpečne uložte; v databáze je iba jeho hash.')
   } else if (command === 'list') {
     const rows = await sql`
-      select id, client_label, status, current_step, created_at, last_activity_at, submitted_at
-      from onboarding_projects
-      order by created_at desc
+      select client.id, client.display_name, core.status, core.current_step,
+        client.created_at, core.last_activity_at, core.submitted_at
+      from clients as client
+      join onboarding_projects as core on core.client_id = client.id
+      order by client.created_at desc
     `
     console.table(rows)
   } else if (command === 'show') {
@@ -54,12 +69,12 @@ try {
     }
     const [project] = await sql`
       select id, client_label, status, current_step, answers, created_at, updated_at, submitted_at
-      from onboarding_projects where id = ${projectId}
+      from onboarding_projects where client_id = ${projectId}
     `
     if (!project) throw new Error('Projekt sa nenašiel.')
     const assets = await sql`
-      select id, original_name, mime_type, size_bytes, status, object_key, uploaded_at
-      from onboarding_assets where project_id = ${projectId} order by created_at
+      select id, original_filename, mime_type, size, status, storage_key, uploaded_at
+      from onboarding_assets where client_id = ${projectId} order by created_at
     `
     console.log(JSON.stringify({ ...project, assets }, null, 2))
   } else {

@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import postgres, { type Sql } from 'postgres'
 import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus } from './types'
 
@@ -28,11 +28,18 @@ export async function createOnboardingProject(clientLabel: string) {
   const sql = getDatabase()
   const token = randomBytes(32).toString('base64url')
   const tokenHash = hashOnboardingToken(token)
-  const rows = await sql<{ createdAt: Date; id: string }[]>`
-    insert into onboarding_projects (client_label, token_hash)
-    values (${clientLabel}, ${tokenHash})
-    returning id, created_at as "createdAt"
-  `
+  const clientId = randomUUID()
+  const rows = await sql.begin(async (transaction) => {
+    await transaction`
+      insert into clients (id, display_name)
+      values (${clientId}, ${clientLabel})
+    `
+    return transaction<{ createdAt: Date; id: string }[]>`
+      insert into onboarding_projects (id, client_id, client_label, token_hash)
+      values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
+      returning client_id as id, created_at as "createdAt"
+    `
+  }) as { createdAt: Date; id: string }[]
   const project = rows[0]
   if (!project) throw new Error('Could not create onboarding project')
   return { ...project, token }
@@ -50,21 +57,23 @@ export async function listOnboardingProjects() {
     submittedAt: Date | null
   }[]>`
     select
-      id,
-      client_label as "clientLabel",
-      status,
-      current_step as "currentStep",
-      created_at as "createdAt",
-      last_activity_at as "lastActivityAt",
-      submitted_at as "submittedAt"
-    from onboarding_projects
-    order by created_at desc
+      client.id,
+      client.display_name as "clientLabel",
+      project.status,
+      project.current_step as "currentStep",
+      client.created_at as "createdAt",
+      client.updated_at as "lastActivityAt",
+      project.submitted_at as "submittedAt"
+    from clients as client
+    join onboarding_projects as project on project.client_id = client.id
+    order by client.created_at desc
     limit 200
   `
 }
 
 export type OnboardingProjectRecord = {
   id: string
+  clientId: string
   clientLabel: string
   tokenHash: string
   status: OnboardingStatus
@@ -82,6 +91,7 @@ export async function findOnboardingByToken(token: string): Promise<OnboardingPr
   const rows = await sql<OnboardingProjectRecord[]>`
     select
       id,
+      client_id as "clientId",
       client_label as "clientLabel",
       token_hash as "tokenHash",
       status,
@@ -98,18 +108,40 @@ export async function findOnboardingByToken(token: string): Promise<OnboardingPr
   return rows[0] ?? null
 }
 
-export async function listAssets(projectId: string): Promise<OnboardingAsset[]> {
+export async function findCoreOnboardingByClientId(clientId: string): Promise<OnboardingProjectRecord | null> {
+  const sql = getDatabase()
+  const rows = await sql<OnboardingProjectRecord[]>`
+    select
+      id,
+      client_id as "clientId",
+      client_label as "clientLabel",
+      token_hash as "tokenHash",
+      status,
+      current_step as "currentStep",
+      answers,
+      created_at as "createdAt",
+      updated_at as "updatedAt",
+      last_activity_at as "lastActivityAt",
+      submitted_at as "submittedAt"
+    from onboarding_projects
+    where client_id = ${clientId}
+    limit 1
+  `
+  return rows[0] ?? null
+}
+
+export async function listAssets(clientId: string): Promise<OnboardingAsset[]> {
   const sql = getDatabase()
   return sql<OnboardingAsset[]>`
     select
       id,
-      original_name as name,
+      original_filename as name,
       mime_type as "mimeType",
-      size_bytes::int as size,
+      size::int as size,
       status,
       created_at as "createdAt"
     from onboarding_assets
-    where project_id = ${projectId}
+    where client_id = ${clientId}
     order by created_at asc
   `
 }
@@ -121,36 +153,44 @@ export async function saveOnboarding(
   reopen = false,
 ) {
   const sql = getDatabase()
-  await sql`
-    update onboarding_projects
-    set
-      answers = ${sql.json(answers as unknown as postgres.JSONValue)},
-      current_step = ${currentStep},
-      status = case
-        when ${reopen} then 'in_progress'
-        when status = 'not_started' then 'in_progress'
-        else status
-      end,
-      submitted_at = case when ${reopen} then null else submitted_at end,
-      updated_at = now(),
-      last_activity_at = now()
-    where id = ${projectId}
-  `
+  await sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string }[]>`
+      update onboarding_projects
+      set
+        answers = ${transaction.json(answers as unknown as postgres.JSONValue)},
+        current_step = ${currentStep},
+        status = case
+          when ${reopen} then 'in_progress'
+          when status = 'not_started' then 'in_progress'
+          else status
+        end,
+        submitted_at = case when ${reopen} then null else submitted_at end,
+        updated_at = now(),
+        last_activity_at = now()
+      where id = ${projectId}
+      returning client_id as "clientId"
+    `
+    if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
+  })
 }
 
 export async function submitOnboarding(projectId: string, answers: OnboardingAnswers) {
   const sql = getDatabase()
-  await sql`
-    update onboarding_projects
-    set
-      answers = ${sql.json(answers as unknown as postgres.JSONValue)},
-      current_step = 6,
-      status = 'submitted',
-      submitted_at = coalesce(submitted_at, now()),
-      updated_at = now(),
-      last_activity_at = now()
-    where id = ${projectId}
-  `
+  await sql.begin(async (transaction) => {
+    const rows = await transaction<{ clientId: string }[]>`
+      update onboarding_projects
+      set
+        answers = ${transaction.json(answers as unknown as postgres.JSONValue)},
+        current_step = 6,
+        status = 'submitted',
+        submitted_at = coalesce(submitted_at, now()),
+        updated_at = now(),
+        last_activity_at = now()
+      where id = ${projectId}
+      returning client_id as "clientId"
+    `
+    if (rows[0]) await transaction`update clients set updated_at = now() where id = ${rows[0].clientId}`
+  })
 }
 
 export async function checkRateLimit(options: {

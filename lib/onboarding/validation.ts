@@ -1,4 +1,9 @@
-import { emptyOnboardingAnswers, type OnboardingAnswers } from './types'
+import {
+  emptyDiscovery2Answers,
+  emptyOnboardingAnswers,
+  type Discovery2Answers,
+  type OnboardingAnswers,
+} from './types'
 
 export const ONBOARDING_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
@@ -76,6 +81,29 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     },
     additionalNotes: text(source.additionalNotes, 5000),
   }
+}
+
+export function sanitizeDiscovery2Answers(input: unknown): Discovery2Answers {
+  const source = object(input)
+  return {
+    ...emptyDiscovery2Answers,
+    order_process: text(source.order_process, 5000),
+    primary_products_and_prices: text(source.primary_products_and_prices, 5000),
+    personalization_options: text(source.personalization_options, 5000),
+    customer_appreciation: text(source.customer_appreciation, 5000),
+    must_show_on_website: text(source.must_show_on_website, 5000),
+  }
+}
+
+export function safeStorageFileName(name: string, extension: string) {
+  const withoutExtension = name.replace(/\.[^.]+$/, '')
+  const base = withoutExtension
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 100)
+  return `${base || 'file'}.${extension}`
 }
 
 export function validateContact(answers: OnboardingAnswers) {

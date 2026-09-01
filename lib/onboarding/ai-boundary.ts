@@ -28,10 +28,10 @@ export async function getWebsiteGenerationInput(projectId: string) {
   }[]>`
     select
       id,
-      original_name as name,
+      original_filename as name,
       mime_type as "mimeType",
-      size_bytes::int as size,
-      object_key as "objectKey"
+      size::int as size,
+      storage_key as "objectKey"
     from onboarding_assets
     where project_id = ${projectId} and status = 'uploaded'
     order by created_at asc

@@ -48,11 +48,12 @@ Ak nginx vracia `405 Not Allowed` pri odoslaní formulára, znamená to, že req
 
 ## Klientsky onboarding
 
-Onboarding potrebuje PostgreSQL databázu. Vyplnený dotazník sa pri odoslaní pošle
-cez Resend na `CONTACT_TO_EMAIL`. Súbory klient odošle samostatne e-mailom cez
-tlačidlo v piatom kroku, preto S3 premenné v tomto dočasnom režime nie sú potrebné.
+Onboarding potrebuje PostgreSQL databázu. Vyplnený Core dotazník sa pri odoslaní
+pošle cez Resend na `CONTACT_TO_EMAIL`. Discovery 2 sa ukladá samostatne podľa
+`client_id`; pôvodné Core odpovede sa migráciou nemenia.
 
-Pred prvým použitím spusti migráciu:
+Po každom nasadení spusti migrácie. Runner vykoná všetky SQL súbory v priečinku
+`migrations/` v poradí; príkazy sú pripravené na opakované spustenie:
 
 ```bash
 pnpm onboarding:migrate
@@ -79,6 +80,22 @@ pnpm onboarding:list
 pnpm onboarding:show -- <project-id>
 ```
 
-S3/R2 integrácia zostáva v projekte pripravená na neskoršie zapnutie. Bucket potom
-musí povoliť CORS `PUT` požiadavky z domény webu s hlavičkou `Content-Type` a nesmie
-mať zapnuté verejné čítanie.
+## S3-compatible úložisko
+
+Pre viacnásobné nahrávanie fotografií a dokumentov nastav:
+
+```env
+S3_ENDPOINT=https://...
+S3_REGION=auto
+S3_BUCKET=webkastart-client-assets
+S3_ACCESS_KEY_ID=...
+S3_SECRET_ACCESS_KEY=...
+S3_FORCE_PATH_STYLE=false
+S3_PUBLIC_URL=
+```
+
+Bucket nesmie mať zapnuté verejné čítanie. Musí povoliť CORS `PUT` z domény webu
+s hlavičkou `Content-Type`. Frontend nikdy nedostane access keys, iba krátkodobý
+presigned upload URL. Súbory sa ukladajú pod
+`clients/{client_id}/uploads/{uuid}-{bezpecny-nazov}`; databáza uchováva len
+metadata a `storage_key`. Galéria v administrácii používa krátkodobé podpísané URL.

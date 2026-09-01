@@ -17,16 +17,17 @@ export async function DELETE(request: Request, { params }: Context) {
 
     const sql = getDatabase()
     const rows = await sql<{ objectKey: string }[]>`
-      select object_key as "objectKey" from onboarding_assets
-      where id = ${uploadId} and project_id = ${project.id}
+      select storage_key as "objectKey" from onboarding_assets
+      where id = ${uploadId} and client_id = ${project.clientId}
       limit 1
     `
     const upload = rows[0]
     if (!upload) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
 
     await deleteUploadedObject(upload.objectKey)
-    await sql`delete from onboarding_assets where id = ${uploadId} and project_id = ${project.id}`
+    await sql`delete from onboarding_assets where id = ${uploadId} and client_id = ${project.clientId}`
     await sql`update onboarding_projects set updated_at = now(), last_activity_at = now() where id = ${project.id}`
+    await sql`update clients set updated_at = now() where id = ${project.clientId}`
     return privateJson({ ok: true })
   } catch (error) {
     return apiError(error)

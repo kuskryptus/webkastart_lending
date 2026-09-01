@@ -4,9 +4,11 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Copy, Loader2, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
+import { UploadField } from '@/components/onboarding/upload-field'
 import {
   emptyOnboardingAnswers,
   type OnboardingAnswers,
+  type OnboardingAsset,
   type OnboardingProjectResponse,
 } from '@/lib/onboarding/types'
 import { validateContact } from '@/lib/onboarding/validation'
@@ -245,6 +247,7 @@ export function OnboardingWizard({
   token: string
 }) {
   const [answers, setAnswers] = useState<OnboardingAnswers>(emptyOnboardingAnswers)
+  const [assets, setAssets] = useState<OnboardingAsset[]>([])
   const [step, setStep] = useState(1)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [loading, setLoading] = useState(true)
@@ -284,6 +287,7 @@ export function OnboardingWizard({
         }
 
         setAnswers(nextAnswers)
+        setAssets(data.assets)
         setStep(Math.min(TOTAL_STEPS, Math.max(1, nextStep)))
         setCompleted(data.status === 'submitted')
         hydratedRef.current = true
@@ -551,8 +555,11 @@ export function OnboardingWizard({
 
           {step === 5 && (
             <>
-              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Logo, fotografie, texty, cenník alebo ďalšie materiály môžete poslať cez WhatsApp alebo e-mail. Dotazník môžete dokončiť aj bez nich." />
-              <div className="max-w-xl divide-y divide-border/70">
+              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Nahrajte naraz fotografie, logo, PDF alebo ďalšie materiály. Súbory môžete doplniť aj neskôr cez rovnaký link." />
+              <UploadField assets={assets} onAssetsChange={setAssets} token={token} />
+              <div className="mt-10 max-w-xl border-t border-border/70 pt-7">
+                <p className="mb-2 text-sm font-semibold">Ak vám nahrávanie nevyhovuje</p>
+                <div className="divide-y divide-border/70">
                 <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
                   <div>
                     <p className="text-sm text-muted-foreground">WhatsApp</p>
@@ -570,6 +577,7 @@ export function OnboardingWizard({
                     </a>
                   </div>
                   <CopyContactButton value={filesEmail} />
+                </div>
                 </div>
               </div>
               <OptionalHint>Do správy napíšte svoje meno alebo názov projektu. Pri väčších súboroch nám môžete poslať odkaz z WeTransferu alebo Google Disku.</OptionalHint>

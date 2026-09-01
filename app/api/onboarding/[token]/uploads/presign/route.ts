@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { checkRateLimit, findOnboardingByToken, getDatabase } from '@/lib/onboarding/db'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { createUploadUrl } from '@/lib/onboarding/storage'
-import { MAX_UPLOAD_FILES, validateUpload } from '@/lib/onboarding/validation'
+import { MAX_UPLOAD_FILES, safeStorageFileName, validateUpload } from '@/lib/onboarding/validation'
 
 export const runtime = 'nodejs'
 
@@ -39,11 +39,11 @@ export async function POST(request: Request, { params }: Context) {
 
     if (retryUploadId) {
       const rows = await sql<{ id: string; objectKey: string }[]>`
-        select id, object_key as "objectKey"
+        select id, storage_key as "objectKey"
         from onboarding_assets
-        where id = ${retryUploadId} and project_id = ${project.id} and status = 'pending'
-          and original_name = ${String(body.name)} and mime_type = ${String(body.mimeType)}
-          and size_bytes = ${Number(body.size)}
+        where id = ${retryUploadId} and client_id = ${project.clientId} and status = 'pending'
+          and original_filename = ${String(body.name)} and mime_type = ${String(body.mimeType)}
+          and size = ${Number(body.size)}
         limit 1
       `
       upload = rows[0]
@@ -51,17 +51,18 @@ export async function POST(request: Request, { params }: Context) {
 
     if (!upload) {
       const rows = await sql.begin(async (transaction) => {
-        await transaction`select id from onboarding_projects where id = ${project.id} for update`
+        await transaction`select id from clients where id = ${project.clientId} for update`
         const countRows = await transaction<{ count: number }[]>`
-          select count(*)::int as count from onboarding_assets where project_id = ${project.id}
+          select count(*)::int as count from onboarding_assets where client_id = ${project.clientId}
         `
         if ((countRows[0]?.count ?? MAX_UPLOAD_FILES) >= MAX_UPLOAD_FILES) return []
 
-        const objectKey = `onboarding/${project.id}/${randomUUID()}.${validation.extension}`
+        const fileName = safeStorageFileName(String(body.name), validation.extension)
+        const objectKey = `clients/${project.clientId}/uploads/${randomUUID()}-${fileName}`
         return transaction<{ id: string; objectKey: string }[]>`
-          insert into onboarding_assets (project_id, object_key, original_name, mime_type, size_bytes)
-          values (${project.id}, ${objectKey}, ${String(body.name)}, ${String(body.mimeType)}, ${Number(body.size)})
-          returning id, object_key as "objectKey"
+          insert into onboarding_assets (project_id, client_id, storage_key, original_filename, mime_type, size)
+          values (${project.id}, ${project.clientId}, ${objectKey}, ${String(body.name)}, ${String(body.mimeType)}, ${Number(body.size)})
+          returning id, storage_key as "objectKey"
         `
       }) as { id: string; objectKey: string }[]
       if (!rows.length) {

@@ -1,5 +1,21 @@
 export type OnboardingStatus = 'not_started' | 'in_progress' | 'submitted'
 
+export type Discovery2Answers = {
+  order_process: string
+  primary_products_and_prices: string
+  personalization_options: string
+  customer_appreciation: string
+  must_show_on_website: string
+}
+
+export const emptyDiscovery2Answers: Discovery2Answers = {
+  order_process: '',
+  primary_products_and_prices: '',
+  personalization_options: '',
+  customer_appreciation: '',
+  must_show_on_website: '',
+}
+
 export type OnboardingAnswers = {
   client: {
     displayName: string
@@ -49,6 +65,14 @@ export type OnboardingAsset = {
 export type OnboardingProjectResponse = {
   answers: OnboardingAnswers
   assets: OnboardingAsset[]
+  clientLabel: string
+  currentStep: number
+  status: OnboardingStatus
+  updatedAt: string
+}
+
+export type Discovery2Response = {
+  answers: Discovery2Answers
   clientLabel: string
   currentStep: number
   status: OnboardingStatus

@@ -17,9 +17,9 @@ export async function POST(request: Request, { params }: Context) {
 
     const sql = getDatabase()
     const rows = await sql<{ id: string; mimeType: string; objectKey: string; size: number }[]>`
-      select id, object_key as "objectKey", mime_type as "mimeType", size_bytes::int as size
+      select id, storage_key as "objectKey", mime_type as "mimeType", size::int as size
       from onboarding_assets
-      where id = ${uploadId} and project_id = ${project.id}
+      where id = ${uploadId} and client_id = ${project.clientId}
       limit 1
     `
     const upload = rows[0]
@@ -35,9 +35,10 @@ export async function POST(request: Request, { params }: Context) {
 
     await sql`
       update onboarding_assets set status = 'uploaded', uploaded_at = now()
-      where id = ${upload.id} and project_id = ${project.id}
+      where id = ${upload.id} and client_id = ${project.clientId}
     `
     await sql`update onboarding_projects set updated_at = now(), last_activity_at = now() where id = ${project.id}`
+    await sql`update clients set updated_at = now() where id = ${project.clientId}`
     return privateJson({ ok: true })
   } catch (error) {
     return apiError(error)
