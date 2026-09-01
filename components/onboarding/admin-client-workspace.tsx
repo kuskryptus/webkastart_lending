@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, Loader2, RefreshCw, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, Check, CheckCircle2, Copy, Download, Loader2, RefreshCw, Save } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { UploadField } from './upload-field'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields } from './workspace-form-fields'
+import { stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
 import type { ClientWorkspaceResponse, OnboardingAsset, WorkspaceSection, WorkspaceSectionKey } from '@/lib/onboarding/types'
 
 const sectionTitle: Record<WorkspaceSectionKey, string> = {
@@ -88,6 +89,62 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const [discoveryState, setDiscoveryState] = useState('')
   const [savingCore, setSavingCore] = useState(false)
   const [savingDiscovery, setSavingDiscovery] = useState(false)
+  const [aiExportState, setAiExportState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [aiExportPreview, setAiExportPreview] = useState('')
+  const aiExportRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!aiExportPreview) return
+    aiExportRef.current?.focus({ preventScroll: true })
+    aiExportRef.current?.select()
+  }, [aiExportPreview])
+
+  function aiJson() {
+    return stringifyAiClientBrief(workspace)
+  }
+
+  function showAiCopied() {
+    setAiExportState('copied')
+    window.setTimeout(() => setAiExportState((current) => current === 'copied' ? 'idle' : current), 2500)
+  }
+
+  async function copyForAi() {
+    const json = aiJson()
+    setAiExportPreview('')
+    try {
+      await navigator.clipboard.writeText(json)
+      showAiCopied()
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = json
+      input.setAttribute('readonly', '')
+      input.style.position = 'fixed'
+      input.style.opacity = '0.01'
+      document.body.appendChild(input)
+      input.focus({ preventScroll: true })
+      input.select()
+      const copied = document.execCommand('copy')
+      input.remove()
+      if (copied) {
+        showAiCopied()
+      } else {
+        setAiExportState('error')
+        setAiExportPreview(json)
+      }
+    }
+  }
+
+  function downloadAiJson() {
+    const blobUrl = URL.createObjectURL(new Blob([aiJson()], { type: 'application/json;charset=utf-8' }))
+    const link = document.createElement('a')
+    const safeName = workspace.clientLabel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'klient'
+    link.href = blobUrl
+    link.download = `${safeName}-podklady-pre-ai.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 0)
+  }
 
   function updateSection(section: WorkspaceSection) {
     setWorkspace((current) => ({ ...current, sections: current.sections.map((item) => item.key === section.key ? section : item) }))
@@ -139,7 +196,23 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8"><Link href="/start" className="inline-flex"><LogoMark /></Link><Link href="/start" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> Všetci klienti</Link></header>
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 sm:px-8 sm:pt-12">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Klientsky priestor</p>
-        <div className="mt-3 flex items-end justify-between gap-5"><div><h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1><p className="mt-3 text-sm text-muted-foreground">Pohľad správcu na rovnaké údaje, ktoré klient upravuje vo svojom portáli.</p></div><button type="button" onClick={() => window.location.reload()} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><RefreshCw className="size-4" /> Obnoviť dáta</button></div>
+        <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div><h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1><p className="mt-3 text-sm text-muted-foreground">Pohľad správcu na rovnaké údaje, ktoré klient upravuje vo svojom portáli.</p></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => void copyForAi()} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white hover:bg-brand/90">
+              {aiExportState === 'copied' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+              {aiExportState === 'copied' ? 'Skopírované pre AI' : 'Kopírovať pre AI'}
+            </button>
+            <button type="button" onClick={downloadAiJson} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-secondary px-3 text-xs font-semibold text-foreground hover:bg-secondary/70"><Download className="size-3.5" /> Stiahnuť JSON</button>
+            <button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-9 items-center gap-2 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"><RefreshCw className="size-3.5" /> Obnoviť dáta</button>
+          </div>
+        </div>
+        {aiExportState === 'error' && aiExportPreview && (
+          <div className="mt-5 border-l-2 border-destructive/50 pl-4">
+            <p className="text-sm text-destructive">Prehliadač zablokoval kopírovanie. JSON je označený nižšie — použite ⌘C alebo Ctrl+C.</p>
+            <textarea ref={aiExportRef} readOnly value={aiExportPreview} onFocus={(event) => event.currentTarget.select()} aria-label="JSON podklady pre AI" className="mt-3 min-h-40 w-full resize-y border border-border bg-secondary/30 p-3 font-mono text-xs leading-5 outline-none focus:border-brand" />
+          </div>
+        )}
 
         <nav aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8"><div className="flex min-w-max gap-6">{workspace.sections.map((section) => <a key={section.key} href={`#${section.key}`} className="py-4 text-sm font-medium text-muted-foreground hover:text-brand">{sectionTitle[section.key]}</a>)}</div></nav>
 
