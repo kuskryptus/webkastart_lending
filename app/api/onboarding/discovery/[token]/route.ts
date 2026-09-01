@@ -71,7 +71,7 @@ export async function PATCH(request: Request, { params }: Context) {
     }
 
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
-    const currentStep = Math.min(5, Math.max(1, Math.round(Number(body.currentStep) || 1)))
+    const currentStep = Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1)))
     const answers = sanitizeDiscovery2Answers(body.answers)
     const reopen = body.reopen === true && result.form.status === 'submitted'
     const revision = Number(body.revision)

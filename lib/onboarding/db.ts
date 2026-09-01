@@ -3,6 +3,8 @@ import 'server-only'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import postgres, { type Sql } from 'postgres'
 import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus } from './types'
+import { emptyOnboardingAnswers } from './types'
+import { markPrefilledFields } from './prefill'
 import { createPermanentPortalToken } from './portal-token'
 
 let database: Sql | undefined
@@ -31,14 +33,18 @@ export async function createOnboardingProject(clientLabel: string) {
   const token = createPermanentPortalToken(clientId)
   if (!token) throw new Error('Permanent portal links are not configured')
   const tokenHash = hashOnboardingToken(token)
+  const initialAnswers = markPrefilledFields({
+    ...emptyOnboardingAnswers,
+    client: { displayName: clientLabel },
+  }, ['client.displayName'])
   const rows = await sql.begin(async (transaction) => {
     await transaction`
       insert into clients (id, display_name, portal_token_hash)
       values (${clientId}, ${clientLabel}, ${tokenHash})
     `
     const projects = await transaction<{ createdAt: Date; id: string }[]>`
-      insert into onboarding_projects (id, client_id, client_label, token_hash)
-      values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
+      insert into onboarding_projects (id, client_id, client_label, token_hash, answers)
+      values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash}, ${transaction.json(initialAnswers as unknown as postgres.JSONValue)})
       returning client_id as id, created_at as "createdAt"
     `
     await transaction`

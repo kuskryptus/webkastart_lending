@@ -71,14 +71,25 @@ try {
       throw new Error('Nastavte ONBOARDING_PORTAL_LINK_SECRET alebo ONBOARDING_ADMIN_SECRET (min. 16 znakov).')
     }
     const tokenHash = createHash('sha256').update(token).digest('hex')
+    const initialAnswers = {
+      client: { displayName: clientLabel },
+      fieldMetadata: {
+        'client.displayName': {
+          source_type: 'admin',
+          prefilled: true,
+          confirmed_by_client: false,
+          updated_at: new Date().toISOString(),
+        },
+      },
+    }
     const [project] = await sql.begin(async (transaction) => {
       await transaction`
         insert into clients (id, display_name, portal_token_hash)
         values (${clientId}, ${clientLabel}, ${tokenHash})
       `
       const projects = await transaction`
-        insert into onboarding_projects (id, client_id, client_label, token_hash)
-        values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash})
+        insert into onboarding_projects (id, client_id, client_label, token_hash, answers)
+        values (${clientId}, ${clientId}, ${clientLabel}, ${tokenHash}, ${transaction.json(initialAnswers)})
         returning id, created_at as "createdAt"
       `
       await transaction`

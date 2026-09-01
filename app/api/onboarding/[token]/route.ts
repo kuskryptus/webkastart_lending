@@ -1,6 +1,7 @@
 import { checkRateLimit, findOnboardingByToken, listAssets, pruneRateLimits, saveOnboarding } from '@/lib/onboarding/db'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers } from '@/lib/onboarding/validation'
+import { reconcileClientMetadata } from '@/lib/onboarding/prefill'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -73,7 +74,10 @@ export async function PATCH(request: Request, { params }: Context) {
 
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const currentStep = Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1)))
-    const answers = sanitizeAnswers(body.answers)
+    const answers = reconcileClientMetadata(
+      sanitizeAnswers(result.project.answers),
+      sanitizeAnswers(body.answers),
+    )
     const reopen = body.reopen === true && result.project.status === 'submitted'
     const revision = Number(body.revision)
     if (!Number.isSafeInteger(revision) || revision < 1) {

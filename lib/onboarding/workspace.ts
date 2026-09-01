@@ -46,15 +46,23 @@ export function coreProgress(answers: OnboardingAnswers): WorkspaceProgress {
     answers.client.displayName,
     answers.business.area,
     answers.business.description,
+    answers.projectType,
+    answers.targetAudienceSelections,
     answers.targetAudience,
+    answers.websiteExpectations,
+    answers.websiteInformation,
     answers.websiteGoal,
     answers.desiredActions,
+    answers.offeringTypes,
+    answers.offerItems,
     answers.services,
     answers.sections,
     answers.otherSections,
     answers.futureFeatures,
     answers.designPreferences,
     answers.designOther,
+    answers.colorPreferences,
+    answers.designDislikes,
     answers.inspirationUrls,
     answers.dislikes,
     answers.existingWebsite,
@@ -62,6 +70,7 @@ export function coreProgress(answers: OnboardingAnswers): WorkspaceProgress {
     answers.contact.name,
     answers.contact.email,
     answers.contact.phone,
+    answers.contact.preferredMethods,
     answers.contact.preferredMethod,
     answers.billing.companyName,
     answers.billing.companyId,
@@ -80,8 +89,15 @@ export function coreProgress(answers: OnboardingAnswers): WorkspaceProgress {
 }
 
 export function discoveryProgress(answers: Discovery2Answers): WorkspaceProgress {
-  const values = Object.values(answers)
-  const completedItems = values.filter((value) => value.trim()).length
+  const values = [
+    answers.order_methods.length > 0 || Boolean(answers.order_process.trim()),
+    answers.products_and_prices.length > 0 || Boolean(answers.primary_products_and_prices.trim()),
+    answers.personalization_choices.length > 0 || Boolean(answers.personalization_options.trim()),
+    answers.customer_appreciation_choices.length > 0 || Boolean(answers.customer_appreciation.trim()),
+    answers.frequent_questions.length > 0 || Boolean(answers.frequent_questions_other.trim()),
+    answers.must_show_choices.length > 0 || Boolean(answers.must_show_on_website.trim()),
+  ]
+  const completedItems = values.filter(Boolean).length
   return {
     completed: completedItems === values.length,
     completedItems,
@@ -184,10 +200,19 @@ export async function getClientWorkspace(
     updatedAt: core.updatedAt.toISOString(),
   } : null
   const discoveryAnswers = discovery2 && {
+    order_methods: discovery2.order_methods,
+    order_methods_other: discovery2.order_methods_other,
     order_process: discovery2.order_process,
+    products_and_prices: discovery2.products_and_prices,
     primary_products_and_prices: discovery2.primary_products_and_prices,
+    personalization_choices: discovery2.personalization_choices,
     personalization_options: discovery2.personalization_options,
+    customer_appreciation_choices: discovery2.customer_appreciation_choices,
     customer_appreciation: discovery2.customer_appreciation,
+    customer_quote: discovery2.customer_quote,
+    frequent_questions: discovery2.frequent_questions,
+    frequent_questions_other: discovery2.frequent_questions_other,
+    must_show_choices: discovery2.must_show_choices,
     must_show_on_website: discovery2.must_show_on_website,
   }
   const discoveryValue = discovery2 && discoveryAnswers && (!options.visibleOnly || visibleKeys.has('discovery_2')) ? {
@@ -259,10 +284,19 @@ export async function saveDiscoveryVersioned(options: {
     const updated = await transaction<{ revision: number; status: OnboardingStatus; updatedAt: Date }[]>`
       update discovery_2_forms
       set
+        order_methods = ${transaction.json(options.answers.order_methods as unknown as postgres.JSONValue)},
+        order_methods_other = ${options.answers.order_methods_other},
         order_process = ${options.answers.order_process},
+        products_and_prices = ${transaction.json(options.answers.products_and_prices as unknown as postgres.JSONValue)},
         primary_products_and_prices = ${options.answers.primary_products_and_prices},
+        personalization_choices = ${transaction.json(options.answers.personalization_choices as unknown as postgres.JSONValue)},
         personalization_options = ${options.answers.personalization_options},
+        customer_appreciation_choices = ${transaction.json(options.answers.customer_appreciation_choices as unknown as postgres.JSONValue)},
         customer_appreciation = ${options.answers.customer_appreciation},
+        customer_quote = ${options.answers.customer_quote},
+        frequent_questions = ${transaction.json(options.answers.frequent_questions as unknown as postgres.JSONValue)},
+        frequent_questions_other = ${options.answers.frequent_questions_other},
+        must_show_choices = ${transaction.json(options.answers.must_show_choices as unknown as postgres.JSONValue)},
         must_show_on_website = ${options.answers.must_show_on_website},
         current_step = ${options.currentStep},
         status = case when status = 'not_started' then 'in_progress' else status end,

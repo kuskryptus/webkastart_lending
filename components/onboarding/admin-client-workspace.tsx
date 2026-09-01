@@ -4,10 +4,11 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Check, CheckCircle2, Copy, Download, Loader2, RefreshCw, Save } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
+import { AdminPrefillSection } from './admin-prefill-section'
 import { UploadField } from './upload-field'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields } from './workspace-form-fields'
 import { stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
-import type { ClientWorkspaceResponse, OnboardingAsset, WorkspaceSection, WorkspaceSectionKey } from '@/lib/onboarding/types'
+import type { ClientWorkspaceResponse, OnboardingAsset, PrefillFieldKey, WorkspaceSection, WorkspaceSectionKey } from '@/lib/onboarding/types'
 
 const sectionTitle: Record<WorkspaceSectionKey, string> = {
   core: 'Základný formulár',
@@ -89,6 +90,9 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const [discoveryState, setDiscoveryState] = useState('')
   const [savingCore, setSavingCore] = useState(false)
   const [savingDiscovery, setSavingDiscovery] = useState(false)
+  const [savingPrefill, setSavingPrefill] = useState(false)
+  const [prefillState, setPrefillState] = useState('')
+  const [prefillFields, setPrefillFields] = useState<PrefillFieldKey[]>([])
   const [aiExportState, setAiExportState] = useState<'idle' | 'copied' | 'error'>('idle')
   const [aiExportPreview, setAiExportPreview] = useState('')
   const aiExportRef = useRef<HTMLTextAreaElement>(null)
@@ -178,6 +182,44 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     }
   }
 
+  async function savePrefill() {
+    const form = workspace.core
+    if (!form || !prefillFields.length) return
+    setSavingPrefill(true)
+    setPrefillState('')
+    try {
+      const response = await fetch(`/api/onboarding/admin/clients/${clientId}/workspace`, {
+        body: JSON.stringify({
+          answers: form.answers,
+          currentStep: form.currentStep,
+          operation: 'prefill',
+          prefillFields,
+          revision: form.revision,
+          sectionKey: 'core',
+        }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+      if (!response.ok) throw new Error(await errorMessage(response))
+      const saved = await response.json() as {
+        answers: typeof form.answers
+        progress: typeof form.progress
+        revision: number
+        savedAt: string
+      }
+      setWorkspace((current) => current.core ? {
+        ...current,
+        core: { ...current.core, answers: saved.answers, progress: saved.progress, revision: saved.revision, updatedAt: saved.savedAt },
+      } : current)
+      setPrefillFields([])
+      setPrefillState('Predvyplnené údaje sú uložené.')
+    } catch (error) {
+      setPrefillState(error instanceof Error ? error.message : 'Predvyplnené údaje sa nepodarilo uložiť.')
+    } finally {
+      setSavingPrefill(false)
+    }
+  }
+
   async function changeAssetVisibility(asset: OnboardingAsset, visible: boolean) {
     const previous = workspace.assets
     setWorkspace((current) => ({ ...current, assets: current.assets.map((item) => item.id === asset.id ? { ...item, clientVisible: visible } : item) }))
@@ -225,7 +267,21 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
           <section key={section.key} id={section.key} className="scroll-mt-24 border-t border-border py-12 sm:py-16">
             <div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-semibold tracking-[-0.035em]">{sectionTitle[section.key]}</h2>{section.key === 'core' && workspace.core && <Completion {...workspace.core.progress} />}{section.key === 'discovery_2' && workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</div>
             <div className="mt-6"><SectionSettings clientId={clientId} section={section} onChange={updateSection} /></div>
-            {section.key === 'core' && workspace.core && <div className="mt-10"><CoreWorkspaceFields answers={workspace.core.answers} onChange={(answers) => setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className={`text-xs ${coreState.includes('medzitým') ? 'text-destructive' : 'text-muted-foreground'}`}>{coreState}</span><button type="button" onClick={() => void saveForm('core')} disabled={savingCore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingCore ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť základný formulár</button></div></div>}
+            {section.key === 'core' && workspace.core && <div className="mt-10">
+              <AdminPrefillSection
+                answers={workspace.core.answers}
+                dirty={prefillFields.length > 0}
+                message={prefillState}
+                onChange={(answers, field) => {
+                  setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)
+                  setPrefillFields((current) => current.includes(field) ? current : [...current, field])
+                  setPrefillState('')
+                }}
+                onSave={() => void savePrefill()}
+                saving={savingPrefill}
+              />
+              <div className="pt-12 sm:pt-16"><h3 className="mb-8 text-xl font-semibold tracking-[-0.03em]">Normálny onboarding formulár</h3><CoreWorkspaceFields answers={workspace.core.answers} onChange={(answers) => setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className={`text-xs ${coreState.includes('medzitým') ? 'text-destructive' : 'text-muted-foreground'}`}>{coreState}</span><button type="button" onClick={() => void saveForm('core')} disabled={savingCore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingCore ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť základný formulár</button></div></div>
+            </div>}
             {section.key === 'discovery_2' && workspace.discovery2 && <div className="mt-10"><DiscoveryWorkspaceFields answers={workspace.discovery2.answers} onChange={(answers) => setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className="text-xs text-muted-foreground">{discoveryState}</span><button type="button" onClick={() => void saveForm('discovery_2')} disabled={savingDiscovery} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingDiscovery ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť doplňujúce otázky</button></div></div>}
             {section.key === 'files' && <div className="mt-10"><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={workspace.assets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ clientVisible: false, uploadedBy: 'admin' }} onAssetsChange={(assets) => setWorkspace((current) => ({ ...current, assets }))} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata /></div>}
             {(section.key === 'creative_strategy' || section.key === 'creative_directions' || section.key === 'internal_notes') && <label className="mt-9 block"><span className="text-sm font-semibold">Obsah sekcie</span><textarea value={section.content} onChange={(event) => updateSection({ ...section, content: event.target.value })} className="mt-3 min-h-52 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-4 text-sm leading-7 outline-none focus:border-brand" placeholder={section.key === 'internal_notes' ? 'Interné poznámky — klient ich nikdy neuvidí.' : 'Pridajte obsah, ktorý bude možné podľa nastavenia viditeľnosti zdieľať s klientom.'} /></label>}

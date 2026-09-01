@@ -3,6 +3,7 @@ import { checkRateLimit, findOnboardingByToken, submitOnboarding } from '@/lib/o
 import { createOnboardingEmail } from '@/lib/onboarding/email'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
+import { reconcileClientMetadata } from '@/lib/onboarding/prefill'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -45,7 +46,10 @@ export async function POST(request: Request, { params }: Context) {
     if (revision !== project.revision) {
       return privateJson({ error: 'Údaje sa medzitým zmenili. Obnovte stránku.', reason: 'conflict' }, { status: 409 })
     }
-    const answers = sanitizeAnswers(body.answers)
+    const answers = reconcileClientMetadata(
+      sanitizeAnswers(project.answers),
+      sanitizeAnswers(body.answers),
+    )
     const errors = validateContact(answers)
     if (Object.keys(errors).length) {
       return privateJson({ error: 'Doplňte prosím kontaktné údaje.', fields: errors }, { status: 422 })

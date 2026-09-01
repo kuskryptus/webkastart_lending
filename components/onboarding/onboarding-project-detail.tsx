@@ -131,7 +131,7 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
           <dl className="grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
             <Answer label="Vytvorené">{formatDate(project.createdAt)}</Answer>
             <Answer label="Základný formulár">{statusLabel[project.status]} · {progress} %</Answer>
-            <Answer label="Doplňujúce otázky">{discovery ? `${statusLabel[discovery.status]} · ${discovery.currentStep}. krok z 5` : 'Link ešte nebol vytvorený'}</Answer>
+            <Answer label="Doplňujúce otázky">{discovery ? `${statusLabel[discovery.status]} · ${discovery.currentStep}. krok zo 6` : 'Link ešte nebol vytvorený'}</Answer>
             <Answer label="Súbory">{uploadedAssets.length ? `${uploadedAssets.length} nahraných` : 'Žiadne nahrané súbory'}</Answer>
           </dl>
         </PageSection>
@@ -139,23 +139,29 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
         <PageSection id="core" title="Základný formulár" text="Pôvodný onboarding klienta. Existujúce otázky a odpovede zostávajú zachované.">
           <CoreStep number={1} title="O klientovi">
             <Answer label="Meno / názov podnikania">{answers.client.displayName}</Answer><Answer label="Čomu sa venuje">{answers.business.area}</Answer>
+            <Answer label="Typ projektu">{answers.projectType}</Answer>
             <div className="sm:col-span-2"><Answer label="Ako opisuje svoju prácu">{answers.business.description}</Answer></div>
             <ExternalAnswer label="Existujúci web" value={answers.existingWebsite} />
-            <Answer label="Sociálne siete">{answers.socialLinks.length ? <span className="space-y-1.5">{answers.socialLinks.map((value) => { const href = externalUrl(value); return href ? <a key={value} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{value}<ExternalLink className="size-3.5" /></a> : <span key={value} className="block">{value}</span> })}</span> : ''}</Answer>
+            <Answer label="Sociálne siete">{answers.socialLinks.length ? <span className="space-y-1.5">{answers.socialLinks.map((value, index) => { const href = externalUrl(value); const label = [answers.socialPlatforms[index], value].filter(Boolean).join(': '); return href ? <a key={`${value}-${index}`} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{label}<ExternalLink className="size-3.5" /></a> : <span key={`${value}-${index}`} className="block">{label}</span> })}</span> : ''}</Answer>
           </CoreStep>
           <CoreStep number={2} title="Zákazníci a cieľ">
-            <div className="sm:col-span-2"><Answer label="Komu najčastejšie pomáha">{answers.targetAudience}</Answer></div><Answer label="Čo má návštevník urobiť"><SelectionList values={answers.desiredActions} /></Answer><Answer label="Čo sa má návštevník dozvedieť">{answers.websiteGoal}</Answer>
+            <Answer label="Najčastejší zákazníci"><SelectionList values={[...answers.targetAudienceSelections, ...(answers.targetAudience ? [answers.targetAudience] : [])]} /></Answer>
+            <Answer label="Očakávania od webu"><SelectionList values={[...answers.websiteExpectations, ...(answers.websiteExpectationsOther ? [answers.websiteExpectationsOther] : [])]} /></Answer>
+            <Answer label="Čo sa má návštevník dozvedieť"><SelectionList values={[...answers.websiteInformation, ...(answers.websiteGoal ? [answers.websiteGoal] : [])]} /></Answer>
+            <Answer label="Čo má návštevník urobiť"><SelectionList values={[...answers.desiredActions, ...(answers.desiredActionsOther ? [answers.desiredActionsOther] : [])]} /></Answer>
+            <Answer label="Typ ponuky"><SelectionList values={[...answers.offeringTypes, ...(answers.services ? [answers.services] : [])]} /></Answer>
+            <Answer label="Konkrétne produkty / služby"><SelectionList values={answers.offerItems} /></Answer>
           </CoreStep>
           <CoreStep number={3} title="Obsah stránky">
-            <Answer label="Časti stránky"><SelectionList values={answers.sections} /></Answer><Answer label="Budúce rozšírenia"><SelectionList values={answers.futureFeatures} /></Answer><div className="sm:col-span-2"><Answer label="Ďalšie požiadavky">{answers.otherSections}</Answer></div>
+            <Answer label="Časti stránky"><SelectionList values={[...answers.sections, ...(answers.sectionsOther ? [answers.sectionsOther] : [])]} /></Answer><Answer label="Budúce rozšírenia"><SelectionList values={[...answers.futureFeatures, ...(answers.futureFeaturesOther ? [answers.futureFeaturesOther] : [])]} /></Answer><div className="sm:col-span-2"><Answer label="Ďalšie požiadavky">{answers.otherSections}</Answer></div>
           </CoreStep>
           <CoreStep number={4} title="Vizuálny smer">
-            <Answer label="Ako má web pôsobiť"><SelectionList values={[...answers.designPreferences, ...(answers.designOther ? [answers.designOther] : [])]} /></Answer><Answer label="Čomu sa vyhnúť">{answers.dislikes}</Answer>
+            <Answer label="Ako má web pôsobiť"><SelectionList values={[...answers.designPreferences, ...(answers.designOther ? [answers.designOther] : [])]} /></Answer><Answer label="Farebné preferencie"><SelectionList values={[...answers.colorPreferences, ...(answers.colorPreferencesOther ? [answers.colorPreferencesOther] : [])]} /></Answer><Answer label="Čomu sa vyhnúť"><SelectionList values={[...answers.designDislikes, ...(answers.dislikes ? [answers.dislikes] : [])]} /></Answer>
             <div className="sm:col-span-2"><Answer label="Inšpirácie">{answers.inspirationUrls.length ? <span className="space-y-1.5">{answers.inspirationUrls.map((value) => { const href = externalUrl(value); return href ? <a key={value} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{value}<ExternalLink className="size-3.5" /></a> : <span key={value} className="block">{value}</span> })}</span> : ''}</Answer></div>
           </CoreStep>
           <CoreStep number={5} title="Materiály"><div className="sm:col-span-2"><Answer label="Nahrané podklady">{uploadedAssets.length ? `${uploadedAssets.length} súborov — nájdete ich v sekcii Súbory / fotografie.` : ''}</Answer></div></CoreStep>
           <CoreStep number={6} title="Kontakt a dokončenie">
-            <Answer label="Kontaktná osoba">{answers.contact.name}</Answer><Answer label="Preferovaný kontakt">{answers.contact.preferredMethod}</Answer>
+            <Answer label="Kontaktná osoba">{answers.contact.name}</Answer><Answer label="Ideálny kontakt zákazníka"><SelectionList values={[...answers.contact.preferredMethods, ...(answers.contact.preferredMethod ? [answers.contact.preferredMethod] : [])]} /></Answer>
             <Answer label="E-mail">{answers.contact.email ? <a href={`mailto:${answers.contact.email}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Mail className="size-3.5" />{answers.contact.email}</a> : ''}</Answer>
             <Answer label="Telefón">{answers.contact.phone ? <a href={`tel:${answers.contact.phone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Phone className="size-3.5" />{answers.contact.phone}</a> : ''}</Answer>
             <Answer label="Fakturačný názov">{answers.billing.companyName}</Answer><Answer label="IČO / DIČ / IČ DPH">{[answers.billing.companyId, answers.billing.taxId, answers.billing.vatId].filter(Boolean).join(' · ')}</Answer>
@@ -165,7 +171,16 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
 
         <PageSection id="discovery-2" title="Doplňujúce otázky" text="Samostatný doplňujúci formulár s vlastným osobným linkom.">
           <Discovery2Admin clientId={project.id} exists={Boolean(discovery)} />
-          {discovery && <dl className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2"><div className="sm:col-span-2"><Answer label="Ako dnes zákazník objednáva a ako celý proces objednávky prebieha?">{discovery.order_process}</Answer></div><div className="sm:col-span-2"><Answer label="Aké produkty chcete cez web primárne ponúkať a v akých cenách?">{discovery.primary_products_and_prices}</Answer></div><Answer label="Čo všetko môže zákazník personalizovať?">{discovery.personalization_options}</Answer><Answer label="Čo podľa vás zákazníci na vašej tvorbe najviac oceňujú?">{discovery.customer_appreciation}</Answer><div className="sm:col-span-2"><Answer label="Je niečo, čo chcete na novom webe určite ukázať?">{discovery.must_show_on_website}</Answer></div></dl>}
+          {discovery && <dl className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+            <Answer label="Ako dnes zákazník objednáva"><SelectionList values={[...discovery.order_methods, ...(discovery.order_methods_other ? [discovery.order_methods_other] : [])]} /></Answer>
+            <Answer label="Opis procesu">{discovery.order_process}</Answer>
+            <div className="sm:col-span-2"><Answer label="Produkty, služby a ceny"><SelectionList values={[...discovery.products_and_prices.map((item) => [item.name, item.type, item.priceType, item.price, item.note].filter(Boolean).join(' · ')), ...(discovery.primary_products_and_prices ? [discovery.primary_products_and_prices] : [])]} /></Answer></div>
+            <Answer label="Čo môže zákazník prispôsobiť"><SelectionList values={[...discovery.personalization_choices, ...(discovery.personalization_options ? [discovery.personalization_options] : [])]} /></Answer>
+            <Answer label="Čo zákazníci oceňujú"><SelectionList values={[...discovery.customer_appreciation_choices, ...(discovery.customer_appreciation ? [discovery.customer_appreciation] : [])]} /></Answer>
+            <Answer label="Konkrétna reakcia zákazníka">{discovery.customer_quote}</Answer>
+            <Answer label="Časté otázky"><SelectionList values={[...discovery.frequent_questions, ...(discovery.frequent_questions_other ? [discovery.frequent_questions_other] : [])]} /></Answer>
+            <div className="sm:col-span-2"><Answer label="Čo musí byť na webe"><SelectionList values={[...discovery.must_show_choices, ...(discovery.must_show_on_website ? [discovery.must_show_on_website] : [])]} /></Answer></div>
+          </dl>}
         </PageSection>
 
         <PageSection id="files" title="Súbory / fotografie" text="Obrázky sú zobrazené v galérii, ostatné podklady samostatne.">

@@ -37,8 +37,10 @@ function coreSections(answers: OnboardingAnswers) {
       responses: [
         response('display_name', 'Meno alebo názov podnikania', answers.client.displayName),
         response('business_area', 'Čomu sa klient venuje', answers.business.area),
+        response('project_type', 'Typ projektu', answers.projectType),
         response('business_description', 'Ako klient opisuje svoju prácu', answers.business.description),
         response('existing_website', 'Existujúci web', answers.existingWebsite),
+        response('social_platforms', 'Platformy sociálnych sietí', answers.socialPlatforms),
         response('social_links', 'Sociálne siete', answers.socialLinks),
       ],
     },
@@ -47,8 +49,15 @@ function coreSections(answers: OnboardingAnswers) {
       title: 'Zákazníci a cieľ webu',
       responses: [
         response('target_audience', 'Komu klient najčastejšie pomáha', answers.targetAudience),
+        response('target_audience_selections', 'Typy zákazníkov', answers.targetAudienceSelections),
+        response('website_expectations', 'Čo klient od webu očakáva', answers.websiteExpectations),
+        response('website_expectations_other', 'Iné očakávanie od webu', answers.websiteExpectationsOther),
+        response('website_information', 'Čo sa má návštevník dozvedieť', answers.websiteInformation),
         response('website_goal', 'Čo sa má návštevník dozvedieť', answers.websiteGoal),
         response('desired_actions', 'Čo má návštevník urobiť', answers.desiredActions),
+        response('desired_actions_other', 'Iná požadovaná akcia', answers.desiredActionsOther),
+        response('offering_types', 'Typ ponuky', answers.offeringTypes),
+        response('offer_items', 'Konkrétne produkty a služby', answers.offerItems),
         response('services', 'Služby alebo ponuka', answers.services),
       ],
     },
@@ -57,7 +66,9 @@ function coreSections(answers: OnboardingAnswers) {
       title: 'Obsah stránky',
       responses: [
         response('sections', 'Požadované časti stránky', answers.sections),
+        response('sections_other', 'Iná časť stránky', answers.sectionsOther),
         response('future_features', 'Budúce rozšírenia', answers.futureFeatures),
+        response('future_features_other', 'Iné budúce rozšírenie', answers.futureFeaturesOther),
         response('other_sections', 'Ďalšie požiadavky', answers.otherSections),
       ],
     },
@@ -67,7 +78,10 @@ function coreSections(answers: OnboardingAnswers) {
       responses: [
         response('design_preferences', 'Ako má web pôsobiť', answers.designPreferences),
         response('design_other', 'Ďalší vizuálny smer', answers.designOther),
+        response('color_preferences', 'Farebné preferencie', answers.colorPreferences),
+        response('color_preferences_other', 'Iná farebná preferencia', answers.colorPreferencesOther),
         response('inspiration_urls', 'Inšpirácie', answers.inspirationUrls),
+        response('design_dislikes', 'Čomu sa má dizajn vyhnúť', answers.designDislikes),
         response('dislikes', 'Čomu sa vyhnúť', answers.dislikes),
       ],
     },
@@ -78,6 +92,7 @@ function coreSections(answers: OnboardingAnswers) {
         response('contact_name', 'Kontaktná osoba', answers.contact.name),
         response('contact_email', 'E-mail', answers.contact.email),
         response('contact_phone', 'Telefón', answers.contact.phone),
+        response('preferred_contacts', 'Preferované spôsoby kontaktu zákazníkov', answers.contact.preferredMethods),
         response('preferred_contact', 'Preferovaný spôsob kontaktu', answers.contact.preferredMethod),
       ],
     },
@@ -102,12 +117,16 @@ function coreSections(answers: OnboardingAnswers) {
   ]
 }
 
-const discoveryQuestions: Array<[keyof Discovery2Answers, string]> = [
-  ['order_process', 'Ako dnes zákazník objednáva a ako celý proces prebieha?'],
-  ['primary_products_and_prices', 'Aké produkty chce klient primárne ponúkať a v akých cenách?'],
-  ['personalization_options', 'Čo všetko môže zákazník personalizovať?'],
-  ['customer_appreciation', 'Čo zákazníci na tvorbe klienta najviac oceňujú?'],
-  ['must_show_on_website', 'Čo chce klient na novom webe určite ukázať?'],
+const discoveryQuestions: Array<[string, string, (answers: Discovery2Answers) => AiAnswer]> = [
+  ['order_methods', 'Ako dnes zákazník objednáva?', (answers) => [...answers.order_methods, answers.order_methods_other, answers.order_process]],
+  ['products_and_prices', 'Aké produkty alebo služby klient ponúka a v akých cenách?', (answers) => [
+    ...answers.products_and_prices.map((item) => [item.name, item.type, item.priceType, item.price, item.note].filter(Boolean).join(' · ')),
+    answers.primary_products_and_prices,
+  ]],
+  ['personalization_choices', 'Čo všetko môže zákazník prispôsobiť?', (answers) => [...answers.personalization_choices, answers.personalization_options]],
+  ['customer_appreciation_choices', 'Čo zákazníci najviac oceňujú?', (answers) => [...answers.customer_appreciation_choices, answers.customer_appreciation, answers.customer_quote]],
+  ['frequent_questions', 'Čo sa zákazníci najčastejšie pýtajú?', (answers) => [...answers.frequent_questions, answers.frequent_questions_other]],
+  ['must_show_choices', 'Čo musí byť na novom webe určite?', (answers) => [...answers.must_show_choices, answers.must_show_on_website]],
 ]
 
 const workspaceSectionTitles: Record<WorkspaceSectionKey, string> = {
@@ -141,7 +160,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
       revision: discovery?.revision || null,
       status: discovery?.status || 'not_started',
       updated_at: discovery?.updatedAt || null,
-      responses: discoveryQuestions.map(([key, question]) => response(key, question, (discovery?.answers || emptyDiscovery2Answers)[key])),
+      responses: discoveryQuestions.map(([key, question, answer]) => response(key, question, answer(discovery?.answers || emptyDiscovery2Answers))),
     },
   ]
 
@@ -154,6 +173,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
       overall_completion_percent: workspace.overallProgress,
     },
     forms,
+    answer_metadata: core?.answers.fieldMetadata || {},
     workspace_sections: workspace.sections.map((section) => ({
       id: section.key,
       title: workspaceSectionTitles[section.key],

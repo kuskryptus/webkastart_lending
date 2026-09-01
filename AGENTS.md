@@ -26,7 +26,8 @@ and pnpm.
 - PostgreSQL schema: ordered migrations under `migrations/`; migration 003 adds
   clients, client-level assets, Discovery 2, and the shared workspace without
   rewriting Core answers. Migration 004 preserves previously issued portal tokens
-  for lookup and, when available, admin re-copy.
+  for lookup and, when available, admin re-copy. Migration 005 adds the fast-choice
+  and structured product fields while retaining the original Discovery text columns.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -46,6 +47,11 @@ and pnpm.
   rows. Respect `client_workspace_sections`; internal notes are never client-visible.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.
   A stale writer must receive 409 and must never overwrite a newer record.
+- Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
+  values remain in their original answer fields. Reconcile client metadata
+  server-side and never trust client-supplied source labels.
+- Fast-choice fields are additive. Keep the legacy free-text fields readable and
+  writable so existing client answers survive new saves without a data rewrite.
 - Answers remain structured according to their form types; sanitize all writes at
   the API boundary so the future AI boundary remains stable.
 

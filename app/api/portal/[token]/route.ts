@@ -1,5 +1,7 @@
 import { authorizePortalRequest } from '@/lib/onboarding/portal-auth'
+import { findCoreOnboardingByClientId } from '@/lib/onboarding/db'
 import { apiError, privateJson, readSmallJson } from '@/lib/onboarding/http'
+import { reconcileClientMetadata } from '@/lib/onboarding/prefill'
 import { sanitizeAnswers, sanitizeDiscovery2Answers } from '@/lib/onboarding/validation'
 import {
   coreProgress,
@@ -57,7 +59,12 @@ export async function PATCH(request: Request, { params }: Context) {
     }
 
     if (sectionKey === 'core') {
-      const answers = sanitizeAnswers(body.answers)
+      const current = await findCoreOnboardingByClientId(result.client.id)
+      if (!current) return privateJson({ error: 'Projekt sa nenašiel.' }, { status: 404 })
+      const answers = reconcileClientMetadata(
+        sanitizeAnswers(current.answers),
+        sanitizeAnswers(body.answers),
+      )
       const saved = await saveCoreVersioned({
         answers,
         clientId: result.client.id,
@@ -75,7 +82,7 @@ export async function PATCH(request: Request, { params }: Context) {
     const saved = await saveDiscoveryVersioned({
       answers,
       clientId: result.client.id,
-      currentStep: Math.min(5, Math.max(1, Math.round(Number(body.currentStep) || 1))),
+      currentStep: Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1))),
       revision,
     })
     return privateJson({

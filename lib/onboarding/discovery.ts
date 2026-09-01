@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { randomBytes } from 'node:crypto'
+import postgres from 'postgres'
 import type { Discovery2Answers, OnboardingStatus } from './types'
 import { getDatabase, hashOnboardingToken } from './db'
 
@@ -25,10 +26,19 @@ const discoveryReturning = `
   status,
   current_step as "currentStep",
   revision::int as revision,
+  order_methods,
+  order_methods_other,
   order_process,
+  products_and_prices,
   primary_products_and_prices,
+  personalization_choices,
   personalization_options,
+  customer_appreciation_choices,
   customer_appreciation,
+  customer_quote,
+  frequent_questions,
+  frequent_questions_other,
+  must_show_choices,
   must_show_on_website,
   created_at as "createdAt",
   updated_at as "updatedAt",
@@ -43,10 +53,19 @@ const discoverySelect = `
   form.status,
   form.current_step as "currentStep",
   form.revision::int as revision,
+  form.order_methods,
+  form.order_methods_other,
   form.order_process,
+  form.products_and_prices,
   form.primary_products_and_prices,
+  form.personalization_choices,
   form.personalization_options,
+  form.customer_appreciation_choices,
   form.customer_appreciation,
+  form.customer_quote,
+  form.frequent_questions,
+  form.frequent_questions_other,
+  form.must_show_choices,
   form.must_show_on_website,
   form.created_at as "createdAt",
   form.updated_at as "updatedAt",
@@ -107,10 +126,19 @@ export async function saveDiscovery2(
     const rows = await transaction<{ clientId: string; revision: number }[]>`
       update discovery_2_forms
       set
+        order_methods = ${transaction.json(answers.order_methods as unknown as postgres.JSONValue)},
+        order_methods_other = ${answers.order_methods_other},
         order_process = ${answers.order_process},
+        products_and_prices = ${transaction.json(answers.products_and_prices as unknown as postgres.JSONValue)},
         primary_products_and_prices = ${answers.primary_products_and_prices},
+        personalization_choices = ${transaction.json(answers.personalization_choices as unknown as postgres.JSONValue)},
         personalization_options = ${answers.personalization_options},
+        customer_appreciation_choices = ${transaction.json(answers.customer_appreciation_choices as unknown as postgres.JSONValue)},
         customer_appreciation = ${answers.customer_appreciation},
+        customer_quote = ${answers.customer_quote},
+        frequent_questions = ${transaction.json(answers.frequent_questions as unknown as postgres.JSONValue)},
+        frequent_questions_other = ${answers.frequent_questions_other},
+        must_show_choices = ${transaction.json(answers.must_show_choices as unknown as postgres.JSONValue)},
         must_show_on_website = ${answers.must_show_on_website},
         current_step = ${currentStep},
         status = case
@@ -137,12 +165,21 @@ export async function submitDiscovery2(formId: string, answers: Discovery2Answer
     const rows = await transaction<{ clientId: string; revision: number }[]>`
       update discovery_2_forms
       set
+        order_methods = ${transaction.json(answers.order_methods as unknown as postgres.JSONValue)},
+        order_methods_other = ${answers.order_methods_other},
         order_process = ${answers.order_process},
+        products_and_prices = ${transaction.json(answers.products_and_prices as unknown as postgres.JSONValue)},
         primary_products_and_prices = ${answers.primary_products_and_prices},
+        personalization_choices = ${transaction.json(answers.personalization_choices as unknown as postgres.JSONValue)},
         personalization_options = ${answers.personalization_options},
+        customer_appreciation_choices = ${transaction.json(answers.customer_appreciation_choices as unknown as postgres.JSONValue)},
         customer_appreciation = ${answers.customer_appreciation},
+        customer_quote = ${answers.customer_quote},
+        frequent_questions = ${transaction.json(answers.frequent_questions as unknown as postgres.JSONValue)},
+        frequent_questions_other = ${answers.frequent_questions_other},
+        must_show_choices = ${transaction.json(answers.must_show_choices as unknown as postgres.JSONValue)},
         must_show_on_website = ${answers.must_show_on_website},
-        current_step = 5,
+        current_step = 6,
         status = 'submitted',
         submitted_at = coalesce(submitted_at, now()),
         revision = revision + 1,

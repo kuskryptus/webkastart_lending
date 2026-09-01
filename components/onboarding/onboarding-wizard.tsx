@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Copy, Loader2, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
+import { OtherAnswer, QuickQuestion, RepeatableTextItems } from '@/components/onboarding/quick-fields'
 import { UploadField } from '@/components/onboarding/upload-field'
 import {
   emptyOnboardingAnswers,
@@ -12,27 +13,15 @@ import {
   type OnboardingProjectResponse,
 } from '@/lib/onboarding/types'
 import { validateContact } from '@/lib/onboarding/validation'
+import {
+  colorOptions, communicationOptions, designOptions, desiredActionOptions, dislikeOptions,
+  futureOptions, offeringOptions, sectionOptions, socialPlatformOptions,
+  projectTypeOptions, targetAudienceOptions, websiteExpectationOptions, websiteInformationOptions,
+} from '@/lib/onboarding/options'
+import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
+import type { PrefillFieldKey } from '@/lib/onboarding/types'
 
 const TOTAL_STEPS = 6
-
-const desiredActionOptions = [
-  'Zavolať mi', 'Napísať e-mail', 'Poslať kontaktný formulár', 'Rezervovať termín',
-  'Pozrieť si moje služby', 'Kúpiť produkt', 'Nie som si istý/istá', 'Iné',
-]
-const sectionOptions = [
-  'O mne / o firme', 'Služby', 'Cenník', 'Referencie', 'Ukážky práce / portfólio',
-  'Galéria', 'Kontakt', 'Kontaktný formulár', 'Mapa', 'Sociálne siete',
-  'Často kladené otázky', 'Nie som si istý/istá – navrhnite mi to vy',
-]
-const futureOptions = [
-  'Zatiaľ neviem', 'Ďalšie podstránky', 'Blog', 'Rezervácie', 'E-shop',
-  'Viac jazykov', 'Newsletter', 'Iné',
-]
-const designOptions = [
-  'Moderný', 'Jednoduchý', 'Elegantný', 'Prémiový', 'Osobný', 'Hravý',
-  'Minimalistický', 'Profesionálny', 'Výrazný', 'Neviem – navrhnite mi to',
-]
-const communicationOptions = ['E-mail', 'Telefón', 'WhatsApp', 'Je mi to jedno']
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'offline'
 
@@ -82,76 +71,12 @@ function TextArea({
   )
 }
 
-function BulletListField({
-  hint,
-  label,
-  onChange,
-  placeholder,
-  value,
-}: {
-  hint?: string
-  label: string
-  onChange: (value: string) => void
-  placeholder?: string
-  value: string
-}) {
-  const items = value ? value.split('\n').slice(0, 12) : ['']
-
-  function updateItem(index: number, nextValue: string) {
-    const next = [...items]
-    next[index] = nextValue.replaceAll('\n', ' ').slice(0, 200)
-    onChange(next.join('\n').slice(0, 2000))
-  }
-
-  function removeItem(index: number) {
-    const next = items.filter((_, itemIndex) => itemIndex !== index)
-    onChange(next.join('\n'))
-  }
-
-  function addItem() {
-    if (items.length < 12) onChange([...items, ''].join('\n'))
-  }
-
-  return (
-    <div>
-      <p className="text-base font-semibold tracking-[-0.01em]">
-        {label}{hint && <span className="ml-2 text-xs font-normal text-muted-foreground">{hint}</span>}
-      </p>
-      <div className="mt-3 space-y-2">
-        {items.map((item, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
-            <input
-              aria-label={`${label} – bod ${index + 1}`}
-              value={item}
-              maxLength={200}
-              onChange={(event) => updateItem(index, event.target.value)}
-              placeholder={index === 0 ? placeholder : `Ďalší bod ${index + 1}`}
-              className="min-w-0 flex-1 border-0 border-b border-border bg-transparent px-0 py-3 text-base text-foreground caret-foreground outline-none transition-colors placeholder:text-muted-foreground/55 focus:border-brand focus:ring-0"
-            />
-            {items.length > 1 && (
-              <button type="button" onClick={() => removeItem(index)} className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label={`Odstrániť bod ${index + 1}`}>
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-      {items.length < 12 && (
-        <button type="button" onClick={addItem} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
-          <Plus className="size-4" /> Pridať ďalší bod
-        </button>
-      )}
-    </div>
-  )
-}
-
 function ChoiceGrid({
   options,
   selected,
   onChange,
 }: {
-  options: string[]
+  options: readonly string[]
   selected: string[]
   onChange: (value: string[]) => void
 }) {
@@ -349,8 +274,19 @@ export function OnboardingWizard({
       const next = [...current[key]]
       while (next.length <= index) next.push('')
       next[index] = value
-      return { ...current, [key]: next }
+      const updated = { ...current, [key]: next }
+      return key === 'socialLinks' ? markClientFieldChange(updated, 'socialLinks') : updated
     })
+  }
+
+  function updateClientField(next: OnboardingAnswers, key: PrefillFieldKey) {
+    setAnswers(markClientFieldChange(next, key))
+  }
+
+  function prefilledHint(key: PrefillFieldKey, fallback = 'Nepovinné') {
+    return isUnconfirmedPrefill(answers, key)
+      ? 'Predvyplnené z predchádzajúcej komunikácie'
+      : fallback
   }
 
   async function submit() {
@@ -491,19 +427,36 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 1" title="Najprv niečo o vás" text="Pár viet nám pomôže pochopiť, čo robíte. Nemusia byť dokonalé – texty spolu ešte doladíme." />
               <div className="space-y-9">
-                <Field label="Ako sa voláte / názov podnikania" hint="Nepovinné" value={answers.client.displayName} maxLength={160} onChange={(e) => setAnswers({ ...answers, client: { displayName: e.target.value } })} placeholder="Napr. Jana Nováková / Ateliér Jana" />
-                <Field label="Čomu sa venujete?" hint="Nepovinné" value={answers.business.area} maxLength={500} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, area: e.target.value }, services: e.target.value })} placeholder="Napr. svadobná a rodinná fotografka" />
-                <TextArea label="Ako by ste jednoducho vysvetlili svoju prácu?" hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Som fotografka a fotím najmä svadby a rodinné fotenia." />
-                <Field label="Máte už existujúci web?" hint="Nepovinné" type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => setAnswers({ ...answers, existingWebsite: e.target.value })} placeholder="https://" />
+                <Field label="Ako sa voláte / názov podnikania" hint={prefilledHint('client.displayName')} value={answers.client.displayName} maxLength={160} onChange={(e) => updateClientField({ ...answers, client: { displayName: e.target.value } }, 'client.displayName')} placeholder="Napr. Jana Nováková / Ateliér Jana" />
+                <Field label="Čomu sa venujete?" hint={prefilledHint('business.area')} value={answers.business.area} maxLength={500} onChange={(e) => updateClientField({ ...answers, business: { ...answers.business, area: e.target.value } }, 'business.area')} placeholder="Napr. cykloservis, účtovníctvo, handmade výroba, stavebné práce…" />
+                <label className="block"><span className="text-base font-semibold tracking-[-0.01em]">Typ projektu / čo potrebujete</span><span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('projectType')}</span><select value={answers.projectType} onChange={(event) => updateClientField({ ...answers, projectType: event.target.value }, 'projectType')} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand"><option value="">Vyberte, ak už viete</option>{projectTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+                <TextArea label="Ako by ste jednoducho opísali, čo robíte?" hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Nemusí to byť marketingový text. Napíšte to pokojne vlastnými slovami." />
+                <Field label="Máte už existujúci web?" hint={prefilledHint('existingWebsite')} type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => updateClientField({ ...answers, existingWebsite: e.target.value }, 'existingWebsite')} placeholder="https://" />
                 <div>
-                  <Field label="Sociálne siete" hint="Nepovinné" type="url" inputMode="url" value={answers.socialLinks[0] || ''} maxLength={500} onChange={(e) => updateStringList('socialLinks', 0, e.target.value)} placeholder="Vložte odkaz na Instagram, Facebook alebo LinkedIn" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
-                  {answers.socialLinks.slice(1).map((url, index) => (
-                    <div key={index + 1} className="mt-3 flex items-end gap-3">
-                      <Field aria-label={`Sociálna sieť ${index + 2}`} label={`Ďalší odkaz ${index + 2}`} value={url} type="url" className="flex-1" onChange={(e) => updateStringList('socialLinks', index + 1, e.target.value)} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
-                      <button type="button" className="mb-2 grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Odstrániť odkaz" onClick={() => setAnswers({ ...answers, socialLinks: answers.socialLinks.filter((_, i) => i !== index + 1) })}><X className="size-4" /></button>
-                    </div>
-                  ))}
-                  {answers.socialLinks.length < 5 && <button type="button" onClick={() => setAnswers((current) => ({ ...current, socialLinks: [...(current.socialLinks.length ? current.socialLinks : ['']), ''] }))} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať ďalší odkaz</button>}
+                  <p className="text-base font-semibold tracking-[-0.01em]">Sociálne siete <span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('socialLinks')}</span></p>
+                  <div className="mt-3 space-y-3">
+                    {(answers.socialLinks.length ? answers.socialLinks : ['']).map((url, index) => (
+                      <div key={index} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3">
+                        <select
+                          aria-label={`Platforma sociálnej siete ${index + 1}`}
+                          value={answers.socialPlatforms[index] || ''}
+                          onChange={(event) => setAnswers((current) => {
+                            const socialPlatforms = [...current.socialPlatforms]
+                            while (socialPlatforms.length <= index) socialPlatforms.push('')
+                            socialPlatforms[index] = event.target.value
+                            return markClientFieldChange({ ...current, socialPlatforms }, 'socialLinks')
+                          })}
+                          className="w-full border-0 border-b border-border bg-transparent px-0 py-3 text-sm outline-none focus:border-brand"
+                        >
+                          <option value="">Platforma</option>
+                          {socialPlatformOptions.map((option) => <option key={option}>{option}</option>)}
+                        </select>
+                        <input aria-label={`Odkaz na sociálnu sieť ${index + 1}`} type="url" inputMode="url" value={url} maxLength={500} onChange={(event) => updateStringList('socialLinks', index, event.target.value)} placeholder="https://" autoCapitalize="none" autoCorrect="off" spellCheck={false} className="min-w-0 border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
+                        {answers.socialLinks.length > 1 && <button type="button" className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Odstrániť sociálnu sieť" onClick={() => updateClientField({ ...answers, socialLinks: answers.socialLinks.filter((_, itemIndex) => itemIndex !== index), socialPlatforms: answers.socialPlatforms.filter((_, itemIndex) => itemIndex !== index) }, 'socialLinks')}><X className="size-4" /></button>}
+                      </div>
+                    ))}
+                  </div>
+                  {answers.socialLinks.length < 8 && <button type="button" onClick={() => setAnswers((current) => markClientFieldChange({ ...current, socialLinks: [...(current.socialLinks.length ? current.socialLinks : ['']), ''], socialPlatforms: [...(current.socialPlatforms.length ? current.socialPlatforms : ['']), ''] }, 'socialLinks'))} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať sociálnu sieť</button>}
                 </div>
               </div>
             </>
@@ -513,9 +466,27 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 2" title="Vaši zákazníci a cieľ stránky" text="Stačí váš bežný pohľad. Nemusíte poznať marketingové poučky ani presné čísla." />
               <div className="space-y-10">
-                <TextArea label="Komu najčastejšie pomáhate / kto sú vaši zákazníci?" hint="Nepovinné" value={answers.targetAudience} maxLength={2000} onChange={(e) => setAnswers({ ...answers, targetAudience: e.target.value })} placeholder="Napr. páry, ktoré plánujú menšiu svadbu na Slovensku." />
-                <div><h3 className="text-base font-semibold">Čo by mal návštevník po príchode na web urobiť?</h3><OptionalHint /><div className="mt-4"><ChoiceGrid options={desiredActionOptions} selected={answers.desiredActions} onChange={(desiredActions) => setAnswers({ ...answers, desiredActions })} /></div></div>
-                <TextArea label="Čo je najdôležitejšie, aby sa na stránke dozvedel?" hint="Nepovinné" value={answers.websiteGoal} maxLength={2000} onChange={(e) => setAnswers({ ...answers, websiteGoal: e.target.value })} placeholder="Napr. aké fotenia ponúkam a ako si rezervovať termín." />
+                <QuickQuestion title="Kto sú vaši najčastejší zákazníci?">
+                  <ChoiceGrid options={targetAudienceOptions} selected={answers.targetAudienceSelections} onChange={(targetAudienceSelections) => setAnswers({ ...answers, targetAudienceSelections })} />
+                  <OtherAnswer show={answers.targetAudienceSelections.includes('Iné')} multiline label="Popíšte svojich zákazníkov" value={answers.targetAudience} onChange={(targetAudience) => setAnswers({ ...answers, targetAudience })} />
+                </QuickQuestion>
+                <QuickQuestion title={`Čo od nového webu očakávate?${isUnconfirmedPrefill(answers, 'websiteExpectations') ? ' · Predvyplnené z predchádzajúcej komunikácie' : ''}`}>
+                  <ChoiceGrid options={websiteExpectationOptions} selected={answers.websiteExpectations} onChange={(websiteExpectations) => updateClientField({ ...answers, websiteExpectations }, 'websiteExpectations')} />
+                  <OtherAnswer show={answers.websiteExpectations.includes('Iné')} label="Iné očakávanie" value={answers.websiteExpectationsOther} onChange={(websiteExpectationsOther) => setAnswers({ ...answers, websiteExpectationsOther })} />
+                </QuickQuestion>
+                <QuickQuestion title="Čo sa má návštevník na stránke hlavne dozvedieť?">
+                  <ChoiceGrid options={websiteInformationOptions} selected={answers.websiteInformation} onChange={(websiteInformation) => setAnswers({ ...answers, websiteInformation })} />
+                  <OtherAnswer show={answers.websiteInformation.includes('Iné')} multiline label="Iná dôležitá informácia" value={answers.websiteGoal} onChange={(websiteGoal) => setAnswers({ ...answers, websiteGoal })} />
+                </QuickQuestion>
+                <QuickQuestion title="Čo má návštevník urobiť?">
+                  <ChoiceGrid options={desiredActionOptions} selected={answers.desiredActions} onChange={(desiredActions) => setAnswers({ ...answers, desiredActions })} />
+                  <OtherAnswer show={answers.desiredActions.includes('Iné')} label="Iná akcia" value={answers.desiredActionsOther} onChange={(desiredActionsOther) => setAnswers({ ...answers, desiredActionsOther })} />
+                </QuickQuestion>
+                <QuickQuestion title="Čo ponúkate?">
+                  <ChoiceGrid options={offeringOptions} selected={answers.offeringTypes} onChange={(offeringTypes) => setAnswers({ ...answers, offeringTypes })} />
+                  <OtherAnswer show={answers.offeringTypes.includes('Iné')} label="Iný typ ponuky" value={answers.services} onChange={(services) => setAnswers({ ...answers, services })} />
+                  <div className="mt-6"><RepeatableTextItems label="Konkrétne produkty alebo služby" addLabel="Pridať konkrétny produkt alebo službu" placeholder="Napr. servis bicykla" values={answers.offerItems} onChange={(offerItems) => setAnswers({ ...answers, offerItems })} /></div>
+                </QuickQuestion>
               </div>
             </>
           )}
@@ -524,9 +495,15 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 3" title="Čo chcete na stránke" text="Označte všetko, čo vám dáva zmysel. Ak si nie ste istí, pokojne nechajte návrh na nás." />
               <div className="space-y-10">
-                <div><ChoiceGrid options={sectionOptions} selected={answers.sections} onChange={(sections) => setAnswers({ ...answers, sections })} /></div>
-                <BulletListField label="Je ešte niečo, čo by ste na stránke chceli?" hint="Nepovinné" value={answers.otherSections} onChange={(otherSections) => setAnswers({ ...answers, otherSections })} placeholder="Napr. kalendár" />
-                <div><h3 className="text-base font-semibold">Chceli by ste web neskôr rozširovať?</h3><OptionalHint>Nemusíte to mať ešte premyslené. Pomôže nám aj „zatiaľ neviem“.</OptionalHint><div className="mt-4"><ChoiceGrid options={futureOptions} selected={answers.futureFeatures} onChange={(futureFeatures) => setAnswers({ ...answers, futureFeatures })} /></div></div>
+                <QuickQuestion title="Čo by ste chceli na stránke?">
+                  <ChoiceGrid options={sectionOptions} selected={answers.sections} onChange={(sections) => setAnswers({ ...answers, sections })} />
+                  <OtherAnswer show={answers.sections.includes('Iné')} label="Iná časť stránky" value={answers.sectionsOther} onChange={(sectionsOther) => setAnswers({ ...answers, sectionsOther })} />
+                </QuickQuestion>
+                <QuickQuestion title="Plánujete web v budúcnosti rozšíriť?" hint="Nemusíte to mať ešte premyslené. Pomôže nám aj „zatiaľ neviem“." >
+                  <ChoiceGrid options={futureOptions} selected={answers.futureFeatures} onChange={(futureFeatures) => setAnswers({ ...answers, futureFeatures })} />
+                  <OtherAnswer show={answers.futureFeatures.includes('Iné')} label="Iné plánované rozšírenie" value={answers.futureFeaturesOther} onChange={(futureFeaturesOther) => setAnswers({ ...answers, futureFeaturesOther })} />
+                </QuickQuestion>
+                <TextArea label="Je ešte niečo, čo chcete na stránke?" hint="Nepovinné" value={answers.otherSections} maxLength={2000} onChange={(event) => setAnswers({ ...answers, otherSections: event.target.value })} placeholder="Čokoľvek, čo sa nezmestilo vyššie." />
               </div>
             </>
           )}
@@ -535,14 +512,18 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 4" title="Ako by mal web pôsobiť" text="Vyberte pár slov podľa pocitu. Zvyšok vám navrhneme tak, aby sedel vašej práci aj zákazníkom." />
               <div className="space-y-10">
-                <div>
-                  <h3 className="text-base font-semibold">Ako by mal váš web pôsobiť?</h3>
-                  <OptionalHint />
-                  <div className="mt-4"><ChoiceGrid options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} /></div>
-                  <div className="mt-6">
-                    <Field label="Vlastnými slovami" hint="Nepovinné" value={answers.designOther || ''} maxLength={500} onChange={(event) => setAnswers({ ...answers, designOther: event.target.value })} placeholder="Napr. jemný, vzdušný a prirodzený" />
-                  </div>
-                </div>
+                <QuickQuestion title="Ako má web pôsobiť?">
+                  <ChoiceGrid options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} />
+                  <OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný vizuálny smer" value={answers.designOther} onChange={(designOther) => setAnswers({ ...answers, designOther })} placeholder="Napr. vzdušný a prirodzený" />
+                </QuickQuestion>
+                <QuickQuestion title="Aké farby vám sú blízke?" hint="Je to iba vaša preferencia, nie záväzná farebná paleta.">
+                  <ChoiceGrid options={colorOptions} selected={answers.colorPreferences} onChange={(colorPreferences) => setAnswers({ ...answers, colorPreferences })} />
+                  <OtherAnswer show={answers.colorPreferences.includes('Iné')} label="Iná farebná preferencia" value={answers.colorPreferencesOther} onChange={(colorPreferencesOther) => setAnswers({ ...answers, colorPreferencesOther })} />
+                </QuickQuestion>
+                <QuickQuestion title="Čomu sa má dizajn vyhnúť?">
+                  <ChoiceGrid options={dislikeOptions} selected={answers.designDislikes} onChange={(designDislikes) => setAnswers({ ...answers, designDislikes })} />
+                  <OtherAnswer show={answers.designDislikes.includes('Iné')} multiline label="Iné obmedzenie" value={answers.dislikes} onChange={(dislikes) => setAnswers({ ...answers, dislikes })} />
+                </QuickQuestion>
                 <div>
                   <h3 className="text-base font-semibold">Poznáte stránky, ktoré sa vám páčia? <span className="ml-2 text-xs font-normal text-muted-foreground">Nepovinné</span></h3>
                   <OptionalHint>Nemusíte vedieť vysvetliť prečo. Stačí nám ukázať, čo sa vám páči.</OptionalHint>
@@ -556,14 +537,13 @@ export function OnboardingWizard({
                   </div>
                   {answers.inspirationUrls.length < 5 && <button type="button" onClick={() => setAnswers({ ...answers, inspirationUrls: [...answers.inspirationUrls, ''] })} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať ďalší odkaz</button>}
                 </div>
-                <TextArea label="Je niečo, čo sa vám na weboch vyslovene nepáči?" hint="Nepovinné" value={answers.dislikes} maxLength={2000} onChange={(e) => setAnswers({ ...answers, dislikes: e.target.value })} placeholder="Ak nič také nemáte, nevadí." />
               </div>
             </>
           )}
 
           {step === 5 && (
             <>
-              <StepHeader eyebrow="Krok 5" title="Pošlite nám všetko, čo už máte" text="Nahrajte naraz fotografie, logo, PDF alebo ďalšie materiály. Súbory môžete doplniť aj neskôr cez rovnaký link." />
+              <StepHeader eyebrow="Krok 5" title="Fotografie a materiály" text="Nahrajte všetko, čo by mohlo byť pri tvorbe webu užitočné. Nemusíte vyberať iba najlepšie fotografie. Vhodné podklady vyberieme pri príprave webu." />
               <UploadField assets={assets} onAssetsChange={setAssets} token={token} />
               <div className="mt-10 max-w-xl border-t border-border/70 pt-7">
                 <p className="mb-2 text-sm font-semibold">Ak vám nahrávanie nevyhovuje</p>
@@ -596,10 +576,13 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 6" title="Kontakt a dokončenie" text="Už len údaje, cez ktoré sa spojíme. Povinné sú iba meno a e-mail." />
               <div className="space-y-9">
-                <Field label="Meno kontaktnej osoby" value={answers.contact.name} error={fieldErrors.name} maxLength={160} onChange={(e) => setAnswers({ ...answers, contact: { ...answers.contact, name: e.target.value } })} autoComplete="name" />
-                <Field label="E-mail" type="email" inputMode="email" value={answers.contact.email} error={fieldErrors.email} maxLength={254} onChange={(e) => setAnswers({ ...answers, contact: { ...answers.contact, email: e.target.value } })} autoComplete="email" />
-                <Field label="Telefón" hint="Nepovinné" type="tel" inputMode="tel" value={answers.contact.phone} maxLength={80} onChange={(e) => setAnswers({ ...answers, contact: { ...answers.contact, phone: e.target.value } })} autoComplete="tel" />
-                <div><h3 className="text-base font-semibold">Ako vám najradšej napíšeme alebo zavoláme?</h3><OptionalHint /><div className="mt-4"><ChoiceGrid options={communicationOptions} selected={answers.contact.preferredMethod ? [answers.contact.preferredMethod] : []} onChange={(value) => setAnswers({ ...answers, contact: { ...answers.contact, preferredMethod: value.at(-1) || '' } })} /></div></div>
+                <Field label="Meno kontaktnej osoby" hint={prefilledHint('contact.name', '')} value={answers.contact.name} error={fieldErrors.name} maxLength={160} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, name: e.target.value } }, 'contact.name')} autoComplete="name" />
+                <Field label="E-mail" hint={prefilledHint('contact.email', '')} type="email" inputMode="email" value={answers.contact.email} error={fieldErrors.email} maxLength={254} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, email: e.target.value } }, 'contact.email')} autoComplete="email" />
+                <Field label="Telefón" hint={prefilledHint('contact.phone')} type="tel" inputMode="tel" value={answers.contact.phone} maxLength={80} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, phone: e.target.value } }, 'contact.phone')} autoComplete="tel" />
+                <QuickQuestion title={`Ako vás má zákazník ideálne kontaktovať?${isUnconfirmedPrefill(answers, 'contact.preferredMethods') ? ' · Predvyplnené z predchádzajúcej komunikácie' : ''}`}>
+                  <ChoiceGrid options={communicationOptions} selected={answers.contact.preferredMethods} onChange={(preferredMethods) => updateClientField({ ...answers, contact: { ...answers.contact, preferredMethods } }, 'contact.preferredMethods')} />
+                  <OtherAnswer show={answers.contact.preferredMethods.includes('Iné')} label="Iný spôsob kontaktu" value={answers.contact.preferredMethod} onChange={(preferredMethod) => setAnswers({ ...answers, contact: { ...answers.contact, preferredMethod } })} />
+                </QuickQuestion>
                 <details className="group py-1">
                   <summary className="cursor-pointer list-none text-sm font-semibold text-foreground marker:hidden"><span className="inline-flex items-center gap-2"><Plus className="size-4 transition-transform group-open:rotate-45" /> Pridať fakturačné údaje <span className="font-normal text-muted-foreground">(nepovinné)</span></span></summary>
                   <div className="mt-7 space-y-8 pl-6">
@@ -608,7 +591,7 @@ export function OnboardingWizard({
                     <TextArea label="Fakturačná adresa" value={answers.billing.address} onChange={(e) => setAnswers({ ...answers, billing: { ...answers.billing, address: e.target.value } })} />
                   </div>
                 </details>
-                <TextArea label="Je ešte niečo, čo by sme mali o projekte vedieť?" hint="Nepovinné" value={answers.additionalNotes} maxLength={5000} onChange={(e) => setAnswers({ ...answers, additionalNotes: e.target.value })} placeholder="Čokoľvek, čo sa nezmestilo do predchádzajúcich otázok." />
+                <TextArea label="Je ešte niečo, čo by sme mali o projekte vedieť?" hint={prefilledHint('additionalNotes')} value={answers.additionalNotes} maxLength={5000} onChange={(e) => updateClientField({ ...answers, additionalNotes: e.target.value }, 'additionalNotes')} placeholder="Čokoľvek, čo sa nezmestilo do predchádzajúcich otázok." />
 
                 <div className="bg-white/60 px-5 py-5 sm:px-6">
                   <h3 className="font-semibold">Krátke zhrnutie</h3>

@@ -1,6 +1,7 @@
 import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { apiError, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, sanitizeDiscovery2Answers } from '@/lib/onboarding/validation'
+import { isPrefillFieldKey, markPrefilledFields } from '@/lib/onboarding/prefill'
 import {
   coreProgress,
   discoveryProgress,
@@ -63,21 +64,27 @@ export async function PATCH(request: Request, { params }: Context) {
       return privateJson({ error: 'Chýba verzia údajov. Obnovte stránku.' }, { status: 422 })
     }
     if (sectionKey === 'core') {
-      const answers = sanitizeAnswers(body.answers)
+      let answers = sanitizeAnswers(body.answers)
+      if (body.operation === 'prefill') {
+        const fields = Array.isArray(body.prefillFields)
+          ? body.prefillFields.filter(isPrefillFieldKey)
+          : []
+        answers = markPrefilledFields(answers, fields)
+      }
       const saved = await saveCoreVersioned({
         answers,
         clientId,
         currentStep: Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1))),
         revision,
       })
-      return privateJson({ progress: progressForStatus(coreProgress(answers), saved.status), revision: saved.revision, savedAt: saved.updatedAt.toISOString() })
+      return privateJson({ answers, progress: progressForStatus(coreProgress(answers), saved.status), revision: saved.revision, savedAt: saved.updatedAt.toISOString() })
     }
     if (sectionKey === 'discovery_2') {
       const answers = sanitizeDiscovery2Answers(body.answers)
       const saved = await saveDiscoveryVersioned({
         answers,
         clientId,
-        currentStep: Math.min(5, Math.max(1, Math.round(Number(body.currentStep) || 1))),
+        currentStep: Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1))),
         revision,
       })
       return privateJson({ progress: progressForStatus(discoveryProgress(answers), saved.status), revision: saved.revision, savedAt: saved.updatedAt.toISOString() })
