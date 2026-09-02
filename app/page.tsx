@@ -4,6 +4,7 @@ import { Projects } from '@/components/projects'
 import { Process } from '@/components/process'
 import { About } from '@/components/about'
 import { Pricing } from '@/components/pricing'
+import { ArticlesSection } from '@/components/articles-section'
 import { ContactBanner } from '@/components/contact-banner'
 import { SiteFooter } from '@/components/site-footer'
 import { HomeScrollReset } from '@/components/home-scroll-reset'
@@ -37,6 +38,7 @@ export default function Home() {
       <Process />
       <About />
       <Pricing />
+      <ArticlesSection />
       <ContactBanner />
       <SiteFooter />
     </main>

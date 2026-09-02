@@ -1,18 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { SectionLink } from '@/components/section-link'
 
 const navItems = [
-  { label: 'Projekty', href: '#projekty' },
-  { label: 'Ako pracujem', href: '#proces' },
-  { label: 'Prečo WebkaStart?', href: '#preco-webkastart' },
-  { label: 'Kontakt', href: '#kontakt' },
+  { label: 'Projekty', href: '/#projekty' },
+  { label: 'Ako pracujem', href: '/#proces' },
+  { label: 'Prečo WebkaStart?', href: '/#preco-webkastart' },
+  { label: 'Články', href: '/#clanky' },
+  { label: 'Kontakt', href: '/#kontakt' },
 ]
 
 export function SiteHeader() {
+  const router = useRouter()
   const lastScrollY = useRef(0)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
 
@@ -33,7 +36,7 @@ export function SiteHeader() {
 
   function handleContactClick() {
     if (window.location.pathname !== '/') {
-      window.location.href = '/#kontakt-formular'
+      router.push('/#kontakt-formular')
       return
     }
 
@@ -65,7 +68,7 @@ export function SiteHeader() {
 
           <nav
             aria-label="Hlavná navigácia"
-            className="hidden items-center gap-9 md:flex"
+            className="hidden items-center gap-7 md:flex lg:gap-9"
           >
             {navItems.map((item) => (
               <SectionLink
