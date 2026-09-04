@@ -13,17 +13,19 @@ export function ArticlesSection() {
         <div className="max-w-3xl">
           <SectionLabel>Články</SectionLabel>
           <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
-            Príbehy o práci, ktorá sa dá robiť jednoduchšie
+            Problémy z praxe. Jednoduchšie riešenia.
           </h2>
         </div>
 
-        <Link
-          href="/clanky"
-          className="inline-flex w-fit items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Všetky články
-          <ArrowRight className="size-4" aria-hidden="true" />
-        </Link>
+        {articles.length > 1 && (
+          <Link
+            href="/clanky"
+            className="inline-flex w-fit items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Všetky články
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        )}
       </div>
 
       <div className="mt-10 lg:mt-12">
@@ -32,4 +34,3 @@ export function ArticlesSection() {
     </section>
   )
 }
-

@@ -16,7 +16,7 @@ export const articles = [
       'Jeden servisný prípad ukazuje, ako rýchlo sa z opravy bicykla stane problém s dielmi, schvaľovaním a prehľadom.',
     category: 'Cyklo servis',
     coverImage: '/articles/jeden-obycajny-bicykel-v-servise.jpg',
-    coverAlt: 'Bicykel Cube na servisnom stojane v cykloservise',
+    coverAlt: 'Horský bicykel na servisnom stojane v cykloservise',
     publishedAt: '2026-09-02',
   },
 ] satisfies Article[]
