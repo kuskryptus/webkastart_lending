@@ -51,9 +51,8 @@ export const projects: Project[] = [
     showcase: {
       device: 'phone',
       phoneTone: 'light',
-      src: '/portfolio/mirela-materials.jpg',
+      src: '/portfolio/mirela-materials-clean.jpg',
       alt: 'Správa materiálov v aplikácii Mirela',
-      hasEmbeddedSystemBar: true,
       imageClassName: 'object-top',
     },
   },
@@ -67,7 +66,7 @@ export const projects: Project[] = [
     showcase: {
       device: 'phone',
       phoneTone: 'dark',
-      src: '/portfolio/reader-view.jpg',
+      src: '/portfolio/reader-view-clean.png',
       alt: 'Obrazovka mobilnej čítačky s textom',
       imageClassName: 'object-center',
     },
@@ -82,11 +81,9 @@ export const projects: Project[] = [
     showcase: {
       device: 'phone',
       phoneTone: 'dark',
-      src: '/portfolio/newlevel-youth.jpg',
+      src: '/portfolio/newlevel-youth-clean.jpg',
       alt: 'Mobilná stránka New Level Youth',
-      hasEmbeddedSystemBar: true,
       imageClassName: 'object-top',
-      systemBarTone: 'light',
     },
   },
   {
