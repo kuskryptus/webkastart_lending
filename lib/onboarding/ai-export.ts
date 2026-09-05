@@ -38,9 +38,10 @@ function coreSections(answers: OnboardingAnswers) {
         response('display_name', 'Meno alebo názov podnikania', answers.client.displayName),
         response('business_area', 'Čomu sa klient venuje', answers.business.area),
         response('project_type', 'Typ projektu', answers.projectType),
-        response('business_description', 'Ako klient opisuje svoju prácu', answers.business.description),
+        response('business_description', 'Povedzte mi trochu viac o vašom podnikaní a o tom, čomu sa venujete.', answers.business.description),
         response('brand_story', 'Je za značkou osobný príbeh, ktorý by mal zákazník poznať?', answers.brandStory),
         response('existing_website', 'Existujúci web', answers.existingWebsite),
+        response('previous_website_experience', 'Mali ste už web alebo ste skúšali niečo podobné? Čo fungovalo a čo nie?', answers.previousWebsiteExperience),
         response('social_platforms', 'Platformy sociálnych sietí', answers.socialPlatforms),
         response('social_links', 'Sociálne siete', answers.socialLinks),
       ],
@@ -51,8 +52,12 @@ function coreSections(answers: OnboardingAnswers) {
       responses: [
         response('target_audience', 'Komu klient najčastejšie pomáha', answers.targetAudience),
         response('target_audience_selections', 'Typy zákazníkov', answers.targetAudienceSelections),
-        response('website_expectations', 'Čo klient od webu očakáva', answers.websiteExpectations),
-        response('website_expectations_other', 'Iné očakávanie od webu', answers.websiteExpectationsOther),
+        response('website_expectations', 'Čo chcete pomocou nového webu dosiahnuť?', answers.websiteExpectations),
+        response('website_expectations_other', 'Iný cieľ nového webu', answers.websiteExpectationsOther),
+        response('goal_importance', 'Prečo je pre vás tento cieľ dôležitý?', answers.goalImportance),
+        response('success_criteria', 'Podľa čoho spoznáte, že nový web funguje a ste s ním spokojný?', answers.successCriteria),
+        response('website_priorities', 'Čo je pre vás na novom webe najdôležitejšie?', answers.websitePriorities),
+        response('customer_insights', 'Čo viete zo skúseností o svojich zákazníkoch – čo najviac riešia, oceňujú alebo sa pýtajú?', answers.customerInsights),
         response('website_information', 'Čo sa má návštevník dozvedieť', answers.websiteInformation),
         response('website_goal', 'Čo sa má návštevník dozvedieť', answers.websiteGoal),
         response('desired_actions', 'Čo má návštevník urobiť', answers.desiredActions),
@@ -88,6 +93,15 @@ function coreSections(answers: OnboardingAnswers) {
         response('design_dislikes', 'Čomu sa má dizajn vyhnúť', answers.designDislikes),
         response('dislikes', 'Čomu sa vyhnúť', answers.dislikes),
         response('representative_photo_ids', 'Fotografie, ktoré najlepšie reprezentujú značku', answers.representativePhotoIds),
+        response('project_constraints', 'Je niečo, čo musím pri návrhu rešpektovať alebo o čom by som mal vedieť?', answers.projectConstraints),
+      ],
+    },
+    {
+      id: 'collaboration',
+      title: 'Spolupráca',
+      responses: [
+        response('collaboration_involvement', 'Ako veľmi chcete byť zapojený do návrhu a jednotlivých rozhodnutí?', answers.collaborationInvolvement),
+        response('feedback_communication', 'Ako vám najviac vyhovuje komunikovať a dávať spätnú väzbu?', answers.feedbackCommunication),
       ],
     },
     {
@@ -116,7 +130,7 @@ function coreSections(answers: OnboardingAnswers) {
       id: 'additional_notes',
       title: 'Ďalšie poznámky klienta',
       responses: [
-        response('additional_notes', 'Ďalšie poznámky', answers.additionalNotes),
+        response('additional_notes', 'Je ešte niečo dôležité, na čo som sa nespýtal a mal by som to pred návrhom webu vedieť?', answers.additionalNotes),
       ],
     },
   ]

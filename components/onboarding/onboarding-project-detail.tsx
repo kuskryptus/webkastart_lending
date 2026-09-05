@@ -146,11 +146,16 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
             <div className="sm:col-span-2"><Answer label="Ako opisuje svoju prácu">{answers.business.description}</Answer></div>
             <div className="sm:col-span-2"><Answer label="Osobný príbeh značky">{answers.brandStory}</Answer></div>
             <ExternalAnswer label="Existujúci web" value={answers.existingWebsite} />
+            <div className="sm:col-span-2"><Answer label="Predchádzajúce skúsenosti s webom">{answers.previousWebsiteExperience}</Answer></div>
             <Answer label="Sociálne siete">{answers.socialLinks.length ? <span className="space-y-1.5">{answers.socialLinks.map((value, index) => { const href = externalUrl(value); const label = [answers.socialPlatforms[index], value].filter(Boolean).join(': '); return href ? <a key={`${value}-${index}`} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{label}<ExternalLink className="size-3.5" /></a> : <span key={`${value}-${index}`} className="block">{label}</span> })}</span> : ''}</Answer>
           </CoreStep>
           <CoreStep number={2} title="Zákazníci a cieľ">
             <Answer label="Najčastejší zákazníci"><SelectionList values={[...answers.targetAudienceSelections, ...(answers.targetAudience ? [answers.targetAudience] : [])]} /></Answer>
+            <div className="sm:col-span-2"><Answer label="Skúsenosti so zákazníkmi">{answers.customerInsights}</Answer></div>
             <Answer label="Očakávania od webu"><SelectionList values={[...answers.websiteExpectations, ...(answers.websiteExpectationsOther ? [answers.websiteExpectationsOther] : [])]} /></Answer>
+            <div className="sm:col-span-2"><Answer label="Prečo je cieľ dôležitý">{answers.goalImportance}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Ako klient spozná úspech webu">{answers.successCriteria}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Najdôležitejšie priority webu">{answers.websitePriorities}</Answer></div>
             <Answer label="Čo sa má návštevník dozvedieť"><SelectionList values={[...answers.websiteInformation, ...(answers.websiteGoal ? [answers.websiteGoal] : [])]} /></Answer>
             <Answer label="Čo má návštevník urobiť"><SelectionList values={[...answers.desiredActions, ...(answers.desiredActionsOther ? [answers.desiredActionsOther] : [])]} /></Answer>
             <Answer label="Typ ponuky"><SelectionList values={[...answers.offeringTypes, ...(answers.services ? [answers.services] : [])]} /></Answer>
@@ -165,14 +170,17 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
           <CoreStep number={4} title="Vizuálny smer">
             <Answer label="Pocit pri návšteve stránky"><SelectionList values={[...answers.designPreferences, ...(answers.designOther ? [answers.designOther] : [])]} /></Answer><Answer label="Farebné preferencie"><SelectionList values={[...answers.colorPreferences, ...(answers.colorPreferencesOther ? [answers.colorPreferencesOther] : [])]} /></Answer><Answer label="Čomu sa vyhnúť"><SelectionList values={[...answers.designDislikes, ...(answers.dislikes ? [answers.dislikes] : [])]} /></Answer>
             <div className="sm:col-span-2"><Answer label="Inšpirácie">{answers.inspirationUrls.length ? <span className="space-y-1.5">{answers.inspirationUrls.map((value) => { const href = externalUrl(value); return href ? <a key={value} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{value}<ExternalLink className="size-3.5" /></a> : <span key={value} className="block">{value}</span> })}</span> : ''}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Obmedzenia a súvislosti, ktoré treba rešpektovať">{answers.projectConstraints}</Answer></div>
           </CoreStep>
           <CoreStep number={5} title="Materiály"><div className="sm:col-span-2"><Answer label="Nahrané podklady">{uploadedAssets.length ? `${uploadedAssets.length} súborov — nájdete ich v sekcii Súbory / fotografie.` : ''}</Answer></div><div className="sm:col-span-2"><Answer label="Fotografie, ktoré najlepšie reprezentujú značku"><SelectionList values={representativePhotos.map((asset) => asset.name)} /></Answer></div></CoreStep>
           <CoreStep number={6} title="Kontakt a dokončenie">
+            <div className="sm:col-span-2"><Answer label="Zapojenie klienta do návrhu">{answers.collaborationInvolvement}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Komunikácia a spätná väzba">{answers.feedbackCommunication}</Answer></div>
             <Answer label="Kontaktná osoba">{answers.contact.name}</Answer><Answer label="Ideálny kontakt zákazníka"><SelectionList values={[...answers.contact.preferredMethods, ...(answers.contact.preferredMethod ? [answers.contact.preferredMethod] : [])]} /></Answer>
             <Answer label="E-mail">{answers.contact.email ? <a href={`mailto:${answers.contact.email}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Mail className="size-3.5" />{answers.contact.email}</a> : ''}</Answer>
             <Answer label="Telefón">{answers.contact.phone ? <a href={`tel:${answers.contact.phone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Phone className="size-3.5" />{answers.contact.phone}</a> : ''}</Answer>
             <Answer label="Fakturačný názov">{answers.billing.companyName}</Answer><Answer label="IČO / DIČ / IČ DPH">{[answers.billing.companyId, answers.billing.taxId, answers.billing.vatId].filter(Boolean).join(' · ')}</Answer>
-            <div className="sm:col-span-2"><Answer label="Fakturačná adresa">{answers.billing.address}</Answer></div><div className="sm:col-span-2"><Answer label="Ďalšie poznámky">{answers.additionalNotes}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Fakturačná adresa">{answers.billing.address}</Answer></div><div className="sm:col-span-2"><Answer label="Dôležité informácie navyše">{answers.additionalNotes}</Answer></div>
           </CoreStep>
         </PageSection>
 

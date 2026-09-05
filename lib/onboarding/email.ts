@@ -27,6 +27,7 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Oblasť podnikania', answers.business.area],
         ['Typ projektu', answers.projectType],
         ['Opis práce', answers.business.description],
+        ['Predchádzajúce skúsenosti s webom', answers.previousWebsiteExperience],
         ['Existujúci web', answers.existingWebsite],
         ['Platformy sociálnych sietí', answers.socialPlatforms],
         ['Sociálne siete', answers.socialLinks],
@@ -39,6 +40,10 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Cieľová skupina', answers.targetAudience],
         ['Očakávania od webu', answers.websiteExpectations],
         ['Iné očakávanie', answers.websiteExpectationsOther],
+        ['Prečo je cieľ dôležitý', answers.goalImportance],
+        ['Ako klient spozná úspech webu', answers.successCriteria],
+        ['Najdôležitejšie priority webu', answers.websitePriorities],
+        ['Skúsenosti so zákazníkmi', answers.customerInsights],
         ['Čo má návštevník urobiť', answers.desiredActions],
         ['Iná akcia', answers.desiredActionsOther],
         ['Čo sa má návštevník dozvedieť', answers.websiteInformation],
@@ -72,11 +77,19 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Čomu sa má dizajn vyhnúť', answers.designDislikes],
         ['Čomu sa vyhnúť', answers.dislikes],
         ['Reprezentatívne fotografie', representativePhotoNames],
+        ['Obmedzenia a súvislosti', answers.projectConstraints],
       ],
     },
     {
       title: 'Príbeh značky',
       rows: [['Osobný príbeh značky', answers.brandStory]],
+    },
+    {
+      title: 'Spolupráca',
+      rows: [
+        ['Zapojenie klienta do návrhu', answers.collaborationInvolvement],
+        ['Komunikácia a spätná väzba', answers.feedbackCommunication],
+      ],
     },
     {
       title: 'Kontakt',
@@ -100,7 +113,7 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
     },
     {
       title: 'Poznámka',
-      rows: [['Ďalšie informácie', answers.additionalNotes]],
+      rows: [['Dôležité informácie navyše', answers.additionalNotes]],
     },
   ]
 

@@ -80,6 +80,10 @@ export type OnboardingAnswers = {
   targetAudience: string
   websiteExpectations: string[]
   websiteExpectationsOther: string
+  goalImportance: string
+  successCriteria: string
+  websitePriorities: string
+  customerInsights: string
   websiteInformation: string[]
   websiteGoal: string
   desiredActions: string[]
@@ -105,7 +109,11 @@ export type OnboardingAnswers = {
   representativePhotoIds: string[]
   brandStory: string
   existingWebsite: string
+  previousWebsiteExperience: string
   socialLinks: string[]
+  projectConstraints: string
+  collaborationInvolvement: string
+  feedbackCommunication: string
   contact: {
     name: string
     email: string
@@ -212,6 +220,10 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   targetAudience: '',
   websiteExpectations: [],
   websiteExpectationsOther: '',
+  goalImportance: '',
+  successCriteria: '',
+  websitePriorities: '',
+  customerInsights: '',
   websiteInformation: [],
   websiteGoal: '',
   desiredActions: [],
@@ -237,7 +249,11 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   representativePhotoIds: [],
   brandStory: '',
   existingWebsite: '',
+  previousWebsiteExperience: '',
   socialLinks: [''],
+  projectConstraints: '',
+  collaborationInvolvement: '',
+  feedbackCommunication: '',
   contact: { name: '', email: '', phone: '', preferredMethods: [], preferredMethod: '' },
   billing: { companyName: '', companyId: '', taxId: '', vatId: '', address: '' },
   additionalNotes: '',

@@ -431,9 +431,10 @@ export function OnboardingWizard({
                 <Field label="Ako sa voláte / názov podnikania" hint={prefilledHint('client.displayName')} value={answers.client.displayName} maxLength={160} onChange={(e) => updateClientField({ ...answers, client: { displayName: e.target.value } }, 'client.displayName')} placeholder="Napr. Jana Nováková / Ateliér Jana" />
                 <Field label="Čomu sa venujete?" hint={prefilledHint('business.area')} value={answers.business.area} maxLength={500} onChange={(e) => updateClientField({ ...answers, business: { ...answers.business, area: e.target.value } }, 'business.area')} placeholder="Napr. cykloservis, účtovníctvo, handmade výroba, stavebné práce…" />
                 <label className="block"><span className="text-base font-semibold tracking-[-0.01em]">Typ projektu / čo potrebujete</span><span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('projectType')}</span><select value={answers.projectType} onChange={(event) => updateClientField({ ...answers, projectType: event.target.value }, 'projectType')} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand"><option value="">Vyberte, ak už viete</option>{projectTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-                <TextArea label="Ako by ste jednoducho opísali, čo robíte?" hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Nemusí to byť marketingový text. Napíšte to pokojne vlastnými slovami." />
+                <TextArea label="Povedzte mi trochu viac o vašom podnikaní a o tom, čomu sa venujete." hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Nemusí to byť marketingový text. Napíšte to pokojne vlastnými slovami." />
                 <TextArea label="Je za vašou značkou nejaký osobný príbeh, ktorý by mal zákazník poznať?" hint="Nepovinné" value={answers.brandStory} maxLength={5000} onChange={(e) => setAnswers({ ...answers, brandStory: e.target.value })} />
                 <Field label="Máte už existujúci web?" hint={prefilledHint('existingWebsite')} type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => updateClientField({ ...answers, existingWebsite: e.target.value }, 'existingWebsite')} placeholder="https://" />
+                <TextArea label="Mali ste už web alebo ste skúšali niečo podobné? Čo fungovalo a čo nie?" hint="Nepovinné" value={answers.previousWebsiteExperience} maxLength={5000} onChange={(event) => setAnswers({ ...answers, previousWebsiteExperience: event.target.value })} />
                 <div>
                   <p className="text-base font-semibold tracking-[-0.01em]">Sociálne siete <span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('socialLinks')}</span></p>
                   <div className="mt-3 space-y-3">
@@ -472,10 +473,14 @@ export function OnboardingWizard({
                   <ChoiceGrid options={targetAudienceOptions} selected={answers.targetAudienceSelections} onChange={(targetAudienceSelections) => setAnswers({ ...answers, targetAudienceSelections })} />
                   <OtherAnswer show={answers.targetAudienceSelections.includes('Iné')} multiline label="Popíšte svojich zákazníkov" value={answers.targetAudience} onChange={(targetAudience) => setAnswers({ ...answers, targetAudience })} />
                 </QuickQuestion>
-                <QuickQuestion title={`Čo od nového webu očakávate?${isUnconfirmedPrefill(answers, 'websiteExpectations') ? ' · Predvyplnené z predchádzajúcej komunikácie' : ''}`}>
+                <TextArea label="Čo viete zo skúseností o svojich zákazníkoch – čo najviac riešia, oceňujú alebo sa pýtajú?" hint="Nepovinné" value={answers.customerInsights} maxLength={5000} onChange={(event) => setAnswers({ ...answers, customerInsights: event.target.value })} />
+                <QuickQuestion title={`Čo chcete pomocou nového webu dosiahnuť?${isUnconfirmedPrefill(answers, 'websiteExpectations') ? ' · Predvyplnené z predchádzajúcej komunikácie' : ''}`}>
                   <ChoiceGrid options={websiteExpectationOptions} selected={answers.websiteExpectations} onChange={(websiteExpectations) => updateClientField({ ...answers, websiteExpectations }, 'websiteExpectations')} />
-                  <OtherAnswer show={answers.websiteExpectations.includes('Iné')} label="Iné očakávanie" value={answers.websiteExpectationsOther} onChange={(websiteExpectationsOther) => setAnswers({ ...answers, websiteExpectationsOther })} />
+                  <OtherAnswer show={answers.websiteExpectations.includes('Iné')} label="Iný cieľ" value={answers.websiteExpectationsOther} onChange={(websiteExpectationsOther) => setAnswers({ ...answers, websiteExpectationsOther })} />
                 </QuickQuestion>
+                <TextArea label="Prečo je pre vás tento cieľ dôležitý?" hint="Nepovinné" value={answers.goalImportance} maxLength={5000} onChange={(event) => setAnswers({ ...answers, goalImportance: event.target.value })} />
+                <TextArea label="Podľa čoho spoznáte, že nový web funguje a ste s ním spokojný?" hint="Nepovinné" value={answers.successCriteria} maxLength={5000} onChange={(event) => setAnswers({ ...answers, successCriteria: event.target.value })} />
+                <TextArea label="Čo je pre vás na novom webe najdôležitejšie?" hint="Nepovinné" value={answers.websitePriorities} maxLength={5000} onChange={(event) => setAnswers({ ...answers, websitePriorities: event.target.value })} />
                 <QuickQuestion title="Čo sa má návštevník na stránke hlavne dozvedieť?">
                   <ChoiceGrid options={websiteInformationOptions} selected={answers.websiteInformation} onChange={(websiteInformation) => setAnswers({ ...answers, websiteInformation })} />
                   <OtherAnswer show={answers.websiteInformation.includes('Iné')} multiline label="Iná dôležitá informácia" value={answers.websiteGoal} onChange={(websiteGoal) => setAnswers({ ...answers, websiteGoal })} />
@@ -529,6 +534,7 @@ export function OnboardingWizard({
                   <ChoiceGrid options={dislikeOptions} selected={answers.designDislikes} onChange={(designDislikes) => setAnswers({ ...answers, designDislikes })} />
                   <OtherAnswer show={answers.designDislikes.includes('Iné')} multiline label="Iné obmedzenie" value={answers.dislikes} onChange={(dislikes) => setAnswers({ ...answers, dislikes })} />
                 </QuickQuestion>
+                <TextArea label="Je niečo, čo musím pri návrhu rešpektovať alebo o čom by som mal vedieť?" hint="Nepovinné" value={answers.projectConstraints} maxLength={5000} onChange={(event) => setAnswers({ ...answers, projectConstraints: event.target.value })} />
                 <div>
                   <h3 className="text-base font-semibold">Poznáte stránky, ktoré sa vám páčia? <span className="ml-2 text-xs font-normal text-muted-foreground">Nepovinné</span></h3>
                   <OptionalHint>Nemusíte vedieť vysvetliť prečo. Stačí nám ukázať, čo sa vám páči.</OptionalHint>
@@ -584,6 +590,8 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 6" title="Kontakt a dokončenie" text="Už len údaje, cez ktoré sa spojíme. Povinné sú iba meno a e-mail." />
               <div className="space-y-9">
+                <TextArea label="Ako veľmi chcete byť zapojený do návrhu a jednotlivých rozhodnutí?" hint="Nepovinné" value={answers.collaborationInvolvement} maxLength={5000} onChange={(event) => setAnswers({ ...answers, collaborationInvolvement: event.target.value })} />
+                <TextArea label="Ako vám najviac vyhovuje komunikovať a dávať spätnú väzbu?" hint="Nepovinné" value={answers.feedbackCommunication} maxLength={5000} onChange={(event) => setAnswers({ ...answers, feedbackCommunication: event.target.value })} />
                 <Field label="Meno kontaktnej osoby" hint={prefilledHint('contact.name', '')} value={answers.contact.name} error={fieldErrors.name} maxLength={160} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, name: e.target.value } }, 'contact.name')} autoComplete="name" />
                 <Field label="E-mail" hint={prefilledHint('contact.email', '')} type="email" inputMode="email" value={answers.contact.email} error={fieldErrors.email} maxLength={254} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, email: e.target.value } }, 'contact.email')} autoComplete="email" />
                 <Field label="Telefón" hint={prefilledHint('contact.phone')} type="tel" inputMode="tel" value={answers.contact.phone} maxLength={80} onChange={(e) => updateClientField({ ...answers, contact: { ...answers.contact, phone: e.target.value } }, 'contact.phone')} autoComplete="tel" />
@@ -599,7 +607,7 @@ export function OnboardingWizard({
                     <TextArea label="Fakturačná adresa" value={answers.billing.address} onChange={(e) => setAnswers({ ...answers, billing: { ...answers.billing, address: e.target.value } })} />
                   </div>
                 </details>
-                <TextArea label="Je ešte niečo, čo by sme mali o projekte vedieť?" hint={prefilledHint('additionalNotes')} value={answers.additionalNotes} maxLength={5000} onChange={(e) => updateClientField({ ...answers, additionalNotes: e.target.value }, 'additionalNotes')} placeholder="Čokoľvek, čo sa nezmestilo do predchádzajúcich otázok." />
+                <TextArea label="Je ešte niečo dôležité, na čo som sa nespýtal a mal by som to pred návrhom webu vedieť?" hint={prefilledHint('additionalNotes')} value={answers.additionalNotes} maxLength={5000} onChange={(e) => updateClientField({ ...answers, additionalNotes: e.target.value }, 'additionalNotes')} placeholder="Čokoľvek, čo sa nezmestilo do predchádzajúcich otázok." />
 
                 <div className="bg-white/60 px-5 py-5 sm:px-6">
                   <h3 className="font-semibold">Krátke zhrnutie</h3>
