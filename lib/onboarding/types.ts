@@ -87,6 +87,9 @@ export type OnboardingAnswers = {
   offeringTypes: string[]
   offerItems: string[]
   services: string
+  uniqueOffering: string
+  keyTakeaway: string
+  tenSecondHighlight: string
   sections: string[]
   sectionsOther: string
   otherSections: string
@@ -99,6 +102,8 @@ export type OnboardingAnswers = {
   designDislikes: string[]
   inspirationUrls: string[]
   dislikes: string
+  representativePhotoIds: string[]
+  brandStory: string
   existingWebsite: string
   socialLinks: string[]
   contact: {
@@ -214,6 +219,9 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   offeringTypes: [],
   offerItems: [],
   services: '',
+  uniqueOffering: '',
+  keyTakeaway: '',
+  tenSecondHighlight: '',
   sections: [],
   sectionsOther: '',
   otherSections: '',
@@ -226,6 +234,8 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   designDislikes: [],
   inspirationUrls: [''],
   dislikes: '',
+  representativePhotoIds: [],
+  brandStory: '',
   existingWebsite: '',
   socialLinks: [''],
   contact: { name: '', email: '', phone: '', preferredMethods: [], preferredMethod: '' },

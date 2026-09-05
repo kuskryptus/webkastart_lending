@@ -11,6 +11,7 @@ import {
 export const ONBOARDING_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[A-Za-z0-9_-]{48}\.[A-Za-z0-9_-]{43})$/
 export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 export const MAX_UPLOAD_FILES = 100
+export const MAX_REPRESENTATIVE_PHOTOS = 5
 
 export const allowedUploadTypes: Record<string, string[]> = {
   'image/jpeg': ['jpg', 'jpeg'],
@@ -34,6 +35,10 @@ function list(value: unknown, maxItems: number, maxLength: number) {
     .map((item) => item.trim().slice(0, maxLength))
     .filter(Boolean)
     .slice(0, maxItems)
+}
+
+function uniqueList(value: unknown, maxItems: number, maxLength: number) {
+  return [...new Set(list(value, maxItems * 2, maxLength))].slice(0, maxItems)
 }
 
 function object(value: unknown): Record<string, unknown> {
@@ -110,6 +115,9 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     offeringTypes: list(source.offeringTypes, 12, 100),
     offerItems: list(source.offerItems, 20, 200),
     services: text(source.services, 3000),
+    uniqueOffering: text(source.uniqueOffering, 3000),
+    keyTakeaway: text(source.keyTakeaway, 3000),
+    tenSecondHighlight: text(source.tenSecondHighlight, 3000),
     sections: list(source.sections, 24, 100),
     sectionsOther: text(source.sectionsOther, 1000),
     otherSections: text(source.otherSections, 2000),
@@ -122,6 +130,8 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     designDislikes: list(source.designDislikes, 16, 100),
     inspirationUrls: list(source.inspirationUrls, 5, 500),
     dislikes: text(source.dislikes, 2000),
+    representativePhotoIds: uniqueList(source.representativePhotoIds, MAX_REPRESENTATIVE_PHOTOS, 100),
+    brandStory: text(source.brandStory, 5000),
     existingWebsite: text(source.existingWebsite, 500),
     socialLinks: list(source.socialLinks, 8, 500),
     contact: {

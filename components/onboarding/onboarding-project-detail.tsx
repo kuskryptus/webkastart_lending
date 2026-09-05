@@ -108,6 +108,9 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
   const uploadedAssets = assets.filter((asset) => asset.status === 'uploaded')
   const images = uploadedAssets.filter((asset) => asset.mimeType.startsWith('image/'))
   const documents = uploadedAssets.filter((asset) => !asset.mimeType.startsWith('image/'))
+  const representativePhotos = answers.representativePhotoIds
+    .map((id) => images.find((asset) => asset.id === id))
+    .filter((asset): asset is OnboardingAsset => Boolean(asset))
 
   return (
     <main className="min-h-dvh bg-background">
@@ -141,6 +144,7 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
             <Answer label="Meno / názov podnikania">{answers.client.displayName}</Answer><Answer label="Čomu sa venuje">{answers.business.area}</Answer>
             <Answer label="Typ projektu">{answers.projectType}</Answer>
             <div className="sm:col-span-2"><Answer label="Ako opisuje svoju prácu">{answers.business.description}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Osobný príbeh značky">{answers.brandStory}</Answer></div>
             <ExternalAnswer label="Existujúci web" value={answers.existingWebsite} />
             <Answer label="Sociálne siete">{answers.socialLinks.length ? <span className="space-y-1.5">{answers.socialLinks.map((value, index) => { const href = externalUrl(value); const label = [answers.socialPlatforms[index], value].filter(Boolean).join(': '); return href ? <a key={`${value}-${index}`} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{label}<ExternalLink className="size-3.5" /></a> : <span key={`${value}-${index}`} className="block">{label}</span> })}</span> : ''}</Answer>
           </CoreStep>
@@ -151,15 +155,18 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
             <Answer label="Čo má návštevník urobiť"><SelectionList values={[...answers.desiredActions, ...(answers.desiredActionsOther ? [answers.desiredActionsOther] : [])]} /></Answer>
             <Answer label="Typ ponuky"><SelectionList values={[...answers.offeringTypes, ...(answers.services ? [answers.services] : [])]} /></Answer>
             <Answer label="Konkrétne produkty / služby"><SelectionList values={answers.offerItems} /></Answer>
+            <div className="sm:col-span-2"><Answer label="Čo je na ponuke najviac jedinečné">{answers.uniqueOffering}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Čo si má návštevník zapamätať">{answers.keyTakeaway}</Answer></div>
+            <div className="sm:col-span-2"><Answer label="Čo ukázať počas prvých 10 sekúnd">{answers.tenSecondHighlight}</Answer></div>
           </CoreStep>
           <CoreStep number={3} title="Obsah stránky">
             <Answer label="Časti stránky"><SelectionList values={[...answers.sections, ...(answers.sectionsOther ? [answers.sectionsOther] : [])]} /></Answer><Answer label="Budúce rozšírenia"><SelectionList values={[...answers.futureFeatures, ...(answers.futureFeaturesOther ? [answers.futureFeaturesOther] : [])]} /></Answer><div className="sm:col-span-2"><Answer label="Ďalšie požiadavky">{answers.otherSections}</Answer></div>
           </CoreStep>
           <CoreStep number={4} title="Vizuálny smer">
-            <Answer label="Ako má web pôsobiť"><SelectionList values={[...answers.designPreferences, ...(answers.designOther ? [answers.designOther] : [])]} /></Answer><Answer label="Farebné preferencie"><SelectionList values={[...answers.colorPreferences, ...(answers.colorPreferencesOther ? [answers.colorPreferencesOther] : [])]} /></Answer><Answer label="Čomu sa vyhnúť"><SelectionList values={[...answers.designDislikes, ...(answers.dislikes ? [answers.dislikes] : [])]} /></Answer>
+            <Answer label="Pocit pri návšteve stránky"><SelectionList values={[...answers.designPreferences, ...(answers.designOther ? [answers.designOther] : [])]} /></Answer><Answer label="Farebné preferencie"><SelectionList values={[...answers.colorPreferences, ...(answers.colorPreferencesOther ? [answers.colorPreferencesOther] : [])]} /></Answer><Answer label="Čomu sa vyhnúť"><SelectionList values={[...answers.designDislikes, ...(answers.dislikes ? [answers.dislikes] : [])]} /></Answer>
             <div className="sm:col-span-2"><Answer label="Inšpirácie">{answers.inspirationUrls.length ? <span className="space-y-1.5">{answers.inspirationUrls.map((value) => { const href = externalUrl(value); return href ? <a key={value} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{value}<ExternalLink className="size-3.5" /></a> : <span key={value} className="block">{value}</span> })}</span> : ''}</Answer></div>
           </CoreStep>
-          <CoreStep number={5} title="Materiály"><div className="sm:col-span-2"><Answer label="Nahrané podklady">{uploadedAssets.length ? `${uploadedAssets.length} súborov — nájdete ich v sekcii Súbory / fotografie.` : ''}</Answer></div></CoreStep>
+          <CoreStep number={5} title="Materiály"><div className="sm:col-span-2"><Answer label="Nahrané podklady">{uploadedAssets.length ? `${uploadedAssets.length} súborov — nájdete ich v sekcii Súbory / fotografie.` : ''}</Answer></div><div className="sm:col-span-2"><Answer label="Fotografie, ktoré najlepšie reprezentujú značku"><SelectionList values={representativePhotos.map((asset) => asset.name)} /></Answer></div></CoreStep>
           <CoreStep number={6} title="Kontakt a dokončenie">
             <Answer label="Kontaktná osoba">{answers.contact.name}</Answer><Answer label="Ideálny kontakt zákazníka"><SelectionList values={[...answers.contact.preferredMethods, ...(answers.contact.preferredMethod ? [answers.contact.preferredMethod] : [])]} /></Answer>
             <Answer label="E-mail">{answers.contact.email ? <a href={`mailto:${answers.contact.email}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Mail className="size-3.5" />{answers.contact.email}</a> : ''}</Answer>

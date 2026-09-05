@@ -2,14 +2,15 @@
 
 import { Plus, X } from 'lucide-react'
 import { ChoiceGrid, OtherAnswer, ProductPriceList, RepeatableTextItems } from '@/components/onboarding/quick-fields'
+import { RepresentativePhotoPicker } from '@/components/onboarding/representative-photo-picker'
 import {
-  appreciationOptions, colorOptions, communicationOptions, designOptions, desiredActionOptions,
+  appreciationOptions, brandFeelingOptions, colorOptions, communicationOptions, desiredActionOptions,
   dislikeOptions, frequentQuestionOptions, futureOptions, mustShowOptions, offeringOptions,
-  orderOptions, personalizationOptions, sectionOptions, targetAudienceOptions,
+  includeSavedOptions, orderOptions, personalizationOptions, sectionOptions, targetAudienceOptions,
   projectTypeOptions, socialPlatformOptions, websiteExpectationOptions, websiteInformationOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
-import type { Discovery2Answers, OnboardingAnswers, PrefillFieldKey } from '@/lib/onboarding/types'
+import type { Discovery2Answers, OnboardingAnswers, OnboardingAsset, PrefillFieldKey } from '@/lib/onboarding/types'
 
 function Field({ hint, label, multiline = false, onChange, value }: {
   hint?: string
@@ -49,10 +50,12 @@ function ChoiceField({ children, onChange, options, selected, title }: {
   return <div className="sm:col-span-2"><p className="mb-3 text-xs font-semibold text-muted-foreground">{title}</p><ChoiceGrid options={options} selected={selected} onChange={onChange} />{children}</div>
 }
 
-export function CoreWorkspaceFields({ actor, answers, disabled, onChange }: {
+export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, getAssetUrl, onChange }: {
   actor?: 'client'
   answers: OnboardingAnswers
+  assets?: OnboardingAsset[]
   disabled?: boolean
+  getAssetUrl?: (asset: OnboardingAsset) => string
   onChange: (answers: OnboardingAnswers) => void
 }) {
   function emit(next: OnboardingAnswers, key?: PrefillFieldKey) {
@@ -68,6 +71,7 @@ export function CoreWorkspaceFields({ actor, answers, disabled, onChange }: {
         <Field hint={hint('business.area')} label="Čomu sa venujete" value={answers.business.area} onChange={(area) => emit({ ...answers, business: { ...answers.business, area } }, 'business.area')} />
         <SelectField hint={hint('projectType')} label="Typ projektu / čo potrebujete" options={projectTypeOptions} value={answers.projectType} onChange={(projectType) => emit({ ...answers, projectType }, 'projectType')} />
         <div className="sm:col-span-2"><Field multiline label="Ako by ste opísali svoju prácu" value={answers.business.description} onChange={(description) => onChange({ ...answers, business: { ...answers.business, description } })} /></div>
+        <div className="sm:col-span-2"><Field multiline label="Je za vašou značkou nejaký osobný príbeh, ktorý by mal zákazník poznať?" value={answers.brandStory} onChange={(brandStory) => onChange({ ...answers, brandStory })} /></div>
         <Field hint={hint('existingWebsite')} label="Existujúci web" value={answers.existingWebsite} onChange={(existingWebsite) => emit({ ...answers, existingWebsite }, 'existingWebsite')} />
         <SocialLinksField answers={answers} hint={hint('socialLinks')} onChange={(next) => emit(next, 'socialLinks')} />
       </Group>
@@ -77,6 +81,9 @@ export function CoreWorkspaceFields({ actor, answers, disabled, onChange }: {
         <ChoiceField title="Čo sa má návštevník hlavne dozvedieť?" options={websiteInformationOptions} selected={answers.websiteInformation} onChange={(websiteInformation) => onChange({ ...answers, websiteInformation })}><OtherAnswer show={answers.websiteInformation.includes('Iné')} multiline label="Iná dôležitá informácia" value={answers.websiteGoal} onChange={(websiteGoal) => onChange({ ...answers, websiteGoal })} /></ChoiceField>
         <ChoiceField title="Čo má návštevník urobiť?" options={desiredActionOptions} selected={answers.desiredActions} onChange={(desiredActions) => onChange({ ...answers, desiredActions })}><OtherAnswer show={answers.desiredActions.includes('Iné')} label="Iná akcia" value={answers.desiredActionsOther} onChange={(desiredActionsOther) => onChange({ ...answers, desiredActionsOther })} /></ChoiceField>
         <ChoiceField title="Čo ponúkate?" options={offeringOptions} selected={answers.offeringTypes} onChange={(offeringTypes) => onChange({ ...answers, offeringTypes })}><OtherAnswer show={answers.offeringTypes.includes('Iné')} label="Iný typ ponuky" value={answers.services} onChange={(services) => onChange({ ...answers, services })} /><div className="mt-5"><RepeatableTextItems addLabel="Pridať konkrétny produkt alebo službu" label="Konkrétne produkty alebo služby" placeholder="Napr. servis bicykla" values={answers.offerItems} onChange={(offerItems) => onChange({ ...answers, offerItems })} /></div></ChoiceField>
+        <div className="sm:col-span-2"><Field multiline label="Čo je na vašej ponuke najviac jedinečné?" hint="Čo je na vašich produktoch alebo službách také, čo zákazník inde bežne nenájde?" value={answers.uniqueOffering} onChange={(uniqueOffering) => onChange({ ...answers, uniqueOffering })} /></div>
+        <div className="sm:col-span-2"><Field multiline label="Ak by si návštevník po odchode zo stránky zapamätal iba jednu vec o vás alebo vašej ponuke, čo by to malo byť?" value={answers.keyTakeaway} onChange={(keyTakeaway) => onChange({ ...answers, keyTakeaway })} /></div>
+        <div className="sm:col-span-2"><Field multiline label="Čo by ste návštevníkovi ukázali ako prvé, keby ste mali iba 10 sekúnd?" value={answers.tenSecondHighlight} onChange={(tenSecondHighlight) => onChange({ ...answers, tenSecondHighlight })} /></div>
       </Group>
       <Group title="Obsah stránky">
         <ChoiceField title="Čo by ste chceli na stránke?" options={sectionOptions} selected={answers.sections} onChange={(sections) => onChange({ ...answers, sections })}><OtherAnswer show={answers.sections.includes('Iné')} label="Iná časť stránky" value={answers.sectionsOther} onChange={(sectionsOther) => onChange({ ...answers, sectionsOther })} /></ChoiceField>
@@ -84,10 +91,11 @@ export function CoreWorkspaceFields({ actor, answers, disabled, onChange }: {
         <div className="sm:col-span-2"><Field multiline label="Je ešte niečo, čo chcete na stránke?" value={answers.otherSections} onChange={(otherSections) => onChange({ ...answers, otherSections })} /></div>
       </Group>
       <Group title="Vizuálny smer">
-        <ChoiceField title="Ako má web pôsobiť?" options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => onChange({ ...answers, designPreferences })}><OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný vizuálny smer" value={answers.designOther} onChange={(designOther) => onChange({ ...answers, designOther })} /></ChoiceField>
+        <ChoiceField title="Aký pocit chcete, aby mal človek pri návšteve vašej stránky?" options={includeSavedOptions(brandFeelingOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => onChange({ ...answers, designPreferences })}><OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný pocit" value={answers.designOther} onChange={(designOther) => onChange({ ...answers, designOther })} /></ChoiceField>
         <ChoiceField title="Aké farby vám sú blízke?" options={colorOptions} selected={answers.colorPreferences} onChange={(colorPreferences) => onChange({ ...answers, colorPreferences })}><OtherAnswer show={answers.colorPreferences.includes('Iné')} label="Iná farebná preferencia" value={answers.colorPreferencesOther} onChange={(colorPreferencesOther) => onChange({ ...answers, colorPreferencesOther })} /></ChoiceField>
         <ChoiceField title="Čomu sa má dizajn vyhnúť?" options={dislikeOptions} selected={answers.designDislikes} onChange={(designDislikes) => onChange({ ...answers, designDislikes })}><OtherAnswer show={answers.designDislikes.includes('Iné')} multiline label="Iné obmedzenie" value={answers.dislikes} onChange={(dislikes) => onChange({ ...answers, dislikes })} /></ChoiceField>
         <ListField label="Weby alebo značky, ktoré sa páčia" value={answers.inspirationUrls} onChange={(inspirationUrls) => onChange({ ...answers, inspirationUrls })} />
+        {getAssetUrl && <RepresentativePhotoPicker assets={assets} getAssetUrl={getAssetUrl} selected={answers.representativePhotoIds} onChange={(representativePhotoIds) => onChange({ ...answers, representativePhotoIds })} />}
       </Group>
       <Group title="Kontakt a fakturácia">
         <Field hint={hint('contact.name')} label="Kontaktná osoba" value={answers.contact.name} onChange={(name) => emit({ ...answers, contact: { ...answers.contact, name } }, 'contact.name')} />

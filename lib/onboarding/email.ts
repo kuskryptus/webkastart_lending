@@ -1,4 +1,4 @@
-import type { OnboardingAnswers } from './types'
+import type { OnboardingAnswers, OnboardingAsset } from './types'
 
 function escapeHtml(value: string) {
   return value
@@ -14,7 +14,10 @@ function value(value: string | string[]) {
   return text || '—'
 }
 
-export function createOnboardingEmail(clientLabel: string, answers: OnboardingAnswers) {
+export function createOnboardingEmail(clientLabel: string, answers: OnboardingAnswers, assets: OnboardingAsset[] = []) {
+  const representativePhotoNames = answers.representativePhotoIds
+    .map((id) => assets.find((asset) => asset.id === id)?.name)
+    .filter((name): name is string => Boolean(name))
   const groups: Array<{ title: string; rows: Array<[string, string | string[]]> }> = [
     {
       title: 'Klient a podnikanie',
@@ -43,6 +46,9 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Typ ponuky', answers.offeringTypes],
         ['Konkrétne produkty / služby', answers.offerItems],
         ['Služby', answers.services],
+        ['Čo je na ponuke jedinečné', answers.uniqueOffering],
+        ['Čo si má návštevník zapamätať', answers.keyTakeaway],
+        ['Čo ukázať počas prvých 10 sekúnd', answers.tenSecondHighlight],
       ],
     },
     {
@@ -58,14 +64,19 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
     {
       title: 'Vizuálny smer',
       rows: [
-        ['Preferovaný štýl', answers.designPreferences],
-        ['Vlastný opis štýlu', answers.designOther],
+        ['Pocit pri návšteve stránky', answers.designPreferences],
+        ['Iný pocit', answers.designOther],
         ['Farebné preferencie', answers.colorPreferences],
         ['Iná farebná preferencia', answers.colorPreferencesOther],
         ['Inšpirácie', answers.inspirationUrls],
         ['Čomu sa má dizajn vyhnúť', answers.designDislikes],
         ['Čomu sa vyhnúť', answers.dislikes],
+        ['Reprezentatívne fotografie', representativePhotoNames],
       ],
+    },
+    {
+      title: 'Príbeh značky',
+      rows: [['Osobný príbeh značky', answers.brandStory]],
     },
     {
       title: 'Kontakt',

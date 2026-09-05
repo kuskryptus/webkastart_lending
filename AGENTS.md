@@ -52,6 +52,10 @@ and pnpm.
   server-side and never trust client-supplied source labels.
 - Fast-choice fields are additive. Keep the legacy free-text fields readable and
   writable so existing client answers survive new saves without a data rewrite.
+- Core answers keep the creative-strategy questions in JSON. `designPreferences`
+  and `designOther` retain the original visual-direction answers after the feeling
+  question rewording; `representativePhotoIds` may reference at most five existing
+  uploaded images and must not create a second upload flow.
 - Answers remain structured according to their form types; sanitize all writes at
   the API boundary so the future AI boundary remains stable.
 

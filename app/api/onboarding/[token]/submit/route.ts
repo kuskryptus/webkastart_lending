@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { checkRateLimit, findOnboardingByToken, submitOnboarding } from '@/lib/onboarding/db'
+import { checkRateLimit, findOnboardingByToken, listAssets, submitOnboarding } from '@/lib/onboarding/db'
 import { createOnboardingEmail } from '@/lib/onboarding/email'
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
@@ -64,7 +64,8 @@ export async function POST(request: Request, { params }: Context) {
 
     const recipient = process.env.CONTACT_TO_EMAIL || 'kampczykristian@gmail.com'
     const sender = process.env.CONTACT_FROM_EMAIL || 'WebkaStart <kontakt@webkastart.sk>'
-    const email = createOnboardingEmail(project.clientLabel, answers)
+    const assets = await listAssets(project.clientId)
+    const email = createOnboardingEmail(project.clientLabel, answers, assets)
     const answersHash = createHash('sha256').update(JSON.stringify(answers)).digest('hex').slice(0, 20)
     const emailResponse = await fetch('https://api.resend.com/emails', {
       body: JSON.stringify({

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebkaStart × Sambike — Instagram cover</title>
+    <style>
+      :root {
+        --blue: #1683e8;
+        --ink: #111820;
+        --muted: #68717d;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { width: 1080px; height: 1350px; margin: 0; overflow: hidden; }
+      body {
+        color: var(--ink);
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .cover {
+        position: relative;
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        padding: 56px 64px 48px;
+        background:
+          radial-gradient(circle at 94% 13%, rgba(22, 131, 232, .09), transparent 31%),
+          radial-gradient(circle at 56% 70%, rgba(22, 131, 232, .055), transparent 36%),
+          linear-gradient(145deg, #ffffff 0%, #fbfdff 52%, #f3f8fc 100%);
+      }
+
+      .brand-row {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-size: 22px;
+        font-weight: 770;
+        letter-spacing: -.025em;
+      }
+      .brand-mark { width: 58px; height: 38px; }
+      .brand-mark path { stroke: currentColor; }
+      .brand-mark circle { fill: var(--blue); }
+      .site {
+        color: #858d97;
+        font-size: 18px;
+        font-weight: 560;
+        letter-spacing: -.01em;
+      }
+
+      .copy {
+        position: relative;
+        z-index: 4;
+        width: 555px;
+        margin-top: 107px;
+      }
+      .label {
+        color: var(--blue);
+        font-size: 16px;
+        font-weight: 790;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 26px 0 0;
+        font-size: 75px;
+        font-weight: 820;
+        letter-spacing: -.062em;
+        line-height: 1.045;
+      }
+      h1 span { color: var(--blue); }
+      .intro {
+        margin: 35px 0 0;
+        color: var(--muted);
+        font-size: 25px;
+        font-weight: 475;
+        letter-spacing: -.025em;
+        line-height: 1.43;
+      }
+
+      .phone {
+        position: absolute;
+        z-index: 3;
+        top: 160px;
+        right: -14px;
+        width: 482px;
+        padding: 7px;
+        border: 1px solid rgba(17, 24, 32, .55);
+        border-radius: 66px;
+        background: linear-gradient(112deg, #252a30 0%, #eef1f3 8%, #343a40 17%, #11151a 78%, #dce1e5 96%);
+        box-shadow:
+          0 44px 90px rgba(22, 58, 91, .18),
+          0 14px 32px rgba(17, 24, 32, .13),
+          0 2px 5px rgba(17, 24, 32, .12);
+        transform: rotate(-1.2deg);
+        transform-origin: 50% 50%;
+      }
+      .phone::before {
+        position: absolute;
+        top: 138px;
+        left: -5px;
+        width: 4px;
+        height: 82px;
+        border-radius: 4px 0 0 4px;
+        background: #737b82;
+        box-shadow: 0 105px 0 #737b82;
+        content: "";
+      }
+      .phone::after {
+        position: absolute;
+        top: 228px;
+        right: -4px;
+        width: 4px;
+        height: 118px;
+        border-radius: 0 4px 4px 0;
+        background: #5d646b;
+        content: "";
+      }
+      .screen {
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        border: 6px solid #080a0c;
+        border-radius: 58px;
+        background: white;
+      }
+      .screen img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .screen-glare {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background: linear-gradient(118deg, rgba(255,255,255,.14), transparent 19%, transparent 76%, rgba(255,255,255,.07));
+      }
+
+      .texture {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+      }
+      .wheel {
+        position: absolute;
+        top: 135px;
+        right: 240px;
+        width: 420px;
+        height: 420px;
+        opacity: .04;
+      }
+      .chainring {
+        position: absolute;
+        right: 355px;
+        bottom: 33px;
+        width: 355px;
+        height: 355px;
+        opacity: .055;
+      }
+      .chain {
+        position: absolute;
+        right: 290px;
+        bottom: 270px;
+        width: 470px;
+        height: 180px;
+        opacity: .045;
+        transform: rotate(-11deg);
+      }
+
+      .cta {
+        position: absolute;
+        z-index: 5;
+        left: 64px;
+        bottom: 126px;
+        display: flex;
+        width: 490px;
+        height: 88px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 9px 10px 9px 31px;
+        border-radius: 999px;
+        background: linear-gradient(105deg, #1683e8 0%, #0872d6 100%);
+        box-shadow: 0 16px 42px rgba(22, 131, 232, .23), 0 3px 9px rgba(22, 131, 232, .14);
+        color: #fff;
+        font-size: 23px;
+        font-weight: 730;
+        letter-spacing: -.025em;
+      }
+      .cta-arrow {
+        display: grid;
+        width: 68px;
+        height: 68px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .16);
+        font-size: 31px;
+        font-weight: 400;
+      }
+      .scope {
+        position: absolute;
+        z-index: 5;
+        bottom: 55px;
+        left: 64px;
+        color: #7e8791;
+        font-size: 14px;
+        font-weight: 730;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="cover">
+      <header class="brand-row">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 220 140" fill="none" aria-hidden="true">
+            <path d="M32 32L72 108L110 32L148 108L188 32" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="204" cy="104" r="13" />
+          </svg>
+          <span>WebkaStart</span>
+        </div>
+        <span class="site">webkastart.sk</span>
+      </header>
+
+      <section class="copy">
+        <p class="label">Projekt Sambike</p>
+        <h1>Kampane,<br />ktoré <span>prinášajú</span><br />zákazníkov.</h1>
+        <p class="intro">Web, kampane a záujemcovia<br />v jednom jednoduchom systéme.</p>
+      </section>
+
+      <div class="texture" aria-hidden="true">
+        <svg class="wheel" viewBox="0 0 400 400" fill="none">
+          <circle cx="200" cy="200" r="178" stroke="#1683e8" stroke-width="5" />
+          <circle cx="200" cy="200" r="17" stroke="#1683e8" stroke-width="5" />
+          <g stroke="#1683e8" stroke-width="3">
+            <path d="M200 22V183M200 217V378M22 200H183M217 200H378" />
+            <path d="M74 74L188 188M212 212L326 326M326 74L212 188M188 212L74 326" />
+          </g>
+        </svg>
+        <svg class="chainring" viewBox="0 0 360 360" fill="none">
+          <g stroke="#1683e8">
+            <circle cx="180" cy="180" r="116" stroke-width="13" stroke-dasharray="8 10" />
+            <circle cx="180" cy="180" r="88" stroke-width="4" />
+            <circle cx="180" cy="180" r="28" stroke-width="7" />
+            <path d="M180 92V152M180 208V268M92 180H152M208 180H268M118 118L160 160M200 200L242 242M242 118L200 160M160 200L118 242" stroke-width="8" stroke-linecap="round" />
+          </g>
+        </svg>
+        <svg class="chain" viewBox="0 0 470 180" fill="none">
+          <g stroke="#1683e8" stroke-width="6">
+            <path d="M27 109C118 18 298 13 443 79" stroke-linecap="round" />
+            <g>
+              <rect x="22" y="95" width="42" height="22" rx="11" transform="rotate(-39 22 95)" />
+              <rect x="86" y="51" width="42" height="22" rx="11" transform="rotate(-25 86 51)" />
+              <rect x="156" y="25" width="42" height="22" rx="11" transform="rotate(-10 156 25)" />
+              <rect x="230" y="20" width="42" height="22" rx="11" transform="rotate(4 230 20)" />
+              <rect x="305" y="31" width="42" height="22" rx="11" transform="rotate(14 305 31)" />
+              <rect x="378" y="52" width="42" height="22" rx="11" transform="rotate(23 378 52)" />
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <figure class="phone" aria-label="Originálna stránka projektu Sambike v telefónnom mockupe">
+        <div class="screen">
+          <img src="assets/sambike-service-page.png" alt="Sambike — stránka servisu bicyklov" />
+          <div class="screen-glare"></div>
+        </div>
+      </figure>
+
+      <div class="cta"><span>Pozrieť projekt</span><span class="cta-arrow">→</span></div>
+      <p class="scope">Web · Kampane · Automatizácia</p>
+    </main>
+  </body>
+</html>

@@ -39,6 +39,7 @@ function coreSections(answers: OnboardingAnswers) {
         response('business_area', 'Čomu sa klient venuje', answers.business.area),
         response('project_type', 'Typ projektu', answers.projectType),
         response('business_description', 'Ako klient opisuje svoju prácu', answers.business.description),
+        response('brand_story', 'Je za značkou osobný príbeh, ktorý by mal zákazník poznať?', answers.brandStory),
         response('existing_website', 'Existujúci web', answers.existingWebsite),
         response('social_platforms', 'Platformy sociálnych sietí', answers.socialPlatforms),
         response('social_links', 'Sociálne siete', answers.socialLinks),
@@ -59,6 +60,9 @@ function coreSections(answers: OnboardingAnswers) {
         response('offering_types', 'Typ ponuky', answers.offeringTypes),
         response('offer_items', 'Konkrétne produkty a služby', answers.offerItems),
         response('services', 'Služby alebo ponuka', answers.services),
+        response('unique_offering', 'Čo je na ponuke najviac jedinečné?', answers.uniqueOffering),
+        response('key_takeaway', 'Čo si má návštevník po odchode zo stránky zapamätať?', answers.keyTakeaway),
+        response('ten_second_highlight', 'Čo ukázať návštevníkovi ako prvé počas 10 sekúnd?', answers.tenSecondHighlight),
       ],
     },
     {
@@ -76,13 +80,14 @@ function coreSections(answers: OnboardingAnswers) {
       id: 'visual_direction',
       title: 'Vizuálny smer',
       responses: [
-        response('design_preferences', 'Ako má web pôsobiť', answers.designPreferences),
-        response('design_other', 'Ďalší vizuálny smer', answers.designOther),
+        response('design_preferences', 'Aký pocit má mať človek pri návšteve stránky?', answers.designPreferences),
+        response('design_other', 'Iný želaný pocit', answers.designOther),
         response('color_preferences', 'Farebné preferencie', answers.colorPreferences),
         response('color_preferences_other', 'Iná farebná preferencia', answers.colorPreferencesOther),
         response('inspiration_urls', 'Inšpirácie', answers.inspirationUrls),
         response('design_dislikes', 'Čomu sa má dizajn vyhnúť', answers.designDislikes),
         response('dislikes', 'Čomu sa vyhnúť', answers.dislikes),
+        response('representative_photo_ids', 'Fotografie, ktoré najlepšie reprezentujú značku', answers.representativePhotoIds),
       ],
     },
     {
@@ -191,6 +196,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
         created_at: asset.createdAt,
         uploaded_by: asset.uploadedBy || 'unknown',
         visible_to_client: asset.clientVisible === true,
+        selected_as_brand_representative: core?.answers.representativePhotoIds.includes(asset.id) === true,
       })),
   }
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Copy, Loader2, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { OtherAnswer, QuickQuestion, RepeatableTextItems } from '@/components/onboarding/quick-fields'
+import { RepresentativePhotoPicker } from '@/components/onboarding/representative-photo-picker'
 import { UploadField } from '@/components/onboarding/upload-field'
 import {
   emptyOnboardingAnswers,
@@ -12,10 +13,10 @@ import {
   type OnboardingAsset,
   type OnboardingProjectResponse,
 } from '@/lib/onboarding/types'
-import { validateContact } from '@/lib/onboarding/validation'
+import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
 import {
-  colorOptions, communicationOptions, designOptions, desiredActionOptions, dislikeOptions,
-  futureOptions, offeringOptions, sectionOptions, socialPlatformOptions,
+  brandFeelingOptions, colorOptions, communicationOptions, desiredActionOptions, dislikeOptions,
+  futureOptions, includeSavedOptions, offeringOptions, sectionOptions, socialPlatformOptions,
   projectTypeOptions, targetAudienceOptions, websiteExpectationOptions, websiteInformationOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
@@ -204,7 +205,7 @@ export function OnboardingWizard({
           try {
             const local = JSON.parse(backup) as { answers: OnboardingAnswers; currentStep: number; savedAt: string }
             if (new Date(local.savedAt) > new Date(data.updatedAt)) {
-              nextAnswers = local.answers
+              nextAnswers = sanitizeAnswers(local.answers)
               nextStep = local.currentStep
             }
           } catch {
@@ -431,6 +432,7 @@ export function OnboardingWizard({
                 <Field label="Čomu sa venujete?" hint={prefilledHint('business.area')} value={answers.business.area} maxLength={500} onChange={(e) => updateClientField({ ...answers, business: { ...answers.business, area: e.target.value } }, 'business.area')} placeholder="Napr. cykloservis, účtovníctvo, handmade výroba, stavebné práce…" />
                 <label className="block"><span className="text-base font-semibold tracking-[-0.01em]">Typ projektu / čo potrebujete</span><span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('projectType')}</span><select value={answers.projectType} onChange={(event) => updateClientField({ ...answers, projectType: event.target.value }, 'projectType')} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand"><option value="">Vyberte, ak už viete</option>{projectTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
                 <TextArea label="Ako by ste jednoducho opísali, čo robíte?" hint="Nepovinné" value={answers.business.description} maxLength={3000} onChange={(e) => setAnswers({ ...answers, business: { ...answers.business, description: e.target.value } })} placeholder="Nemusí to byť marketingový text. Napíšte to pokojne vlastnými slovami." />
+                <TextArea label="Je za vašou značkou nejaký osobný príbeh, ktorý by mal zákazník poznať?" hint="Nepovinné" value={answers.brandStory} maxLength={5000} onChange={(e) => setAnswers({ ...answers, brandStory: e.target.value })} />
                 <Field label="Máte už existujúci web?" hint={prefilledHint('existingWebsite')} type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => updateClientField({ ...answers, existingWebsite: e.target.value }, 'existingWebsite')} placeholder="https://" />
                 <div>
                   <p className="text-base font-semibold tracking-[-0.01em]">Sociálne siete <span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('socialLinks')}</span></p>
@@ -487,6 +489,9 @@ export function OnboardingWizard({
                   <OtherAnswer show={answers.offeringTypes.includes('Iné')} label="Iný typ ponuky" value={answers.services} onChange={(services) => setAnswers({ ...answers, services })} />
                   <div className="mt-6"><RepeatableTextItems label="Konkrétne produkty alebo služby" addLabel="Pridať konkrétny produkt alebo službu" placeholder="Napr. servis bicykla" values={answers.offerItems} onChange={(offerItems) => setAnswers({ ...answers, offerItems })} /></div>
                 </QuickQuestion>
+                <TextArea label="Čo je na vašej ponuke najviac jedinečné?" hint="Čo je na vašich produktoch alebo službách také, čo zákazník inde bežne nenájde?" value={answers.uniqueOffering} maxLength={3000} onChange={(event) => setAnswers({ ...answers, uniqueOffering: event.target.value })} />
+                <TextArea label="Ak by si návštevník po odchode zo stránky zapamätal iba jednu vec o vás alebo vašej ponuke, čo by to malo byť?" hint="Nepovinné" value={answers.keyTakeaway} maxLength={3000} onChange={(event) => setAnswers({ ...answers, keyTakeaway: event.target.value })} />
+                <TextArea label="Čo by ste návštevníkovi ukázali ako prvé, keby ste mali iba 10 sekúnd?" hint="Nepovinné" value={answers.tenSecondHighlight} maxLength={3000} onChange={(event) => setAnswers({ ...answers, tenSecondHighlight: event.target.value })} />
               </div>
             </>
           )}
@@ -512,9 +517,9 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 4" title="Ako by mal web pôsobiť" text="Vyberte pár slov podľa pocitu. Zvyšok vám navrhneme tak, aby sedel vašej práci aj zákazníkom." />
               <div className="space-y-10">
-                <QuickQuestion title="Ako má web pôsobiť?">
-                  <ChoiceGrid options={designOptions} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} />
-                  <OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný vizuálny smer" value={answers.designOther} onChange={(designOther) => setAnswers({ ...answers, designOther })} placeholder="Napr. vzdušný a prirodzený" />
+                <QuickQuestion title="Aký pocit chcete, aby mal človek pri návšteve vašej stránky?">
+                  <ChoiceGrid options={includeSavedOptions(brandFeelingOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} />
+                  <OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný pocit" value={answers.designOther} onChange={(designOther) => setAnswers({ ...answers, designOther })} placeholder="Napr. bezpečie alebo energia" />
                 </QuickQuestion>
                 <QuickQuestion title="Aké farby vám sú blízke?" hint="Je to iba vaša preferencia, nie záväzná farebná paleta.">
                   <ChoiceGrid options={colorOptions} selected={answers.colorPreferences} onChange={(colorPreferences) => setAnswers({ ...answers, colorPreferences })} />
@@ -544,7 +549,10 @@ export function OnboardingWizard({
           {step === 5 && (
             <>
               <StepHeader eyebrow="Krok 5" title="Fotografie a materiály" text="Nahrajte všetko, čo by mohlo byť pri tvorbe webu užitočné. Nemusíte vyberať iba najlepšie fotografie. Vhodné podklady vyberieme pri príprave webu." />
-              <UploadField assets={assets} onAssetsChange={setAssets} token={token} />
+              <UploadField assets={assets} getAssetUrl={(asset) => `/api/onboarding/${token}/uploads/${asset.id}`} onAssetsChange={setAssets} token={token} />
+              <div className="mt-10 border-t border-border/70 pt-8">
+                <RepresentativePhotoPicker assets={assets} getAssetUrl={(asset) => `/api/onboarding/${token}/uploads/${asset.id}`} selected={answers.representativePhotoIds} onChange={(representativePhotoIds) => setAnswers({ ...answers, representativePhotoIds })} />
+              </div>
               <div className="mt-10 max-w-xl border-t border-border/70 pt-7">
                 <p className="mb-2 text-sm font-semibold">Ak vám nahrávanie nevyhovuje</p>
                 <div className="divide-y divide-border/70">

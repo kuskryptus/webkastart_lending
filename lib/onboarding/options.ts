@@ -7,7 +7,7 @@ export const desiredActionOptions = ['Zavolať', 'Poslať e-mail', 'Vyplniť kon
 export const offeringOptions = ['Produkty', 'Služby', 'Produkty aj služby', 'Konzultácie', 'Výroba na mieru', 'Servis', 'Prenájom', 'Rezervácie', 'Iné'] as const
 export const sectionOptions = ['O nás / O mne', 'Služby', 'Produkty', 'Cenník', 'Galéria', 'Realizácie / portfólio', 'Referencie zákazníkov', 'Ako to funguje', 'Časté otázky', 'Kontakt', 'Kontaktný formulár', 'Mapa / prevádzka', 'Sociálne siete', 'Blog / články', 'Tím', 'Certifikáty / ocenenia', 'Partneri', 'Zatiaľ neviem – navrhnite mi to', 'Iné'] as const
 export const futureOptions = ['E-shop', 'Online rezervácie', 'Platby online', 'Klientská zóna', 'Blog', 'Viac jazykov', 'Newsletter', 'Automatizácie', 'Prepojenie na CRM', 'Prepojenie na externé systémy', 'Nové produkty / služby', 'Zatiaľ neviem', 'Neplánujem', 'Iné'] as const
-export const designOptions = ['Moderný', 'Minimalistický', 'Elegantný', 'Prémiový', 'Profesionálny', 'Dôveryhodný', 'Technický', 'Dynamický', 'Odvážny', 'Hravý', 'Priateľský', 'Jemný', 'Luxusný', 'Prírodný', 'Remeselný', 'Vidiecky', 'Tradičný', 'Kreatívny', 'Čistý a jednoduchý', 'Teplý / útulný', 'Zatiaľ neviem – chcem si nechať poradiť', 'Iné'] as const
+export const brandFeelingOptions = ['Dôvera', 'Pokoj', 'Radosť', 'Zvedavosť', 'Teplo', 'Nostalgia', 'Hravosť', 'Prémiovosť', 'Profesionalita', 'Iné'] as const
 export const colorOptions = ['Svetlé / neutrálne', 'Tmavé', 'Teplé', 'Studené', 'Pastelové', 'Prírodné / zemité', 'Výrazné', 'Čiernobiele', 'Chcem vychádzať z existujúcej značky / loga', 'Nechám si poradiť', 'Iné'] as const
 export const dislikeOptions = ['Príliš veľa farieb', 'Ostré / krikľavé farby', 'Príliš tmavý vzhľad', 'Príliš sterilný vzhľad', 'Príliš korporátny vzhľad', 'Príliš hravý vzhľad', 'Príliš luxusný vzhľad', 'Príliš veľa animácií', 'Preplnený dizajn', 'Príliš veľa textu', 'Nemám konkrétne obmedzenia', 'Iné'] as const
 export const communicationOptions = ['Telefón', 'E-mail', 'Kontaktný formulár', 'Messenger', 'WhatsApp', 'Instagram', 'Osobne', 'Rezervačný systém', 'Iné'] as const
@@ -17,3 +17,7 @@ export const personalizationOptions = ['Produkt', 'Rozmery', 'Farbu', 'Materiál
 export const appreciationOptions = ['Kvalitu', 'Cenu', 'Rýchlosť', 'Osobný prístup', 'Komunikáciu', 'Spoľahlivosť', 'Odbornosť', 'Skúsenosti', 'Originalitu', 'Ručnú prácu', 'Možnosť personalizácie', 'Riešenie na mieru', 'Servis / podporu', 'Lokálnosť', 'Neviem', 'Iné'] as const
 export const frequentQuestionOptions = ['Cena', 'Termín', 'Dostupnosť', 'Doprava', 'Spôsob objednávky', 'Platba', 'Personalizácia', 'Materiály', 'Záruka', 'Servis', 'Ako služba / produkt funguje', 'Čo je súčasťou ceny', 'Zatiaľ neviem', 'Iné'] as const
 export const mustShowOptions = ['Produkty', 'Služby', 'Ceny', 'Fotografie', 'Galéria', 'Realizácie', 'Referencie', 'Informácie o firme', 'Príbeh značky', 'Kontaktné údaje', 'Formulár', 'Telefón', 'Sociálne siete', 'Mapa', 'FAQ', 'Nechám si poradiť', 'Iné'] as const
+
+export function includeSavedOptions(options: readonly string[], selected: string[]) {
+  return [...options, ...new Set(selected.filter((value) => value && !options.includes(value)))]
+}
