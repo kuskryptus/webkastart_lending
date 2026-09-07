@@ -57,6 +57,7 @@ function getStorage() {
     region: config.region,
     endpoint: process.env.S3_ENDPOINT || undefined,
     forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+    requestChecksumCalculation: 'WHEN_REQUIRED',
     credentials: {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
