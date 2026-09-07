@@ -15,7 +15,7 @@ import {
 } from '@/lib/onboarding/types'
 import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
 import {
-  brandFeelingOptions, colorOptions, communicationOptions, desiredActionOptions, dislikeOptions,
+  brandAttributeOptions, colorOptions, communicationOptions, desiredActionOptions, dislikeOptions,
   futureOptions, includeSavedOptions, offeringOptions, sectionOptions, socialPlatformOptions,
   projectTypeOptions, targetAudienceOptions, websiteExpectationOptions, websiteInformationOptions,
 } from '@/lib/onboarding/options'
@@ -469,11 +469,13 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 2" title="Vaši zákazníci a cieľ stránky" text="Stačí váš bežný pohľad. Nemusíte poznať marketingové poučky ani presné čísla." />
               <div className="space-y-10">
-                <QuickQuestion title="Kto sú vaši najčastejší zákazníci?">
+                <QuickQuestion title="Kto je váš ideálny zákazník?" hint="Kto u vás nakupuje dnes a koho by ste chceli získavať viac?">
                   <ChoiceGrid options={targetAudienceOptions} selected={answers.targetAudienceSelections} onChange={(targetAudienceSelections) => setAnswers({ ...answers, targetAudienceSelections })} />
-                  <OtherAnswer show={answers.targetAudienceSelections.includes('Iné')} multiline label="Popíšte svojich zákazníkov" value={answers.targetAudience} onChange={(targetAudience) => setAnswers({ ...answers, targetAudience })} />
+                  <OtherAnswer show multiline label="Doplňte, kto nakupuje dnes a koho chcete získavať viac" value={answers.targetAudience} onChange={(targetAudience) => setAnswers({ ...answers, targetAudience })} />
                 </QuickQuestion>
                 <TextArea label="Čo viete zo skúseností o svojich zákazníkoch – čo najviac riešia, oceňujú alebo sa pýtajú?" hint="Nepovinné" value={answers.customerInsights} maxLength={5000} onChange={(event) => setAnswers({ ...answers, customerInsights: event.target.value })} />
+                <TextArea label="Aké najčastejšie obavy má zákazník pred objednávkou?" hint="Napr. cena, termín, kvalita výsledku, dôvera, reklamácia alebo neistota, či dostane to, čo si predstavuje." value={answers.customerConcerns} maxLength={5000} onChange={(event) => setAnswers({ ...answers, customerConcerns: event.target.value })} />
+                <TextArea label="Akú konkrétnu reakciu zákazníka by ste chceli po návšteve webu?" hint="Napr. „Títo presne vedia, čo robia.“ alebo „Toto je kvalita, za ktorú som ochotný zaplatiť.“" value={answers.desiredCustomerReaction} maxLength={3000} onChange={(event) => setAnswers({ ...answers, desiredCustomerReaction: event.target.value })} />
                 <QuickQuestion title={`Čo chcete pomocou nového webu dosiahnuť?${isUnconfirmedPrefill(answers, 'websiteExpectations') ? ' · Predvyplnené z predchádzajúcej komunikácie' : ''}`}>
                   <ChoiceGrid options={websiteExpectationOptions} selected={answers.websiteExpectations} onChange={(websiteExpectations) => updateClientField({ ...answers, websiteExpectations }, 'websiteExpectations')} />
                   <OtherAnswer show={answers.websiteExpectations.includes('Iné')} label="Iný cieľ" value={answers.websiteExpectationsOther} onChange={(websiteExpectationsOther) => setAnswers({ ...answers, websiteExpectationsOther })} />
@@ -522,15 +524,16 @@ export function OnboardingWizard({
             <>
               <StepHeader eyebrow="Krok 4" title="Ako by mal web pôsobiť" text="Vyberte pár slov podľa pocitu. Zvyšok vám navrhneme tak, aby sedel vašej práci aj zákazníkom." />
               <div className="space-y-10">
-                <QuickQuestion title="Aký pocit chcete, aby mal človek pri návšteve vašej stránky?">
-                  <ChoiceGrid options={includeSavedOptions(brandFeelingOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} />
-                  <OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iný pocit" value={answers.designOther} onChange={(designOther) => setAnswers({ ...answers, designOther })} placeholder="Napr. bezpečie alebo energia" />
+                <TextArea label="Čo chcete, aby si človek o vašej firme pomyslel po 5 sekundách na webe?" hint="Prvá intuitívna reakcia – ešte predtým, než začne čítať detaily." value={answers.brandFirstImpression} maxLength={3000} onChange={(event) => setAnswers({ ...answers, brandFirstImpression: event.target.value })} />
+                <QuickQuestion title="Aké 3–5 slov má vaša značka reprezentovať?" hint="Vyberte slová, ktoré najlepšie vystihujú želaný charakter značky.">
+                  <ChoiceGrid options={includeSavedOptions(brandAttributeOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => setAnswers({ ...answers, designPreferences })} />
+                  <OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iné slovo" value={answers.designOther} onChange={(designOther) => setAnswers({ ...answers, designOther })} placeholder="Napr. elegantná" />
                 </QuickQuestion>
                 <QuickQuestion title="Aké farby vám sú blízke?" hint="Je to iba vaša preferencia, nie záväzná farebná paleta.">
                   <ChoiceGrid options={colorOptions} selected={answers.colorPreferences} onChange={(colorPreferences) => setAnswers({ ...answers, colorPreferences })} />
                   <OtherAnswer show={answers.colorPreferences.includes('Iné')} label="Iná farebná preferencia" value={answers.colorPreferencesOther} onChange={(colorPreferencesOther) => setAnswers({ ...answers, colorPreferencesOther })} />
                 </QuickQuestion>
-                <QuickQuestion title="Čomu sa má dizajn vyhnúť?">
+                <QuickQuestion title="Čím vaša značka určite nemá byť?" hint="Napr. lacná, korporátna, sterilná, rustikálna, komplikovaná alebo prehnane luxusná.">
                   <ChoiceGrid options={dislikeOptions} selected={answers.designDislikes} onChange={(designDislikes) => setAnswers({ ...answers, designDislikes })} />
                   <OtherAnswer show={answers.designDislikes.includes('Iné')} multiline label="Iné obmedzenie" value={answers.dislikes} onChange={(dislikes) => setAnswers({ ...answers, dislikes })} />
                 </QuickQuestion>

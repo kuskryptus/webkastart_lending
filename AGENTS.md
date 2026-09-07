@@ -55,6 +55,8 @@ and pnpm.
 - Core answers keep the creative-strategy, project-success, and collaboration
   questions in JSON. `designPreferences` and `designOther` retain the original
   visual-direction answers after the feeling question rewording;
+  `customerConcerns`, `desiredCustomerReaction`, and `brandFirstImpression` are
+  additive discovery fields and must remain available to exports;
   `representativePhotoIds` may reference at most five existing uploaded images and
   must not create a second upload flow.
 - Answers remain structured according to their form types; sanitize all writes at

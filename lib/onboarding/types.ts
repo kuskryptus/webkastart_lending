@@ -84,6 +84,8 @@ export type OnboardingAnswers = {
   successCriteria: string
   websitePriorities: string
   customerInsights: string
+  customerConcerns: string
+  desiredCustomerReaction: string
   websiteInformation: string[]
   websiteGoal: string
   desiredActions: string[]
@@ -101,6 +103,7 @@ export type OnboardingAnswers = {
   futureFeaturesOther: string
   designPreferences: string[]
   designOther: string
+  brandFirstImpression: string
   colorPreferences: string[]
   colorPreferencesOther: string
   designDislikes: string[]
@@ -224,6 +227,8 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   successCriteria: '',
   websitePriorities: '',
   customerInsights: '',
+  customerConcerns: '',
+  desiredCustomerReaction: '',
   websiteInformation: [],
   websiteGoal: '',
   desiredActions: [],
@@ -241,6 +246,7 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   futureFeaturesOther: '',
   designPreferences: [],
   designOther: '',
+  brandFirstImpression: '',
   colorPreferences: [],
   colorPreferencesOther: '',
   designDislikes: [],

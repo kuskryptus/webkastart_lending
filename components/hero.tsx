@@ -4,7 +4,6 @@ import { SectionLink } from '@/components/section-link'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
-  { icon: Sparkles, title: 'Od 100 €', desc: 'Rozsah a cenu poviem vopred.' },
   { icon: Ruler, title: 'Stačí popísať problém', desc: 'Navrhnem najbližší rozumný krok.' },
 ]
 
