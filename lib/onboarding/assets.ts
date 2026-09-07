@@ -120,7 +120,6 @@ export async function createPendingAsset(options: {
   const uploadUrl = await createUploadUrl({
     key: upload.objectKey,
     mimeType: validation.mimeType,
-    size: Number(options.body.size),
   })
   return { mimeType: validation.mimeType, mode: 'single' as const, uploadId: upload.id, uploadUrl } as const
 }

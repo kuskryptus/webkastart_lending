@@ -41,6 +41,8 @@ and pnpm.
 - Uploads stay private, keep original bytes, use UUID object keys, and use
   short-lived signed URLs. Files above 64 MB use resumable S3 multipart upload;
   the server validates type, size, part completeness, count, and signature.
+  Browser upload URLs must not sign `Content-Length`; browsers control that
+  header and the server verifies the uploaded object size before accepting it.
   Keep the S3 client's `requestChecksumCalculation` at `WHEN_REQUIRED`: newer
   AWS SDK versions otherwise sign an empty-body CRC32 into browser upload URLs.
 - A client may own multiple forms. Core and Discovery 2 keep separate persistence

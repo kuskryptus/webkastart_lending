@@ -104,10 +104,11 @@ S3_PUBLIC_URL=
 ```
 
 Bucket nesmie mať zapnuté verejné čítanie. Musí povoliť CORS `PUT` z domény webu
-s hlavičkou `Content-Type`. Pre súbory nad 64 MB sa automaticky používa multipart
-upload po 16 MB častiach; neúplné časti odporúčame v bucket lifecycle pravidle
-odstrániť po 24 hodinách. Frontend nikdy nedostane access keys, iba krátkodobé
-presigned upload URL. Súbory do 5 GB sa ukladajú bez kompresie pod
+s hlavičkami `Content-Type`, `Cache-Control` a `Pragma` (posledné dve pridáva
+Safari pri zapnutom Disable Caches). Pre súbory nad 64 MB sa automaticky používa
+multipart upload po 16 MB častiach; neúplné časti odporúčame v bucket lifecycle
+pravidle odstrániť po 24 hodinách. Frontend nikdy nedostane access keys, iba
+krátkodobé presigned upload URL. Súbory do 5 GB sa ukladajú bez kompresie pod
 `clients/{client_id}/uploads/{uuid}-{bezpecny-nazov}`; databáza uchováva len
 metadata a `storage_key`. Po klientskom uploadovaní príde cez Resend upozornenie
 na `CONTACT_TO_EMAIL` s odkazom do chránenej administrácie. Galéria v administrácii

@@ -47,6 +47,20 @@ function canPreviewImage(mimeType: string) {
   return ['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(mimeType)
 }
 
+function storageErrorMessage(xhr: XMLHttpRequest) {
+  const status = xhr.status ? `HTTP ${xhr.status}` : 'bez HTTP odpovede'
+  const document = xhr.responseText
+    ? new DOMParser().parseFromString(xhr.responseText, 'application/xml')
+    : null
+  const code = document?.querySelector('Code')?.textContent?.trim()
+  const detail = document?.querySelector('Message')?.textContent?.trim()
+  const diagnostic = [status, code].filter(Boolean).join(', ')
+
+  return detail
+    ? `Úložisko súbor odmietlo (${diagnostic}). ${detail}`
+    : `Úložisko súbor odmietlo (${diagnostic}).`
+}
+
 async function errorMessage(response: Response) {
   const data = await response.json().catch(() => null) as {
     configuration?: { missing?: string[] }
@@ -114,10 +128,19 @@ export function UploadField({
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
       }
-      xhr.onload = () => xhr.status >= 200 && xhr.status < 300
-        ? resolve()
-        : reject(new Error('Úložisko súbor odmietlo.'))
-      xhr.onerror = () => reject(new Error('Pripojenie sa prerušilo.'))
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+          return
+        }
+        reject(new Error(storageErrorMessage(xhr)))
+      }
+      xhr.onerror = () => reject(new Error(
+        navigator.onLine
+          ? 'Prehliadač nedostal odpoveď úložiska. Upload mohol zablokovať CORS alebo neplatný podpis odkazu.'
+          : 'Internetové pripojenie nie je dostupné.',
+      ))
+      xhr.onabort = () => reject(new Error('Nahrávanie bolo zrušené.'))
       xhr.send(body)
     })
   }

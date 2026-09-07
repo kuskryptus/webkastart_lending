@@ -69,13 +69,11 @@ function getStorage() {
 export async function createUploadUrl(options: {
   key: string
   mimeType: string
-  size: number
 }) {
   const { bucket, client } = getStorage()
   const command = new PutObjectCommand({
     Bucket: bucket,
     Key: options.key,
-    ContentLength: options.size,
     ContentType: options.mimeType,
   })
   return getSignedUrl(client, command, { expiresIn: 10 * 60 })
