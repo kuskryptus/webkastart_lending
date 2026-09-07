@@ -17,6 +17,18 @@ export function privateJson(data: unknown, init?: ResponseInit) {
   return response
 }
 
+export function privateRedirect(url: string | URL) {
+  return new Response(null, {
+    status: 303,
+    headers: {
+      'Cache-Control': 'no-store, private',
+      Location: url.toString(),
+      'X-Content-Type-Options': 'nosniff',
+      'X-Robots-Tag': 'noindex, nofollow, noarchive',
+    },
+  })
+}
+
 export async function readSmallJson(request: Request, maxBytes = 200_000) {
   const contentLength = Number(request.headers.get('content-length') || 0)
   if (contentLength > maxBytes) throw new Error('PAYLOAD_TOO_LARGE')

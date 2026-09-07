@@ -50,6 +50,8 @@ and pnpm.
   overwrite one form's answers with another.
 - Admin and portal are presentations over the same Core, Discovery, and asset
   rows. Respect `client_workspace_sections`; internal notes are never client-visible.
+- Return signed asset redirects through `privateRedirect`; native
+  `Response.redirect()` has immutable headers and cannot be hardened afterward.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.
   A stale writer must receive 409 and must never overwrite a newer record.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the

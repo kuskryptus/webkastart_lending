@@ -1,7 +1,7 @@
 import { createDownloadUrl } from '@/lib/onboarding/storage'
 import { getDatabase } from '@/lib/onboarding/db'
 import { isAdminRequest } from '@/lib/onboarding/admin-auth'
-import { apiError, privateJson } from '@/lib/onboarding/http'
+import { apiError, privateJson, privateRedirect } from '@/lib/onboarding/http'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -32,10 +32,7 @@ export async function GET(request: Request, { params }: Context) {
 
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
     const downloadUrl = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
-    const response = Response.redirect(downloadUrl, 303)
-    response.headers.set('Cache-Control', 'no-store, private')
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
-    return response
+    return privateRedirect(downloadUrl)
   } catch (error) {
     return apiError(error)
   }

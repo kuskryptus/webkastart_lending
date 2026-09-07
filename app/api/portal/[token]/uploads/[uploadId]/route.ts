@@ -1,6 +1,6 @@
 import { removeAsset } from '@/lib/onboarding/assets'
 import { getDatabase } from '@/lib/onboarding/db'
-import { apiError, privateJson } from '@/lib/onboarding/http'
+import { apiError, privateJson, privateRedirect } from '@/lib/onboarding/http'
 import { authorizePortalRequest } from '@/lib/onboarding/portal-auth'
 import { createDownloadUrl } from '@/lib/onboarding/storage'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
@@ -28,10 +28,7 @@ export async function GET(request: Request, { params }: Context) {
     if (!asset) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
     const url = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
-    const response = Response.redirect(url, 303)
-    response.headers.set('Cache-Control', 'no-store, private')
-    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
-    return response
+    return privateRedirect(url)
   } catch (error) {
     return apiError(error)
   }
