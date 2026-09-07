@@ -103,7 +103,8 @@ S3_FORCE_PATH_STYLE=false
 S3_PUBLIC_URL=
 ```
 
-Bucket nesmie mať zapnuté verejné čítanie. Musí povoliť CORS `PUT` z domény webu
+Bucket nesmie mať zapnuté verejné čítanie. Musí povoliť CORS `PUT` z produkčných
+domén aj používaných lokálnych originov (napríklad `http://localhost:3000`)
 s hlavičkami `Content-Type`, `Cache-Control` a `Pragma` (posledné dve pridáva
 Safari pri zapnutom Disable Caches). Pre súbory nad 64 MB sa automaticky používa
 multipart upload po 16 MB častiach; neúplné časti odporúčame v bucket lifecycle
