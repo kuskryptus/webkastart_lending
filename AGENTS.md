@@ -39,7 +39,8 @@ and pnpm.
 - Onboarding pages and APIs are private/noindex. Admin reads and downloads must
   verify the HttpOnly admin session server-side.
 - Uploads stay private, keep original bytes, use UUID object keys, and use
-  short-lived signed URLs. The server validates type, size, count, and signature.
+  short-lived signed URLs. Files above 64 MB use resumable S3 multipart upload;
+  the server validates type, size, part completeness, count, and signature.
 - A client may own multiple forms. Core and Discovery 2 keep separate persistence
   (and legacy form-specific tokens) behind the shared portal token; never merge or
   overwrite one form's answers with another.

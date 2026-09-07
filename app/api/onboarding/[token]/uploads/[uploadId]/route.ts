@@ -1,6 +1,7 @@
 import { checkRateLimit, findOnboardingByToken, getDatabase } from '@/lib/onboarding/db'
 import { apiError, getClientIp, isValidToken, privateJson } from '@/lib/onboarding/http'
-import { createDownloadUrl, deleteUploadedObject } from '@/lib/onboarding/storage'
+import { removeAsset } from '@/lib/onboarding/assets'
+import { createDownloadUrl } from '@/lib/onboarding/storage'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -53,20 +54,10 @@ export async function DELETE(request: Request, { params }: Context) {
     const allowed = await checkRateLimit({ action: 'upload-delete', identity: `${project.tokenHash}:${getClientIp(request)}`, limit: 60 })
     if (!allowed) return privateJson({ error: 'Príliš veľa požiadaviek.' }, { status: 429 })
 
-    const sql = getDatabase()
-    const rows = await sql<{ objectKey: string }[]>`
-      select storage_key as "objectKey" from onboarding_assets
-      where id = ${uploadId} and client_id = ${project.clientId} and uploaded_by = 'client'
-      limit 1
-    `
-    const upload = rows[0]
-    if (!upload) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
-
-    await deleteUploadedObject(upload.objectKey)
-    await sql`delete from onboarding_assets where id = ${uploadId} and client_id = ${project.clientId}`
-    await sql`update onboarding_projects set updated_at = now(), last_activity_at = now() where id = ${project.id}`
-    await sql`update clients set updated_at = now() where id = ${project.clientId}`
-    return privateJson({ ok: true })
+    const removed = await removeAsset(project.clientId, uploadId, 'client')
+    return removed
+      ? privateJson({ ok: true })
+      : privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
   } catch (error) {
     return apiError(error)
   }

@@ -30,7 +30,7 @@ export async function getWebsiteGenerationInput(projectId: string) {
       id,
       original_filename as name,
       mime_type as "mimeType",
-      size::int as size,
+      size::float8 as size,
       storage_key as "objectKey"
     from onboarding_assets
     where project_id = ${projectId} and status = 'uploaded'

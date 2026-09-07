@@ -9,19 +9,39 @@ import {
 } from './types'
 
 export const ONBOARDING_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[A-Za-z0-9_-]{48}\.[A-Za-z0-9_-]{43})$/
-export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024
 export const MAX_UPLOAD_FILES = 100
 export const MAX_REPRESENTATIVE_PHOTOS = 5
+export const MULTIPART_UPLOAD_THRESHOLD_BYTES = 64 * 1024 * 1024
+export const MULTIPART_UPLOAD_PART_BYTES = 16 * 1024 * 1024
 
 export const allowedUploadTypes: Record<string, string[]> = {
   'image/jpeg': ['jpg', 'jpeg'],
   'image/png': ['png'],
   'image/webp': ['webp'],
+  'image/avif': ['avif'],
+  'image/heic': ['heic'],
+  'image/heif': ['heif'],
+  'image/tiff': ['tif', 'tiff'],
   'image/svg+xml': ['svg'],
+  'video/mp4': ['mp4'],
+  'video/quicktime': ['mov'],
+  'video/webm': ['webm'],
+  'video/x-m4v': ['m4v'],
+  'video/x-matroska': ['mkv'],
+  'video/x-msvideo': ['avi'],
   'application/pdf': ['pdf'],
   'application/msword': ['doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
   'text/plain': ['txt'],
+}
+
+export function resolveUploadMimeType(name: string, reportedMimeType: string) {
+  const extension = name.split('.').pop()?.toLowerCase() ?? ''
+  const normalized = reportedMimeType.toLowerCase().trim()
+  if (allowedUploadTypes[normalized]?.includes(extension)) return normalized
+  return Object.entries(allowedUploadTypes)
+    .find(([, extensions]) => extensions.includes(extension))?.[0] ?? normalized
 }
 
 function text(value: unknown, maxLength: number) {
@@ -212,20 +232,22 @@ export function validateUpload(name: unknown, mimeType: unknown, size: unknown) 
   if (typeof name !== 'string' || !name.trim() || name.length > 255) {
     return { error: 'Súbor nemá platný názov.' }
   }
-  if (typeof mimeType !== 'string' || !allowedUploadTypes[mimeType]) {
+  if (typeof mimeType !== 'string') {
     return { error: 'Tento typ súboru nepodporujeme.' }
   }
+  const resolvedMimeType = resolveUploadMimeType(name, mimeType)
+  if (!allowedUploadTypes[resolvedMimeType]) return { error: 'Tento typ súboru nepodporujeme.' }
   if (typeof size !== 'number' || !Number.isSafeInteger(size) || size <= 0) {
     return { error: 'Súbor je prázdny alebo má neplatnú veľkosť.' }
   }
   if (size > MAX_UPLOAD_BYTES) {
-    return { error: 'Jeden súbor môže mať najviac 50 MB.' }
+    return { error: 'Jeden súbor môže mať najviac 5 GB.' }
   }
 
   const extension = name.split('.').pop()?.toLowerCase() ?? ''
-  if (!allowedUploadTypes[mimeType].includes(extension)) {
+  if (!allowedUploadTypes[resolvedMimeType].includes(extension)) {
     return { error: 'Prípona súboru nezodpovedá jeho typu.' }
   }
 
-  return { extension }
+  return { extension, mimeType: resolvedMimeType }
 }

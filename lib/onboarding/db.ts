@@ -163,7 +163,7 @@ export async function listAssets(clientId: string): Promise<OnboardingAsset[]> {
       id,
       original_filename as name,
       mime_type as "mimeType",
-      size::int as size,
+      size::float8 as size,
       status,
       created_at as "createdAt",
       uploaded_by as "uploadedBy",

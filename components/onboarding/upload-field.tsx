@@ -2,9 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ExternalLink, FileText, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
+import { Check, ExternalLink, FileText, FileVideo, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
-import { allowedUploadTypes, MAX_UPLOAD_BYTES, MAX_UPLOAD_FILES } from '@/lib/onboarding/validation'
+import {
+  allowedUploadTypes,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_FILES,
+  resolveUploadMimeType,
+} from '@/lib/onboarding/validation'
 
 type LocalUpload = {
   file: File
@@ -12,14 +17,34 @@ type LocalUpload = {
   progress: number
   status: 'queued' | 'uploading' | 'error'
   error?: string
+  batchId: string
+  mimeType: string
   uploadId?: string
 }
 
-type QueueItem = { file: File; id: string; retryUploadId?: string }
+type QueueItem = { batchId: string; file: File; id: string; mimeType: string; retryUploadId?: string }
+
+type PresignedUpload = {
+  mimeType: string
+  mode: 'single'
+  uploadId: string
+  uploadUrl: string
+} | {
+  mimeType: string
+  mode: 'multipart'
+  partSize: number
+  uploadId: string
+  uploadedParts: Array<{ partNumber: number; size: number }>
+}
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2).replace('.', ',')} GB`
+}
+
+function canPreviewImage(mimeType: string) {
+  return ['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(mimeType)
 }
 
 async function errorMessage(response: Response) {
@@ -46,6 +71,7 @@ export function UploadField({
   canDeleteAsset = () => true,
   getAssetUrl,
   newAssetMetadata,
+  notificationsEnabled = true,
   onClientVisibilityChange,
   onAssetsChange,
   showAdminMetadata = false,
@@ -56,6 +82,7 @@ export function UploadField({
   canDeleteAsset?: (asset: OnboardingAsset) => boolean
   getAssetUrl?: (asset: OnboardingAsset) => string
   newAssetMetadata?: Pick<OnboardingAsset, 'clientVisible' | 'uploadedBy'>
+  notificationsEnabled?: boolean
   onClientVisibilityChange?: (asset: OnboardingAsset, visible: boolean) => void
   onAssetsChange: (assets: OnboardingAsset[]) => void
   showAdminMetadata?: boolean
@@ -67,6 +94,7 @@ export function UploadField({
   const inputRef = useRef<HTMLInputElement>(null)
   const queueRef = useRef<QueueItem[]>([])
   const activeRef = useRef(0)
+  const batchesRef = useRef(new Map<string, { pending: number; uploadedIds: string[] }>())
   const assetsRef = useRef(assets)
   const endpoint = apiBasePath || `/api/onboarding/${token}/uploads`
 
@@ -78,11 +106,11 @@ export function UploadField({
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...update } : item))
   }
 
-  function putFile(url: string, file: File, onProgress: (progress: number) => void) {
+  function putFile(url: string, body: Blob, onProgress: (progress: number) => void, mimeType?: string) {
     return new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       xhr.open('PUT', url)
-      xhr.setRequestHeader('Content-Type', file.type)
+      if (mimeType) xhr.setRequestHeader('Content-Type', mimeType)
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
       }
@@ -90,18 +118,106 @@ export function UploadField({
         ? resolve()
         : reject(new Error('Úložisko súbor odmietlo.'))
       xhr.onerror = () => reject(new Error('Pripojenie sa prerušilo.'))
-      xhr.send(file)
+      xhr.send(body)
     })
   }
 
+  async function notifyUploadedAssets(assetIds: string[]) {
+    if (!notificationsEnabled || !assetIds.length) return
+    try {
+      const response = await fetch(`${endpoint}/notify`, {
+        body: JSON.stringify({ assetIds }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (response.ok) return
+    } catch {
+      // The uploaded files remain valid even if the secondary e-mail call fails.
+    }
+    if (assetsRef.current.length) {
+      setNotice('Súbory sú bezpečne nahraté, ale e-mailové upozornenie sa nepodarilo odoslať.')
+    }
+  }
+
+  function finishBatch(batchId: string, uploadId?: string) {
+    const batch = batchesRef.current.get(batchId)
+    if (!batch) return
+    if (uploadId) batch.uploadedIds.push(uploadId)
+    batch.pending -= 1
+    if (batch.pending > 0) return
+    batchesRef.current.delete(batchId)
+    void notifyUploadedAssets(batch.uploadedIds)
+  }
+
+  async function uploadMultipart(
+    upload: Extract<PresignedUpload, { mode: 'multipart' }>,
+    file: File,
+    localId: string,
+  ) {
+    const totalParts = Math.ceil(file.size / upload.partSize)
+    const transferred = new Map<number, number>(
+      upload.uploadedParts.map((part) => [part.partNumber, part.size]),
+    )
+    const reportProgress = () => {
+      const bytes = [...transferred.values()].reduce((sum, value) => sum + value, 0)
+      updateItem(localId, { progress: Math.min(100, Math.round((bytes / file.size) * 100)) })
+    }
+    reportProgress()
+
+    const completedParts = new Set(upload.uploadedParts.map((part) => part.partNumber))
+    const missingParts = Array.from({ length: totalParts }, (_, index) => index + 1)
+      .filter((partNumber) => !completedParts.has(partNumber))
+
+    for (let offset = 0; offset < missingParts.length; offset += 6) {
+      const partNumbers = missingParts.slice(offset, offset + 6)
+      const response = await fetch(`${endpoint}/${upload.uploadId}/parts`, {
+        body: JSON.stringify({ partNumbers }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      })
+      if (!response.ok) throw new Error(await errorMessage(response))
+      const data = await response.json() as { parts: Array<{ partNumber: number; uploadUrl: string }> }
+
+      let nextIndex = 0
+      const workers = Array.from({ length: Math.min(3, data.parts.length) }, async () => {
+        while (nextIndex < data.parts.length) {
+          const part = data.parts[nextIndex++]
+          if (!part) return
+          const start = (part.partNumber - 1) * upload.partSize
+          const end = Math.min(start + upload.partSize, file.size)
+          const blob = file.slice(start, end, upload.mimeType)
+          let lastError: unknown
+          for (let attempt = 0; attempt < 3; attempt += 1) {
+            try {
+              await putFile(part.uploadUrl, blob, (percent) => {
+                transferred.set(part.partNumber, Math.round((percent / 100) * blob.size))
+                reportProgress()
+              })
+              transferred.set(part.partNumber, blob.size)
+              reportProgress()
+              lastError = undefined
+              break
+            } catch (error) {
+              lastError = error
+              transferred.delete(part.partNumber)
+              reportProgress()
+            }
+          }
+          if (lastError) throw lastError
+        }
+      })
+      await Promise.all(workers)
+    }
+  }
+
   async function uploadOne(queueItem: QueueItem) {
-    const { file, id, retryUploadId } = queueItem
+    const { file, id, mimeType, retryUploadId } = queueItem
     updateItem(id, { error: undefined, progress: 0, status: 'uploading' })
 
     try {
       const presignResponse = await fetch(`${endpoint}/presign`, {
         body: JSON.stringify({
-          mimeType: file.type,
+          mimeType,
           name: file.name,
           retryUploadId,
           size: file.size,
@@ -110,10 +226,14 @@ export function UploadField({
         method: 'POST',
       })
       if (!presignResponse.ok) throw new Error(await errorMessage(presignResponse))
-      const presign = await presignResponse.json() as { uploadId: string; uploadUrl: string }
+      const presign = await presignResponse.json() as PresignedUpload
       updateItem(id, { uploadId: presign.uploadId })
 
-      await putFile(presign.uploadUrl, file, (progress) => updateItem(id, { progress }))
+      if (presign.mode === 'multipart') {
+        await uploadMultipart(presign, file, id)
+      } else {
+        await putFile(presign.uploadUrl, file, (progress) => updateItem(id, { progress }), presign.mimeType)
+      }
       const completeResponse = await fetch(
         `${endpoint}/${presign.uploadId}/complete`,
         { method: 'POST' },
@@ -125,7 +245,7 @@ export function UploadField({
         {
           createdAt: new Date().toISOString(),
           id: presign.uploadId,
-          mimeType: file.type,
+          mimeType: presign.mimeType,
           name: file.name,
           size: file.size,
           status: 'uploaded',
@@ -135,20 +255,22 @@ export function UploadField({
       assetsRef.current = nextAssets
       onAssetsChange(nextAssets)
       setItems((current) => current.filter((item) => item.id !== id))
+      return presign.uploadId
     } catch (error) {
       updateItem(id, {
         error: error instanceof Error ? error.message : 'Súbor sa nepodarilo nahrať.',
         status: 'error',
       })
+      return undefined
     }
   }
 
   function pumpQueue() {
-    while (activeRef.current < 3 && queueRef.current.length) {
+    while (activeRef.current < 2 && queueRef.current.length) {
       const next = queueRef.current.shift()
       if (!next) return
       activeRef.current += 1
-      void uploadOne(next).finally(() => {
+      void uploadOne(next).then((uploadId) => finishBatch(next.batchId, uploadId)).finally(() => {
         activeRef.current -= 1
         pumpQueue()
       })
@@ -165,31 +287,36 @@ export function UploadField({
 
     const selected = Array.from(fileList).slice(0, remaining)
     const accepted: LocalUpload[] = []
+    const batchId = crypto.randomUUID()
 
     for (const file of selected) {
-      if (!allowedUploadTypes[file.type]) {
+      const mimeType = resolveUploadMimeType(file.name, file.type)
+      if (!allowedUploadTypes[mimeType]) {
         setNotice(`Súbor „${file.name}“ má nepodporovaný typ.`)
         continue
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        setNotice(`Súbor „${file.name}“ je väčší ako 50 MB.`)
+        setNotice(`Súbor „${file.name}“ je väčší ako 5 GB.`)
         continue
       }
       const id = crypto.randomUUID()
-      accepted.push({ file, id, progress: 0, status: 'queued' })
-      queueRef.current.push({ file, id })
+      accepted.push({ batchId, file, id, mimeType, progress: 0, status: 'queued' })
+      queueRef.current.push({ batchId, file, id, mimeType })
     }
 
     if (Array.from(fileList).length > remaining) {
       setNotice(`Naraz môžete mať najviac ${MAX_UPLOAD_FILES} súborov.`)
     }
+    if (accepted.length) batchesRef.current.set(batchId, { pending: accepted.length, uploadedIds: [] })
     setItems((current) => [...current, ...accepted])
     pumpQueue()
   }
 
   function retry(item: LocalUpload) {
-    queueRef.current.push({ file: item.file, id: item.id, retryUploadId: item.uploadId })
-    updateItem(item.id, { error: undefined, status: 'queued' })
+    const batchId = crypto.randomUUID()
+    batchesRef.current.set(batchId, { pending: 1, uploadedIds: [] })
+    queueRef.current.push({ batchId, file: item.file, id: item.id, mimeType: item.mimeType, retryUploadId: item.uploadId })
+    updateItem(item.id, { batchId, error: undefined, status: 'queued' })
     pumpQueue()
   }
 
@@ -247,8 +374,9 @@ export function UploadField({
         <span>
           <span className="block text-base font-semibold text-foreground">Vyberte alebo sem presuňte súbory</span>
           <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-            JPG, PNG, WEBP, SVG, PDF, DOC, DOCX alebo TXT · max. 50 MB
+            Originálne fotografie, videá a dokumenty · max. 5 GB na súbor
           </span>
+          <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Veľké súbory sa nahrávajú po častiach a po výpadku ich môžete obnoviť.</span>
         </span>
       </button>
 
@@ -258,9 +386,11 @@ export function UploadField({
         <ul className="divide-y divide-border/70" aria-label="Nahrávané súbory">
           {assets.map((asset) => (
             <li key={asset.id} className="flex items-center gap-3 py-3.5">
-              {getAssetUrl && asset.mimeType.startsWith('image/') ? (
+              {getAssetUrl && canPreviewImage(asset.mimeType) ? (
                 <Image unoptimized width={44} height={44} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
-              ) : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
+              ) : asset.mimeType.startsWith('video/')
+                ? <FileVideo className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
               <span className="min-w-0 flex-1">
                 {getAssetUrl ? (
                   <a href={getAssetUrl(asset)} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-sm font-medium hover:text-brand hover:underline">
