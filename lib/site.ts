@@ -1,6 +1,6 @@
 export const siteUrl = 'https://webkastart.sk'
 export const siteName = 'WebkaStart'
-export const siteTitle = 'WebkaStart — Aplikácie, ktoré šetria čas a peniaze'
+export const siteTitle = 'Tvorba web stránok, aplikácií a automatizácií | WebkaStart'
 export const siteDescription =
-  'Tvorím weby, automatizácie a malé aplikácie pre firmy, ktoré chcú menej ručnej práce.'
+  'Tvorím webové stránky, interné aplikácie a automatizácie pre živnostníkov a malé firmy v Spišskej Novej Vsi aj na celom Slovensku.'
 export const siteImageUrl = `${siteUrl}/og-webkastart.jpg`

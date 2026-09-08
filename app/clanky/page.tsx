@@ -4,11 +4,11 @@ import { SectionLabel } from '@/components/section-label'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { articles } from '@/lib/articles'
-import { siteUrl } from '@/lib/site'
+import { siteName, siteUrl } from '@/lib/site'
 
-const title = 'Články — WebkaStart'
+const title = 'Články o automatizácii a digitalizácii firiem | WebkaStart'
 const description =
-  'Krátke príbehy z reálneho podnikania o problémoch, ktoré sa dajú vyriešiť jednoduchšou technológiou.'
+  'Praktické príbehy o tom, ako weby, aplikácie a automatizácie zjednodušujú každodennú prácu malých firiem.'
 
 export const metadata: Metadata = {
   title,
@@ -20,6 +20,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'sk_SK',
     url: `${siteUrl}/clanky`,
+    siteName,
+    title,
+    description,
+    images: [articles[0].coverImage],
+  },
+  twitter: {
+    card: 'summary_large_image',
     title,
     description,
     images: [articles[0].coverImage],
@@ -35,7 +42,7 @@ export default function ArticlesPage() {
         <div className="max-w-3xl">
           <SectionLabel>Články</SectionLabel>
           <h1 className="mt-4 text-pretty text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Malé príbehy z reálnej práce
+            Články o automatizácii a digitalizácii firiem
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
             Konkrétne situácie, v ktorých telefonáty, tabuľky a ručná administratíva
@@ -59,4 +66,3 @@ export default function ArticlesPage() {
     </main>
   )
 }
-

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { siteUrl } from '@/lib/site'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -7,6 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/start/', '/portal/', '/api/onboarding/', '/api/portal/'],
     },
-    host: 'https://webkastart.sk',
+    sitemap: `${siteUrl}/sitemap.xml`,
+    host: siteUrl,
   }
 }

@@ -29,13 +29,14 @@ export function Hero() {
           </span>
 
           <h1 className="mt-5 text-balance text-[2.6rem] font-bold leading-[1.04] tracking-tight text-foreground sm:mt-6 sm:text-6xl">
-            Menej rutiny.
+            Web stránky, aplikácie
             <br />
-            <span className="text-brand">Viac času</span> <span className="whitespace-nowrap">na podnikanie.</span>
+            a <span className="text-brand">automatizácie</span>{' '}
+            <span className="whitespace-nowrap">pre firmy.</span>
           </h1>
 
           <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:mt-6">
-            Zjednodušujem firmám prácu pomocou webov, automatizácií a riešení na mieru.
+            Tvorím riešenia, ktoré malým firmám šetria čas a obmedzujú ručnú prácu.
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">

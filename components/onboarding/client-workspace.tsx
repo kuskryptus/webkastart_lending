@@ -142,11 +142,23 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
             const copy = sectionCopy[section.key]
             const progress = section.key === 'core' ? workspace.core?.progress : section.key === 'discovery_2' ? workspace.discovery2?.progress : undefined
             return (
-              <details key={section.key} open={index === 0} className="group py-2">
-                <summary className="flex cursor-pointer list-none items-center gap-4 py-6 marker:hidden">
+              <details
+                key={section.key}
+                open={index === 0 || section.key === 'files'}
+                onToggle={(event) => {
+                  if (section.key === 'files' && !event.currentTarget.open) event.currentTarget.open = true
+                }}
+                className="group py-2"
+              >
+                <summary
+                  onClick={(event) => {
+                    if (section.key === 'files') event.preventDefault()
+                  }}
+                  className={`flex list-none items-center gap-4 py-6 marker:hidden ${section.key === 'files' ? 'cursor-default' : 'cursor-pointer'}`}
+                >
                   <span className="min-w-0 flex-1"><span className="block text-lg font-semibold tracking-[-0.025em]">{copy.title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{copy.description}</span></span>
                   <ProgressLabel progress={progress} />
-                  <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+                  {section.key !== 'files' && <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />}
                 </summary>
                 <div className="pb-10 pt-3">
                   {section.key === 'core' && workspace.core && <><div className="mb-6 flex justify-end"><SaveIndicator state={coreSave} /></div><CoreWorkspaceFields actor="client" answers={workspace.core.answers} assets={workspace.assets} disabled={!section.clientEditable || coreConflict} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} onChange={(answers) => { setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current); setCoreChange((value) => value + 1) }} /></>}
