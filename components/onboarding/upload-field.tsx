@@ -90,17 +90,19 @@ export function UploadField({
   onAssetsChange,
   showAdminMetadata = false,
   token,
+  totalAssetCount,
 }: {
   apiBasePath?: string
   assets: OnboardingAsset[]
   canDeleteAsset?: (asset: OnboardingAsset) => boolean
   getAssetUrl?: (asset: OnboardingAsset) => string
-  newAssetMetadata?: Pick<OnboardingAsset, 'clientVisible' | 'uploadedBy'>
+  newAssetMetadata?: Pick<OnboardingAsset, 'category' | 'clientVisible' | 'uploadedBy'>
   notificationsEnabled?: boolean
   onClientVisibilityChange?: (asset: OnboardingAsset, visible: boolean) => void
   onAssetsChange: (assets: OnboardingAsset[]) => void
   showAdminMetadata?: boolean
   token?: string
+  totalAssetCount?: number
 }) {
   const [items, setItems] = useState<LocalUpload[]>([])
   const [dragging, setDragging] = useState(false)
@@ -240,6 +242,8 @@ export function UploadField({
     try {
       const presignResponse = await fetch(`${endpoint}/presign`, {
         body: JSON.stringify({
+          assetCategory: newAssetMetadata?.category || 'source',
+          clientVisible: newAssetMetadata?.clientVisible === true,
           mimeType,
           name: file.name,
           retryUploadId,
@@ -302,7 +306,7 @@ export function UploadField({
 
   function addFiles(fileList: FileList | File[]) {
     setNotice('')
-    const remaining = MAX_UPLOAD_FILES - assets.length - items.length
+    const remaining = MAX_UPLOAD_FILES - (totalAssetCount ?? assets.length) - items.length
     if (remaining <= 0) {
       setNotice(`Môžete nahrať najviac ${MAX_UPLOAD_FILES} súborov.`)
       return

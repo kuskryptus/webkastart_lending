@@ -65,7 +65,11 @@ export async function POST(request: Request, { params }: Context) {
     const recipient = process.env.CONTACT_TO_EMAIL || 'kampczykristian@gmail.com'
     const sender = process.env.CONTACT_FROM_EMAIL || 'WebkaStart <kontakt@webkastart.sk>'
     const assets = await listAssets(project.clientId)
-    const email = createOnboardingEmail(project.clientLabel, answers, assets)
+    const email = createOnboardingEmail(
+      project.clientLabel,
+      answers,
+      assets.filter((asset) => (asset.category || 'source') === 'source'),
+    )
     const answersHash = createHash('sha256').update(JSON.stringify(answers)).digest('hex').slice(0, 20)
     const emailResponse = await fetch('https://api.resend.com/emails', {
       body: JSON.stringify({

@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: Context) {
     const payload = await readSmallJson(request, 10_000)
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const result = await createPendingAsset({
-      actor: 'client', body, clientId: auth.client.id, clientVisible: true, projectId: project.id,
+      actor: 'client', assetCategory: 'source', body, clientId: auth.client.id, clientVisible: true, projectId: project.id,
     })
     return 'error' in result
       ? privateJson({ error: result.error }, { status: 422 })

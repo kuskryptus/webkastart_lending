@@ -39,7 +39,7 @@ export async function GET(request: Request, { params }: Context) {
     const assets = await listAssets(result.project.clientId)
     return privateJson({
       answers: sanitizeAnswers(result.project.answers),
-      assets: assets.filter((asset) => asset.clientVisible === true),
+      assets: assets.filter((asset) => asset.clientVisible === true && (asset.category || 'source') === 'source'),
       clientLabel: result.project.clientLabel,
       currentStep: result.project.currentStep,
       revision: result.project.revision,

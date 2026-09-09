@@ -33,7 +33,7 @@ export async function getWebsiteGenerationInput(projectId: string) {
       size::float8 as size,
       storage_key as "objectKey"
     from onboarding_assets
-    where project_id = ${projectId} and status = 'uploaded'
+    where project_id = ${projectId} and status = 'uploaded' and asset_category = 'source'
     order by created_at asc
   `
 

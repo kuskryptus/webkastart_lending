@@ -57,6 +57,7 @@ export async function createOnboardingProject(clientLabel: string) {
         (${clientId}, 'core', true, true),
         (${clientId}, 'discovery_2', true, true),
         (${clientId}, 'files', true, true),
+        (${clientId}, 'deliverables', true, false),
         (${clientId}, 'creative_strategy', false, false),
         (${clientId}, 'creative_directions', false, false),
         (${clientId}, 'internal_notes', false, false)
@@ -166,6 +167,7 @@ export async function listAssets(clientId: string): Promise<OnboardingAsset[]> {
       size::float8 as size,
       status,
       created_at as "createdAt",
+      asset_category as category,
       uploaded_by as "uploadedBy",
       client_visible as "clientVisible"
     from onboarding_assets

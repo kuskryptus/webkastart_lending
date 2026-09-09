@@ -166,7 +166,7 @@ export async function listWorkspaceSections(clientId: string): Promise<SectionRe
     from client_workspace_sections
     where client_id = ${clientId}
     order by array_position(
-      array['core', 'discovery_2', 'files', 'creative_strategy', 'creative_directions', 'internal_notes'],
+      array['core', 'discovery_2', 'files', 'deliverables', 'creative_strategy', 'creative_directions', 'internal_notes'],
       section_key
     )
   `
@@ -205,6 +205,10 @@ export async function getClientWorkspace(
   const assets = allAssets
     .filter((asset) => asset.status === 'uploaded')
     .filter((asset) => !options.visibleOnly || asset.clientVisible)
+    .filter((asset) => !options.visibleOnly || (
+      (asset.category === 'deliverable' && visibleKeys.has('deliverables'))
+      || ((asset.category || 'source') === 'source' && visibleKeys.has('files'))
+    ))
     .map((asset) => ({ ...asset, createdAt: new Date(asset.createdAt).toISOString() }))
   const safeCoreAnswers = core ? sanitizeAnswers(core.answers) : null
   const coreValue = core && safeCoreAnswers && (!options.visibleOnly || visibleKeys.has('core')) ? {
@@ -243,7 +247,7 @@ export async function getClientWorkspace(
   const progressValues = sections.flatMap((section) => {
     if (section.key === 'core' && coreValue) return [coreValue.progress.percentage]
     if (section.key === 'discovery_2' && discoveryValue) return [discoveryValue.progress.percentage]
-    if (section.key === 'files') return [assets.length ? 100 : 0]
+    if (section.key === 'files') return [assets.some((asset) => (asset.category || 'source') === 'source') ? 100 : 0]
     if (section.key === 'creative_strategy' || section.key === 'creative_directions') {
       return [section.content.trim() ? 100 : 0]
     }

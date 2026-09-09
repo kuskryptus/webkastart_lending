@@ -14,8 +14,9 @@ export async function POST(request: Request, { params }: Context) {
     if (!project) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
     const payload = await readSmallJson(request, 10_000)
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+    const assetCategory = body.assetCategory === 'deliverable' ? 'deliverable' : 'source'
     const result = await createPendingAsset({
-      actor: 'admin', body, clientId, clientVisible: body.clientVisible === true, projectId: project.id,
+      actor: 'admin', assetCategory, body, clientId, clientVisible: body.clientVisible === true, projectId: project.id,
     })
     return 'error' in result
       ? privateJson({ error: result.error }, { status: 422 })

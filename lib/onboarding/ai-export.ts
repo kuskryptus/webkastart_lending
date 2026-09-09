@@ -155,6 +155,7 @@ const workspaceSectionTitles: Record<WorkspaceSectionKey, string> = {
   core: 'Základný formulár',
   discovery_2: 'Doplňujúce otázky',
   files: 'Súbory a fotografie',
+  deliverables: 'Súbory pre klienta',
   creative_strategy: 'Kreatívna stratégia',
   creative_directions: 'Kreatívne smery',
   internal_notes: 'Interné poznámky',
@@ -207,6 +208,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
     materials: workspace.assets
       .map((asset) => ({
         filename: asset.name,
+        category: asset.category || 'source',
         mime_type: asset.mimeType,
         size_bytes: Number(asset.size),
         status: asset.status,

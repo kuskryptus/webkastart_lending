@@ -20,6 +20,7 @@ import {
   safeStorageFileName,
   validateUpload,
 } from './validation'
+import type { AssetCategory } from './types'
 
 export type AssetActor = 'client' | 'admin'
 
@@ -31,6 +32,7 @@ type PendingUpload = {
 
 export async function createPendingAsset(options: {
   actor: AssetActor
+  assetCategory: AssetCategory
   body: Record<string, unknown>
   clientId: string
   clientVisible: boolean
@@ -49,6 +51,7 @@ export async function createPendingAsset(options: {
       from onboarding_assets
       where id = ${retryUploadId} and client_id = ${options.clientId} and status = 'pending'
         and uploaded_by = ${options.actor}
+        and asset_category = ${options.assetCategory}
         and original_filename = ${String(options.body.name)}
         and mime_type = ${validation.mimeType}
         and size = ${Number(options.body.size)}
@@ -69,11 +72,11 @@ export async function createPendingAsset(options: {
       return transaction<PendingUpload[]>`
         insert into onboarding_assets (
           project_id, client_id, storage_key, original_filename, mime_type, size,
-          uploaded_by, client_visible
+          uploaded_by, client_visible, asset_category
         ) values (
           ${options.projectId}, ${options.clientId}, ${objectKey}, ${String(options.body.name)},
           ${validation.mimeType}, ${Number(options.body.size)}, ${options.actor},
-          ${options.clientVisible}
+          ${options.clientVisible}, ${options.assetCategory}
         )
         returning id, storage_key as "objectKey", multipart_upload_id as "multipartUploadId"
       `

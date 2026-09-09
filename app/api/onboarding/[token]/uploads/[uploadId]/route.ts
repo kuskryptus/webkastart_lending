@@ -25,7 +25,7 @@ export async function GET(request: Request, { params }: Context) {
       select original_filename as name, storage_key as "objectKey", mime_type as "mimeType"
       from onboarding_assets
       where id = ${uploadId} and client_id = ${project.clientId}
-        and status = 'uploaded' and client_visible = true
+        and status = 'uploaded' and client_visible = true and asset_category = 'source'
       limit 1
     `
     const asset = rows[0]

@@ -28,6 +28,7 @@ and pnpm.
   rewriting Core answers. Migration 004 preserves previously issued portal tokens
   for lookup and, when available, admin re-copy. Migration 005 adds the fast-choice
   and structured product fields while retaining the original Discovery text columns.
+  Migration 007 separates client source materials from admin deliverables.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -50,6 +51,8 @@ and pnpm.
   overwrite one form's answers with another.
 - Admin and portal are presentations over the same Core, Discovery, and asset
   rows. Respect `client_workspace_sections`; internal notes are never client-visible.
+  Assets with category `source` are client inputs; `deliverable` assets are admin
+  outputs shown in the separate client download section.
 - Return signed asset redirects through `privateRedirect`; native
   `Response.redirect()` has immutable headers and cannot be hardened afterward.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.

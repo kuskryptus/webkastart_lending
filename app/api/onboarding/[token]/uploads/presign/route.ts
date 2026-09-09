@@ -35,6 +35,7 @@ export async function POST(request: Request, { params }: Context) {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const result = await createPendingAsset({
       actor: 'client',
+      assetCategory: 'source',
       body,
       clientId: project.clientId,
       clientVisible: true,

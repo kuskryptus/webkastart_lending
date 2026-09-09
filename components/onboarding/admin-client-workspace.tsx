@@ -13,7 +13,8 @@ import type { ClientWorkspaceResponse, OnboardingAsset, PrefillFieldKey, Workspa
 const sectionTitle: Record<WorkspaceSectionKey, string> = {
   core: 'Základný formulár',
   discovery_2: 'Doplňujúce otázky',
-  files: 'Súbory / fotografie',
+  files: 'Podklady od klienta',
+  deliverables: 'Súbory pre klienta',
   creative_strategy: 'Kreatívna stratégia',
   creative_directions: 'Kreatívne smery',
   internal_notes: 'Poznámky',
@@ -38,7 +39,7 @@ function SectionSettings({ clientId, onChange, section }: {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const locked = section.key === 'internal_notes'
-  const editLocked = locked || section.key === 'creative_strategy' || section.key === 'creative_directions'
+  const editLocked = locked || section.key === 'deliverables' || section.key === 'creative_strategy' || section.key === 'creative_directions'
 
   async function save() {
     setSaving(true)
@@ -231,7 +232,19 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     if (!response.ok) setWorkspace((current) => ({ ...current, assets: previous }))
   }
 
+  function replaceCategoryAssets(category: 'source' | 'deliverable', assets: OnboardingAsset[]) {
+    setWorkspace((current) => ({
+      ...current,
+      assets: [
+        ...current.assets.filter((asset) => (asset.category || 'source') !== category),
+        ...assets,
+      ],
+    }))
+  }
+
   const uploadedAssets = workspace.assets.filter((asset) => asset.status === 'uploaded')
+  const sourceAssets = uploadedAssets.filter((asset) => (asset.category || 'source') === 'source')
+  const deliverableAssets = uploadedAssets.filter((asset) => asset.category === 'deliverable')
 
   return (
     <main className="min-h-dvh bg-background">
@@ -260,7 +273,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
 
         <section id="overview" className="scroll-mt-24 py-12 sm:py-16">
           <h2 className="text-2xl font-semibold tracking-[-0.035em]">Prehľad</h2>
-          <dl className="mt-8 grid gap-8 sm:grid-cols-3"><div><dt className="text-xs font-medium text-muted-foreground">Základný formulár</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory</dt><dd className="mt-2 text-sm font-semibold">{uploadedAssets.length} nahraných</dd></div></dl>
+          <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"><div><dt className="text-xs font-medium text-muted-foreground">Základný formulár</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
         </section>
 
         {workspace.sections.map((section) => (
@@ -280,10 +293,11 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                 onSave={() => void savePrefill()}
                 saving={savingPrefill}
               />
-              <div className="pt-12 sm:pt-16"><h3 className="mb-8 text-xl font-semibold tracking-[-0.03em]">Normálny onboarding formulár</h3><CoreWorkspaceFields answers={workspace.core.answers} assets={workspace.assets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} onChange={(answers) => setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className={`text-xs ${coreState.includes('medzitým') ? 'text-destructive' : 'text-muted-foreground'}`}>{coreState}</span><button type="button" onClick={() => void saveForm('core')} disabled={savingCore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingCore ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť základný formulár</button></div></div>
+              <div className="pt-12 sm:pt-16"><h3 className="mb-8 text-xl font-semibold tracking-[-0.03em]">Normálny onboarding formulár</h3><CoreWorkspaceFields answers={workspace.core.answers} assets={sourceAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} onChange={(answers) => setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className={`text-xs ${coreState.includes('medzitým') ? 'text-destructive' : 'text-muted-foreground'}`}>{coreState}</span><button type="button" onClick={() => void saveForm('core')} disabled={savingCore} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingCore ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť základný formulár</button></div></div>
             </div>}
             {section.key === 'discovery_2' && workspace.discovery2 && <div className="mt-10"><DiscoveryWorkspaceFields answers={workspace.discovery2.answers} onChange={(answers) => setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current)} /><div className="mt-8 flex items-center justify-end gap-4"><span className="text-xs text-muted-foreground">{discoveryState}</span><button type="button" onClick={() => void saveForm('discovery_2')} disabled={savingDiscovery} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-50">{savingDiscovery ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť doplňujúce otázky</button></div></div>}
-            {section.key === 'files' && <div className="mt-10"><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={workspace.assets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => setWorkspace((current) => ({ ...current, assets }))} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata /></div>}
+            {section.key === 'files' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Fotografie, logá a ostatné vstupy od klienta. Ako správca sem môžete doplniť chýbajúce podklady.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={sourceAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}
+            {section.key === 'deliverables' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Nahrajte sem hotové prezentácie, fotografie alebo dokumenty. Nové súbory klient ihneď uvidí vo svojej sekcii na stiahnutie.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={deliverableAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'deliverable', clientVisible: true, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('deliverable', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}
             {(section.key === 'creative_strategy' || section.key === 'creative_directions' || section.key === 'internal_notes') && <label className="mt-9 block"><span className="text-sm font-semibold">Obsah sekcie</span><textarea value={section.content} onChange={(event) => updateSection({ ...section, content: event.target.value })} className="mt-3 min-h-52 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-4 text-sm leading-7 outline-none focus:border-brand" placeholder={section.key === 'internal_notes' ? 'Interné poznámky — klient ich nikdy neuvidí.' : 'Pridajte obsah, ktorý bude možné podľa nastavenia viditeľnosti zdieľať s klientom.'} /></label>}
           </section>
         ))}

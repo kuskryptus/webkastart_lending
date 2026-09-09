@@ -102,6 +102,7 @@ try {
           (${clientId}, 'core', true, true),
           (${clientId}, 'discovery_2', true, true),
           (${clientId}, 'files', true, true),
+          (${clientId}, 'deliverables', true, false),
           (${clientId}, 'creative_strategy', false, false),
           (${clientId}, 'creative_directions', false, false),
           (${clientId}, 'internal_notes', false, false)
@@ -134,7 +135,7 @@ try {
     `
     if (!project) throw new Error('Projekt sa nenašiel.')
     const assets = await sql`
-      select id, original_filename, mime_type, size, status, storage_key, uploaded_at
+      select id, original_filename, mime_type, size, status, storage_key, asset_category, uploaded_at
       from onboarding_assets where client_id = ${projectId} order by created_at
     `
     console.log(JSON.stringify({ ...project, assets }, null, 2))

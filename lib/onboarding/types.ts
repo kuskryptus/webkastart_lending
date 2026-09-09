@@ -134,6 +134,8 @@ export type OnboardingAnswers = {
   additionalNotes: string
 }
 
+export type AssetCategory = 'source' | 'deliverable'
+
 export type OnboardingAsset = {
   id: string
   name: string
@@ -141,6 +143,7 @@ export type OnboardingAsset = {
   size: number
   status: 'pending' | 'uploaded'
   createdAt: string
+  category?: AssetCategory
   uploadedBy?: 'client' | 'admin'
   clientVisible?: boolean
 }
@@ -149,6 +152,7 @@ export const workspaceSectionKeys = [
   'core',
   'discovery_2',
   'files',
+  'deliverables',
   'creative_strategy',
   'creative_directions',
   'internal_notes',

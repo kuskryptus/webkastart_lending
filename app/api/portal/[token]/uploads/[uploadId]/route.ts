@@ -14,11 +14,10 @@ export async function GET(request: Request, { params }: Context) {
     const { token, uploadId } = await params
     const auth = await authorizePortalRequest(request, token, 'portal-file-read')
     if ('response' in auth) return auth.response
-    const permission = await getWorkspaceSection(auth.client.id, 'files')
-    if (!permission?.clientVisible) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
     const sql = getDatabase()
-    const rows = await sql<{ mimeType: string; name: string; objectKey: string }[]>`
-      select original_filename as name, storage_key as "objectKey", mime_type as "mimeType"
+    const rows = await sql<{ category: 'source' | 'deliverable'; mimeType: string; name: string; objectKey: string }[]>`
+      select original_filename as name, storage_key as "objectKey", mime_type as "mimeType",
+        asset_category as category
       from onboarding_assets
       where id = ${uploadId} and client_id = ${auth.client.id}
         and status = 'uploaded' and client_visible = true
@@ -26,6 +25,8 @@ export async function GET(request: Request, { params }: Context) {
     `
     const asset = rows[0]
     if (!asset) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
+    const permission = await getWorkspaceSection(auth.client.id, asset.category === 'deliverable' ? 'deliverables' : 'files')
+    if (!permission?.clientVisible) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
     const url = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
     return privateRedirect(url)
