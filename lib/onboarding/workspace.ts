@@ -16,6 +16,7 @@ import type {
 import { workspaceSectionKeys } from './types'
 import { sanitizeAnswers } from './validation'
 import { clientIdFromPermanentPortalToken } from './portal-token'
+import { createAssetShareToken } from './asset-share'
 
 type ClientRecord = {
   id: string
@@ -209,7 +210,11 @@ export async function getClientWorkspace(
       (asset.category === 'deliverable' && visibleKeys.has('deliverables'))
       || ((asset.category || 'source') === 'source' && visibleKeys.has('files'))
     ))
-    .map((asset) => ({ ...asset, createdAt: new Date(asset.createdAt).toISOString() }))
+    .map((asset) => ({
+      ...asset,
+      createdAt: new Date(asset.createdAt).toISOString(),
+      shareToken: asset.mimeType.startsWith('image/') ? createAssetShareToken(asset.id) || undefined : undefined,
+    }))
   const safeCoreAnswers = core ? sanitizeAnswers(core.answers) : null
   const coreValue = core && safeCoreAnswers && (!options.visibleOnly || visibleKeys.has('core')) ? {
     answers: safeCoreAnswers,

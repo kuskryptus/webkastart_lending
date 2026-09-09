@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Check, ExternalLink, FileText, FileVideo, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
+import { ShareLinkButton, sharedAssetPath } from './share-link-button'
 import {
   allowedUploadTypes,
   MAX_UPLOAD_BYTES,
@@ -266,6 +267,7 @@ export function UploadField({
         { method: 'POST' },
       )
       if (!completeResponse.ok) throw new Error(await errorMessage(completeResponse))
+      const completed = await completeResponse.json() as { shareToken?: string | null }
 
       const nextAssets: OnboardingAsset[] = [
         ...assetsRef.current,
@@ -274,6 +276,7 @@ export function UploadField({
           id: presign.uploadId,
           mimeType: presign.mimeType,
           name: file.name,
+          shareToken: completed.shareToken || undefined,
           size: file.size,
           status: 'uploaded',
           ...newAssetMetadata,
@@ -411,16 +414,19 @@ export function UploadField({
 
       {(assets.length > 0 || items.length > 0) && (
         <ul className="divide-y divide-border/70" aria-label="Nahrávané súbory">
-          {assets.map((asset) => (
-            <li key={asset.id} className="flex items-center gap-3 py-3.5">
+          {assets.map((asset) => {
+            const assetUrl = getAssetUrl?.(asset)
+            const openUrl = sharedAssetPath(asset)
+              || (assetUrl && canPreviewImage(asset.mimeType) ? `${assetUrl}?preview=1` : assetUrl)
+            return <li key={asset.id} className="flex items-center gap-3 py-3.5">
               {getAssetUrl && canPreviewImage(asset.mimeType) ? (
                 <Image unoptimized width={44} height={44} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
               ) : asset.mimeType.startsWith('video/')
                 ? <FileVideo className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
               <span className="min-w-0 flex-1">
-                {getAssetUrl ? (
-                  <a href={getAssetUrl(asset)} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-sm font-medium hover:text-brand hover:underline">
+                {openUrl ? (
+                  <a href={openUrl} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-sm font-medium hover:text-brand hover:underline">
                     <span className="truncate">{asset.name}</span><ExternalLink className="size-3.5 shrink-0" />
                   </a>
                 ) : <span className="block truncate text-sm font-medium">{asset.name}</span>}
@@ -435,6 +441,7 @@ export function UploadField({
                   Vidí klient
                 </label>
               )}
+              <ShareLinkButton asset={asset} />
               {canDeleteAsset(asset) && (
                 <button
                   type="button"
@@ -446,7 +453,7 @@ export function UploadField({
                 </button>
               )}
             </li>
-          ))}
+          })}
           {items.map((item) => (
             <li key={item.id} className="flex items-center gap-3 py-3.5">
               {item.status === 'uploading'

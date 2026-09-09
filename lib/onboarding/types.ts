@@ -144,6 +144,7 @@ export type OnboardingAsset = {
   status: 'pending' | 'uploaded'
   createdAt: string
   category?: AssetCategory
+  shareToken?: string
   uploadedBy?: 'client' | 'admin'
   clientVisible?: boolean
 }

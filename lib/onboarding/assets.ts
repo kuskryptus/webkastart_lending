@@ -21,6 +21,7 @@ import {
   validateUpload,
 } from './validation'
 import type { AssetCategory } from './types'
+import { createAssetShareToken } from './asset-share'
 
 export type AssetActor = 'client' | 'admin'
 
@@ -184,7 +185,9 @@ export async function completePendingAsset(clientId: string, assetId: string, ac
   `
   const upload = rows[0]
   if (!upload) return { error: 'Súbor sa nenašiel.', status: 404 } as const
-  if (upload.status === 'uploaded') return { ok: true } as const
+  if (upload.status === 'uploaded') {
+    return { ok: true, shareToken: upload.mimeType.startsWith('image/') ? createAssetShareToken(assetId) : null } as const
+  }
 
   if (upload.multipartUploadId) {
     const parts = await listMultipartParts(upload.objectKey, upload.multipartUploadId)
@@ -217,7 +220,7 @@ export async function completePendingAsset(clientId: string, assetId: string, ac
     await transaction`update onboarding_projects set updated_at = now(), last_activity_at = now() where client_id = ${clientId}`
     await transaction`update clients set updated_at = now() where id = ${clientId}`
   })
-  return { ok: true } as const
+  return { ok: true, shareToken: upload.mimeType.startsWith('image/') ? createAssetShareToken(assetId) : null } as const
 }
 
 export async function removeAsset(clientId: string, assetId: string, actor?: AssetActor) {

@@ -55,6 +55,9 @@ and pnpm.
   outputs shown in the separate client download section.
 - Return signed asset redirects through `privateRedirect`; native
   `Response.redirect()` has immutable headers and cannot be hardened afterward.
+- Individual image share links use an HMAC of the asset ID and expose only that
+  client-visible file through `/subor/[assetId]/[shareToken]`; keep the signing
+  secret stable and re-check file and section visibility on every shared read.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.
   A stale writer must receive 409 and must never overwrite a newer record.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the

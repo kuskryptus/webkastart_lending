@@ -2,6 +2,7 @@ import { checkRateLimit, findOnboardingByToken, listAssets, pruneRateLimits, sav
 import { apiError, getClientIp, isValidToken, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers } from '@/lib/onboarding/validation'
 import { reconcileClientMetadata } from '@/lib/onboarding/prefill'
+import { createAssetShareToken } from '@/lib/onboarding/asset-share'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -39,7 +40,12 @@ export async function GET(request: Request, { params }: Context) {
     const assets = await listAssets(result.project.clientId)
     return privateJson({
       answers: sanitizeAnswers(result.project.answers),
-      assets: assets.filter((asset) => asset.clientVisible === true && (asset.category || 'source') === 'source'),
+      assets: assets
+        .filter((asset) => asset.clientVisible === true && (asset.category || 'source') === 'source')
+        .map((asset) => ({
+          ...asset,
+          shareToken: asset.mimeType.startsWith('image/') ? createAssetShareToken(asset.id) || undefined : undefined,
+        })),
       clientLabel: result.project.clientLabel,
       currentStep: result.project.currentStep,
       revision: result.project.revision,

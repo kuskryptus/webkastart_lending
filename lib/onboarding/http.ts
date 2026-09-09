@@ -44,6 +44,7 @@ function redactSecrets(value: string) {
   const secretNames = [
     'DATABASE_URL',
     'ONBOARDING_ADMIN_SECRET',
+    'ONBOARDING_ASSET_SHARE_SECRET',
     'ONBOARDING_PORTAL_LINK_SECRET',
     'ONBOARDING_RATE_LIMIT_SECRET',
     'RESEND_API_KEY',

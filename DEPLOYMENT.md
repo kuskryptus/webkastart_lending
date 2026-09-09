@@ -69,6 +69,9 @@ Nastavte stabilnú hodnotu `ONBOARDING_PORTAL_LINK_SECRET` s dĺžkou aspoň
 link, ktorý môže admin kedykoľvek znova skopírovať. Ak premenná chýba, používa
 sa `ONBOARDING_ADMIN_SECRET`. Hodnotu po nasadení nemeňte, pretože určuje
 kanonický klientský link. Už odoslané staršie náhodné linky zostávajú funkčné.
+Podpísané odkazy na jednotlivé súbory používajú ten istý kľúč. Voliteľná
+premenná `ONBOARDING_ASSET_SHARE_SECRET` ich môže oddeliť; aj tá musí zostať
+stabilná, inak už vytvorené odkazy prestanú fungovať.
 
 Po nasadení otvorte `https://webkastart.sk/start`, prihláste sa hodnotou
 `ONBOARDING_ADMIN_SECRET`, napíšte názov klienta a kliknite na „Vytvoriť link“.
