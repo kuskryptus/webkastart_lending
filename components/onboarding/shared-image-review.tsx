@@ -37,6 +37,7 @@ export type ImageReviewComment = {
 type Point = { positionX: number; positionY: number }
 type Size = { height: number; width: number }
 type Connector = { endX: number; endY: number; height: number; startX: number; startY: number; width: number }
+type MobilePanelPlacement = 'none' | 'bottom' | 'top'
 
 const zoomSteps = [1, 1.5, 2, 3, 4, 6, 8]
 const mobileReviewQuery = '(max-width: 1023px)'
@@ -134,6 +135,7 @@ export function SharedImageReview({
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [visualViewport, setVisualViewport] = useState(readVisualViewport)
   const mobileReview = useSyncExternalStore(subscribeToMobileReview, isMobileReview, isServerMobileReview)
+  const mobileFormOpen = mobileReview && mobilePanelOpen && Boolean(draft || editingId)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -232,7 +234,7 @@ export function SharedImageReview({
     }
   }, [comments, fittedImageSize, updateConnector])
 
-  const centerReview = useCallback((markerId: string | null, keepMarkerAbovePanel: boolean) => {
+  const centerReview = useCallback((markerId: string | null, panelPlacement: MobilePanelPlacement) => {
     const viewport = viewportRef.current
     if (!viewport) return
 
@@ -248,15 +250,23 @@ export function SharedImageReview({
     viewport.scrollLeft += markerRect.left + markerRect.width / 2
       - (viewportRect.left + viewportRect.width / 2)
 
-    const panelTop = keepMarkerAbovePanel
-      ? mobilePanelRef.current?.getBoundingClientRect().top
+    const panelRect = panelPlacement !== 'none'
+      ? mobilePanelRef.current?.getBoundingClientRect()
       : undefined
-    const visibleTop = Math.max(viewportRect.top, visualViewport.top)
-    const visibleBottom = Math.min(
+    let visibleTop = Math.max(viewportRect.top, visualViewport.top)
+    let visibleBottom = Math.min(
       viewportRect.bottom,
-      panelTop ? panelTop - 12 : visualViewport.top + visualViewport.height,
+      visualViewport.top + visualViewport.height,
     )
-    if (visibleBottom - visibleTop > 80) {
+    if (panelPlacement === 'bottom' && panelRect) {
+      visibleBottom = Math.min(visibleBottom, panelRect.top - 12)
+    } else if (panelPlacement === 'top' && panelRect) {
+      visibleTop = Math.max(visibleTop, panelRect.bottom + 12)
+      // Some Android in-app browsers do not report the keyboard through
+      // VisualViewport. Keep the marker close below the editor in that case.
+      visibleBottom = Math.min(visibleBottom, visibleTop + 120)
+    }
+    if (visibleBottom - visibleTop > 44) {
       viewport.scrollTop += markerRect.top + markerRect.height / 2
         - (visibleTop + visibleBottom) / 2
     }
@@ -265,7 +275,7 @@ export function SharedImageReview({
   useEffect(() => {
     if (!imageSize) return
     const frame = window.requestAnimationFrame(() => {
-      centerReview(null, false)
+      centerReview(null, 'none')
     })
     return () => window.cancelAnimationFrame(frame)
   }, [centerReview, fittedImageSize, imageSize])
@@ -273,10 +283,10 @@ export function SharedImageReview({
   useEffect(() => {
     if (!mobileReview || !mobilePanelOpen) return
     const frame = window.requestAnimationFrame(() => {
-      centerReview(draft ? 'draft' : selectedId, true)
+      centerReview(draft ? 'draft' : selectedId, mobileFormOpen ? 'top' : 'bottom')
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [centerReview, draft, fittedImageSize, mobilePanelOpen, mobileReview, selectedId])
+  }, [centerReview, draft, fittedImageSize, mobileFormOpen, mobilePanelOpen, mobileReview, selectedId])
 
   useEffect(() => {
     const panel = mobilePanelRef.current
@@ -286,7 +296,7 @@ export function SharedImageReview({
     const recenter = () => {
       window.cancelAnimationFrame(frame)
       frame = window.requestAnimationFrame(() => {
-        centerReview(draft ? 'draft' : selectedId, true)
+        centerReview(draft ? 'draft' : selectedId, mobileFormOpen ? 'top' : 'bottom')
       })
     }
     const observer = new ResizeObserver(recenter)
@@ -297,7 +307,7 @@ export function SharedImageReview({
       window.cancelAnimationFrame(frame)
       observer.disconnect()
     }
-  }, [centerReview, draft, mobilePanelOpen, mobileReview, selectedId])
+  }, [centerReview, draft, mobileFormOpen, mobilePanelOpen, mobileReview, selectedId])
 
   function setMarkerRef(id: string, node: HTMLButtonElement | null) {
     if (node) markerRefs.current.set(id, node)
@@ -574,7 +584,10 @@ export function SharedImageReview({
 
         <aside
           ref={mobilePanelRef}
-          style={mobileReview ? { bottom: visualViewport.bottom + 12, maxHeight: mobilePanelHeight } : undefined}
+          style={mobileReview ? mobileFormOpen
+            ? { maxHeight: mobilePanelHeight, top: visualViewport.top + 12 }
+            : { bottom: visualViewport.bottom + 12, maxHeight: mobilePanelHeight }
+            : undefined}
           className={`${mobilePanelOpen ? 'fixed inset-x-3 z-50 flex overflow-hidden rounded-2xl border border-border shadow-2xl' : 'hidden'} min-h-0 flex-col bg-background lg:relative lg:inset-auto lg:z-30 lg:flex lg:h-[64dvh] lg:min-h-[30rem] lg:rounded-none lg:border-0 lg:border-l lg:shadow-none`}
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
