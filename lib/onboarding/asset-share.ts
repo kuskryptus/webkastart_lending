@@ -14,6 +14,15 @@ export type SharedAsset = {
   size: number
 }
 
+export type SharedImageComment = {
+  id: string
+  authorName: string
+  body: string
+  positionX: number
+  positionY: number
+  createdAt: Date
+}
+
 function shareSecret() {
   const secret = process.env.ONBOARDING_ASSET_SHARE_SECRET
     || process.env.ONBOARDING_PORTAL_LINK_SECRET
@@ -60,4 +69,67 @@ export async function findSharedAsset(assetId: string, token: string): Promise<S
     limit 1
   `
   return rows[0] ?? null
+}
+
+export async function listSharedImageComments(assetId: string): Promise<SharedImageComment[]> {
+  const sql = getDatabase()
+  return sql<SharedImageComment[]>`
+    select
+      comment.id,
+      comment.author_name as "authorName",
+      comment.body,
+      comment.position_x as "positionX",
+      comment.position_y as "positionY",
+      comment.created_at as "createdAt"
+    from (
+      select *
+      from shared_image_comments
+      where asset_id = ${assetId}
+      order by created_at desc, id desc
+      limit 500
+    ) as comment
+    order by comment.created_at asc, comment.id asc
+  `
+}
+
+export async function createSharedImageComment(input: {
+  assetId: string
+  authorName: string
+  body: string
+  positionX: number
+  positionY: number
+}): Promise<SharedImageComment> {
+  const sql = getDatabase()
+  const comment = await sql.begin(async (transaction) => {
+    const rows = await transaction<SharedImageComment[]>`
+      insert into shared_image_comments (
+        asset_id,
+        author_name,
+        body,
+        position_x,
+        position_y
+      ) values (
+        ${input.assetId},
+        ${input.authorName},
+        ${input.body},
+        ${input.positionX},
+        ${input.positionY}
+      )
+      returning
+        id,
+        author_name as "authorName",
+        body,
+        position_x as "positionX",
+        position_y as "positionY",
+        created_at as "createdAt"
+    `
+    await transaction`
+      update clients
+      set updated_at = now()
+      where id = (select client_id from onboarding_assets where id = ${input.assetId})
+    `
+    return rows[0]
+  }) as SharedImageComment | undefined
+  if (!comment) throw new Error('Could not create shared image comment')
+  return comment
 }

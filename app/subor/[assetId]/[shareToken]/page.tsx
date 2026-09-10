@@ -1,9 +1,9 @@
-import Image from 'next/image'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { Download, FileText, LockKeyhole } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
-import { findSharedAsset } from '@/lib/onboarding/asset-share'
+import { SharedImageReview } from '@/components/onboarding/shared-image-review'
+import { findSharedAsset, listSharedImageComments } from '@/lib/onboarding/asset-share'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,14 +32,21 @@ export default async function SharedFilePage({
   const contentUrl = `/api/shared-files/${assetId}/${shareToken}`
   const downloadUrl = `${contentUrl}?download=1`
   const canPreview = previewableImages.has(asset.mimeType)
+  const commentsUrl = `${contentUrl}/comments`
+  const comments = canPreview
+    ? (await listSharedImageComments(asset.id)).map((comment) => ({
+        ...comment,
+        createdAt: comment.createdAt.toISOString(),
+      }))
+    : []
 
   return (
     <main className="min-h-dvh bg-background">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
+      <header className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-6 sm:px-8">
         <LogoMark />
         <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><LockKeyhole className="size-3.5" /> Súkromný náhľad</span>
       </header>
-      <div className="mx-auto max-w-6xl px-5 pb-16 pt-6 sm:px-8 sm:pt-10">
+      <div className="mx-auto max-w-[1600px] px-5 pb-16 pt-6 sm:px-8 sm:pt-10">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Zdieľaný súbor</p>
@@ -52,9 +59,12 @@ export default async function SharedFilePage({
         </div>
 
         {canPreview ? (
-          <div className="relative mt-8 min-h-[55dvh] overflow-hidden rounded-2xl bg-secondary sm:mt-10">
-            <Image unoptimized fill loading="eager" sizes="100vw" src={contentUrl} alt={asset.name} className="object-contain" />
-          </div>
+          <SharedImageReview
+            alt={asset.name}
+            commentsUrl={commentsUrl}
+            imageUrl={contentUrl}
+            initialComments={comments}
+          />
         ) : (
           <div className="mt-10 flex min-h-64 flex-col items-center justify-center gap-4 border-y border-border py-12 text-center">
             <FileText className="size-9 text-muted-foreground" />

@@ -28,7 +28,8 @@ and pnpm.
   rewriting Core answers. Migration 004 preserves previously issued portal tokens
   for lookup and, when available, admin re-copy. Migration 005 adds the fast-choice
   and structured product fields while retaining the original Discovery text columns.
-  Migration 007 separates client source materials from admin deliverables.
+  Migration 007 separates client source materials from admin deliverables, and
+  migration 008 adds comments anchored to shared images.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -58,6 +59,8 @@ and pnpm.
 - Individual image share links use an HMAC of the asset ID and expose only that
   client-visible file through `/subor/[assetId]/[shareToken]`; keep the signing
   secret stable and re-check file and section visibility on every shared read.
+  Image comments use normalized coordinates in `shared_image_comments`, are
+  available only through the same bearer link, and must preserve that validation.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.
   A stale writer must receive 409 and must never overwrite a newer record.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
