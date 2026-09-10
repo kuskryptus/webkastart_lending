@@ -133,3 +133,60 @@ export async function createSharedImageComment(input: {
   if (!comment) throw new Error('Could not create shared image comment')
   return comment
 }
+
+export async function updateSharedImageComment(input: {
+  assetId: string
+  commentId: string
+  authorName: string
+  body: string
+}): Promise<SharedImageComment | null> {
+  const sql = getDatabase()
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<SharedImageComment[]>`
+      update shared_image_comments
+      set
+        author_name = ${input.authorName},
+        body = ${input.body}
+      where id = ${input.commentId}
+        and asset_id = ${input.assetId}
+      returning
+        id,
+        author_name as "authorName",
+        body,
+        position_x as "positionX",
+        position_y as "positionY",
+        created_at as "createdAt"
+    `
+    if (!rows[0]) return null
+
+    await transaction`
+      update clients
+      set updated_at = now()
+      where id = (select client_id from onboarding_assets where id = ${input.assetId})
+    `
+    return rows[0]
+  }) as Promise<SharedImageComment | null>
+}
+
+export async function deleteSharedImageComment(input: {
+  assetId: string
+  commentId: string
+}): Promise<boolean> {
+  const sql = getDatabase()
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ id: string }[]>`
+      delete from shared_image_comments
+      where id = ${input.commentId}
+        and asset_id = ${input.assetId}
+      returning id
+    `
+    if (!rows[0]) return false
+
+    await transaction`
+      update clients
+      set updated_at = now()
+      where id = (select client_id from onboarding_assets where id = ${input.assetId})
+    `
+    return true
+  }) as Promise<boolean>
+}

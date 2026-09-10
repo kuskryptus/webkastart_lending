@@ -6,9 +6,12 @@ import {
   LocateFixed,
   MessageCircle,
   Minus,
+  Pencil,
   Plus,
   RefreshCw,
+  Save,
   Send,
+  Trash2,
   X,
 } from 'lucide-react'
 import {
@@ -92,6 +95,12 @@ export function SharedImageReview({
   const [imageSize, setImageSize] = useState<Size | null>(null)
   const [viewportSize, setViewportSize] = useState<Size>({ height: 640, width: 900 })
   const [saving, setSaving] = useState(false)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editAuthorName, setEditAuthorName] = useState('')
+  const [editBody, setEditBody] = useState('')
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [connector, setConnector] = useState<Connector | null>(null)
@@ -101,8 +110,9 @@ export function SharedImageReview({
   const commentsScrollRef = useRef<HTMLDivElement>(null)
   const draftCardRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null)
   const markerRefs = useRef(new Map<string, HTMLButtonElement>())
-  const cardRefs = useRef(new Map<string, HTMLButtonElement>())
+  const cardRefs = useRef(new Map<string, HTMLDivElement>())
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -183,7 +193,7 @@ export function SharedImageReview({
     else markerRefs.current.delete(id)
   }
 
-  function setCardRef(id: string, node: HTMLButtonElement | null) {
+  function setCardRef(id: string, node: HTMLDivElement | null) {
     if (node) cardRefs.current.set(id, node)
     else cardRefs.current.delete(id)
   }
@@ -196,6 +206,8 @@ export function SharedImageReview({
     }
     setDraft(nextDraft)
     setSelectedId(null)
+    setEditingId(null)
+    setConfirmingDeleteId(null)
     setBody('')
     setError('')
     window.requestAnimationFrame(() => textareaRef.current?.focus())
@@ -204,6 +216,8 @@ export function SharedImageReview({
   function selectComment(id: string, scrollCard = false) {
     setDraft(null)
     setSelectedId(id)
+    setEditingId(null)
+    setConfirmingDeleteId(null)
     setError('')
     if (scrollCard) {
       window.requestAnimationFrame(() => cardRefs.current.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
@@ -242,6 +256,82 @@ export function SharedImageReview({
       setError(caught instanceof Error ? caught.message : 'Komentár sa nepodarilo uložiť.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function startEditing(comment: ImageReviewComment) {
+    setDraft(null)
+    setSelectedId(comment.id)
+    setEditingId(comment.id)
+    setConfirmingDeleteId(null)
+    setEditAuthorName(comment.authorName)
+    setEditBody(comment.body)
+    setError('')
+    window.requestAnimationFrame(() => editTextareaRef.current?.focus())
+  }
+
+  function cancelEditing() {
+    setEditingId(null)
+    setEditAuthorName('')
+    setEditBody('')
+    setError('')
+  }
+
+  async function submitEdit(event: FormEvent) {
+    event.preventDefault()
+    if (!editingId || !editBody.trim() || savingEdit) return
+    setSavingEdit(true)
+    setError('')
+
+    try {
+      const response = await fetch(commentsUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: editingId, authorName: editAuthorName, body: editBody }),
+      })
+      if (!response.ok) throw new Error(await responseError(response, 'Komentár sa nepodarilo upraviť.'))
+
+      const data = await response.json() as { comment: ImageReviewComment }
+      setComments((current) => current.map((comment) => comment.id === data.comment.id ? data.comment : comment))
+      setEditingId(null)
+      rememberAuthorName(editAuthorName.trim())
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Komentár sa nepodarilo upraviť.')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  function confirmDelete(commentId: string) {
+    setDraft(null)
+    setEditingId(null)
+    setSelectedId(commentId)
+    setConfirmingDeleteId(commentId)
+    setError('')
+  }
+
+  async function deleteComment(commentId: string) {
+    if (deletingId) return
+    setDeletingId(commentId)
+    setError('')
+
+    try {
+      const response = await fetch(commentsUrl, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId }),
+      })
+      if (!response.ok) throw new Error(await responseError(response, 'Komentár sa nepodarilo vymazať.'))
+
+      const deletedIndex = comments.findIndex((comment) => comment.id === commentId)
+      const remaining = comments.filter((comment) => comment.id !== commentId)
+      setComments(remaining)
+      setSelectedId(remaining[deletedIndex]?.id ?? remaining[deletedIndex - 1]?.id ?? null)
+      setConfirmingDeleteId(null)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Komentár sa nepodarilo vymazať.')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -387,24 +477,68 @@ export function SharedImageReview({
             )}
 
             {comments.map((comment, index) => (
-              <button
+              <div
                 key={comment.id}
                 ref={(node) => setCardRef(comment.id, node)}
-                type="button"
-                onClick={() => selectComment(comment.id)}
-                className={`w-full rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${selectedId === comment.id && !draft ? 'border-brand bg-brand-soft/45' : 'border-border bg-card hover:border-brand/40'}`}
+                className={`overflow-hidden rounded-xl border transition-colors ${selectedId === comment.id && !draft ? 'border-brand bg-brand-soft/45' : 'border-border bg-card hover:border-brand/40'}`}
               >
-                <span className="flex items-start gap-2.5">
-                  <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-bold ${selectedId === comment.id && !draft ? 'bg-brand text-white' : 'bg-primary text-primary-foreground'}`}>{index + 1}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline justify-between gap-2">
-                      <span className="truncate text-xs font-semibold">{comment.authorName || 'Anonymný komentár'}</span>
-                      <span className="shrink-0 text-[10px] text-muted-foreground">{displayDate(comment.createdAt)}</span>
-                    </span>
-                    <span className="mt-1.5 block whitespace-pre-wrap break-words text-sm leading-5 text-foreground">{comment.body}</span>
-                  </span>
-                </span>
-              </button>
+                {confirmingDeleteId === comment.id ? (
+                  <div className="p-3">
+                    <p className="text-sm font-semibold">Vymazať komentár {index + 1}?</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">Táto akcia sa nedá vrátiť späť.</p>
+                    {error && <p role="alert" className="mt-2 text-xs leading-5 text-destructive">{error}</p>}
+                    <div className="mt-3 flex gap-2">
+                      <button type="button" onClick={() => { setConfirmingDeleteId(null); setError('') }} disabled={deletingId === comment.id} className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold hover:bg-secondary disabled:opacity-45">Zrušiť</button>
+                      <button type="button" onClick={() => void deleteComment(comment.id)} disabled={deletingId === comment.id} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-destructive px-3 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
+                        {deletingId === comment.id ? <><RefreshCw className="size-3.5 animate-spin" /> Mažem…</> : <><Trash2 className="size-3.5" /> Vymazať</>}
+                      </button>
+                    </div>
+                  </div>
+                ) : editingId === comment.id ? (
+                  <form onSubmit={(event) => void submitEdit(event)} className="space-y-2.5 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold text-brand">Upraviť komentár {index + 1}</p>
+                      <button type="button" onClick={cancelEditing} className="grid size-7 place-items-center rounded-lg text-muted-foreground hover:bg-background hover:text-foreground" aria-label="Zrušiť úpravu"><X className="size-3.5" /></button>
+                    </div>
+                    <label className="block">
+                      <span className="sr-only">Vaše meno</span>
+                      <input value={editAuthorName} onChange={(event) => setEditAuthorName(event.target.value)} maxLength={80} className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Vaše meno (nepovinné)" />
+                    </label>
+                    <label className="block">
+                      <span className="sr-only">Komentár</span>
+                      <textarea ref={editTextareaRef} value={editBody} onChange={(event) => setEditBody(event.target.value)} maxLength={2000} rows={4} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Text komentára" />
+                    </label>
+                    {error && <p role="alert" className="text-xs leading-5 text-destructive">{error}</p>}
+                    <div className="flex gap-2">
+                      <button type="button" onClick={cancelEditing} disabled={savingEdit} className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold hover:bg-secondary disabled:opacity-45">Zrušiť</button>
+                      <button type="submit" disabled={!editBody.trim() || savingEdit} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45">
+                        {savingEdit ? <><RefreshCw className="size-3.5 animate-spin" /> Ukladám…</> : <><Save className="size-3.5" /> Uložiť</>}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => selectComment(comment.id)} className="w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand">
+                      <span className="flex items-start gap-2.5">
+                        <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-bold ${selectedId === comment.id && !draft ? 'bg-brand text-white' : 'bg-primary text-primary-foreground'}`}>{index + 1}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-baseline justify-between gap-2">
+                            <span className="truncate text-xs font-semibold">{comment.authorName || 'Anonymný komentár'}</span>
+                            <span className="shrink-0 text-[10px] text-muted-foreground">{displayDate(comment.createdAt)}</span>
+                          </span>
+                          <span className="mt-1.5 block whitespace-pre-wrap break-words text-sm leading-5 text-foreground">{comment.body}</span>
+                        </span>
+                      </span>
+                    </button>
+                    {selectedId === comment.id && !draft && (
+                      <div className="flex justify-end gap-1 border-t border-brand/15 px-2 py-1.5">
+                        <button type="button" onClick={() => startEditing(comment)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-brand hover:bg-background" aria-label={`Upraviť komentár ${index + 1}`}><Pencil className="size-3.5" /> Upraviť</button>
+                        <button type="button" onClick={() => confirmDelete(comment.id)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10" aria-label={`Vymazať komentár ${index + 1}`}><Trash2 className="size-3.5" /> Vymazať</button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             ))}
 
             {!draft && comments.length === 0 && (
