@@ -22,6 +22,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 
 export type ImageReviewComment = {
@@ -38,6 +39,32 @@ type Size = { height: number; width: number }
 type Connector = { endX: number; endY: number; height: number; startX: number; startY: number; width: number }
 
 const zoomSteps = [1, 1.5, 2, 3, 4, 6, 8]
+const mobileReviewQuery = '(max-width: 1023px)'
+
+function subscribeToMobileReview(callback: () => void) {
+  const media = window.matchMedia(mobileReviewQuery)
+  media.addEventListener('change', callback)
+  return () => media.removeEventListener('change', callback)
+}
+
+function isMobileReview() {
+  return window.matchMedia(mobileReviewQuery).matches
+}
+
+function isServerMobileReview() {
+  return false
+}
+
+function readVisualViewport() {
+  if (typeof window === 'undefined') return { bottom: 0, height: 800, top: 0 }
+  const viewport = window.visualViewport
+  if (!viewport) return { bottom: 0, height: window.innerHeight, top: 0 }
+  return {
+    bottom: Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop),
+    height: viewport.height,
+    top: viewport.offsetTop,
+  }
+}
 
 function displayDate(value: string) {
   return new Intl.DateTimeFormat('sk-SK', {
@@ -104,11 +131,15 @@ export function SharedImageReview({
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [connector, setConnector] = useState<Connector | null>(null)
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
+  const [visualViewport, setVisualViewport] = useState(readVisualViewport)
+  const mobileReview = useSyncExternalStore(subscribeToMobileReview, isMobileReview, isServerMobileReview)
 
   const rootRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
   const commentsScrollRef = useRef<HTMLDivElement>(null)
   const draftCardRef = useRef<HTMLDivElement>(null)
+  const mobilePanelRef = useRef<HTMLElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editTextareaRef = useRef<HTMLTextAreaElement>(null)
   const markerRefs = useRef(new Map<string, HTMLButtonElement>())
@@ -123,6 +154,19 @@ export function SharedImageReview({
     const observer = new ResizeObserver(measure)
     observer.observe(viewport)
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const viewport = window.visualViewport
+    const measure = () => setVisualViewport(readVisualViewport())
+    viewport?.addEventListener('resize', measure)
+    viewport?.addEventListener('scroll', measure)
+    window.addEventListener('resize', measure)
+    return () => {
+      viewport?.removeEventListener('resize', measure)
+      viewport?.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+    }
   }, [])
 
   const fittedImageSize = useMemo(() => {
@@ -188,6 +232,73 @@ export function SharedImageReview({
     }
   }, [comments, fittedImageSize, updateConnector])
 
+  const centerReview = useCallback((markerId: string | null, keepMarkerAbovePanel: boolean) => {
+    const viewport = viewportRef.current
+    if (!viewport) return
+
+    const marker = markerId ? markerRefs.current.get(markerId) : null
+    if (!marker) {
+      viewport.scrollLeft = Math.max(0, (viewport.scrollWidth - viewport.clientWidth) / 2)
+      viewport.scrollTop = Math.max(0, (viewport.scrollHeight - viewport.clientHeight) / 2)
+      return
+    }
+
+    const viewportRect = viewport.getBoundingClientRect()
+    const markerRect = marker.getBoundingClientRect()
+    viewport.scrollLeft += markerRect.left + markerRect.width / 2
+      - (viewportRect.left + viewportRect.width / 2)
+
+    const panelTop = keepMarkerAbovePanel
+      ? mobilePanelRef.current?.getBoundingClientRect().top
+      : undefined
+    const visibleTop = Math.max(viewportRect.top, visualViewport.top)
+    const visibleBottom = Math.min(
+      viewportRect.bottom,
+      panelTop ? panelTop - 12 : visualViewport.top + visualViewport.height,
+    )
+    if (visibleBottom - visibleTop > 80) {
+      viewport.scrollTop += markerRect.top + markerRect.height / 2
+        - (visibleTop + visibleBottom) / 2
+    }
+  }, [visualViewport])
+
+  useEffect(() => {
+    if (!imageSize) return
+    const frame = window.requestAnimationFrame(() => {
+      centerReview(null, false)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [centerReview, fittedImageSize, imageSize])
+
+  useEffect(() => {
+    if (!mobileReview || !mobilePanelOpen) return
+    const frame = window.requestAnimationFrame(() => {
+      centerReview(draft ? 'draft' : selectedId, true)
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [centerReview, draft, fittedImageSize, mobilePanelOpen, mobileReview, selectedId])
+
+  useEffect(() => {
+    const panel = mobilePanelRef.current
+    if (!mobileReview || !mobilePanelOpen || !panel) return
+
+    let frame = 0
+    const recenter = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        centerReview(draft ? 'draft' : selectedId, true)
+      })
+    }
+    const observer = new ResizeObserver(recenter)
+    observer.observe(panel)
+    recenter()
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      observer.disconnect()
+    }
+  }, [centerReview, draft, mobilePanelOpen, mobileReview, selectedId])
+
   function setMarkerRef(id: string, node: HTMLButtonElement | null) {
     if (node) markerRefs.current.set(id, node)
     else markerRefs.current.delete(id)
@@ -210,7 +321,8 @@ export function SharedImageReview({
     setConfirmingDeleteId(null)
     setBody('')
     setError('')
-    window.requestAnimationFrame(() => textareaRef.current?.focus())
+    if (mobileReview) setMobilePanelOpen(true)
+    window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }))
   }
 
   function selectComment(id: string, scrollCard = false) {
@@ -219,7 +331,9 @@ export function SharedImageReview({
     setEditingId(null)
     setConfirmingDeleteId(null)
     setError('')
-    if (scrollCard) {
+    if (mobileReview) {
+      setMobilePanelOpen(true)
+    } else if (scrollCard) {
       window.requestAnimationFrame(() => cardRefs.current.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
     }
   }
@@ -267,7 +381,8 @@ export function SharedImageReview({
     setEditAuthorName(comment.authorName)
     setEditBody(comment.body)
     setError('')
-    window.requestAnimationFrame(() => editTextareaRef.current?.focus())
+    if (mobileReview) setMobilePanelOpen(true)
+    window.requestAnimationFrame(() => editTextareaRef.current?.focus({ preventScroll: true }))
   }
 
   function cancelEditing() {
@@ -352,8 +467,10 @@ export function SharedImageReview({
   }
 
   const activeMarkerId = draft ? 'draft' : selectedId
+  const mobilePanelHeight = Math.max(210, Math.min(430, Math.round(visualViewport.height * 0.5)))
   const innerWidth = Math.max(viewportSize.width, fittedImageSize.width + 48)
   const innerHeight = Math.max(viewportSize.height, fittedImageSize.height + 48)
+    + (mobileReview && mobilePanelOpen ? mobilePanelHeight + 24 : 0)
 
   return (
     <section aria-label="Pripomienkovanie obrázka" className="mt-8 sm:mt-10">
@@ -362,7 +479,7 @@ export function SharedImageReview({
           <h2 className="text-base font-semibold tracking-tight">Pripomienky k obrázku</h2>
           <p className="mt-1 text-sm text-muted-foreground">Priblížte si návrh a kliknite presne na miesto, ktoré chcete okomentovať.</p>
         </div>
-        <div className="flex w-fit items-center gap-1 rounded-xl border border-border bg-background p-1" aria-label="Priblíženie obrázka">
+        <div className="hidden w-fit items-center gap-1 rounded-xl border border-border bg-background p-1 lg:flex" aria-label="Priblíženie obrázka">
           <button type="button" onClick={() => changeZoom(-1)} disabled={zoom === zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
           <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(zoom * 100)} %</span>
           <button type="button" onClick={() => changeZoom(1)} disabled={zoom === zoomSteps.at(-1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
@@ -372,6 +489,9 @@ export function SharedImageReview({
       </div>
 
       <div ref={rootRef} className="relative grid overflow-hidden rounded-2xl border border-border bg-card lg:grid-cols-[minmax(0,1fr)_21rem]">
+        {mobileReview && mobilePanelOpen && (
+          <button type="button" className="fixed inset-0 z-40 bg-black/15 lg:hidden" onClick={() => setMobilePanelOpen(false)} aria-label="Zavrieť okno komentára" />
+        )}
         {connector && (
           <svg className="pointer-events-none absolute inset-0 z-20 hidden lg:block" width={connector.width} height={connector.height} viewBox={`0 0 ${connector.width} ${connector.height}`} aria-hidden="true">
             <path
@@ -384,7 +504,19 @@ export function SharedImageReview({
           </svg>
         )}
 
-        <div className="min-w-0 bg-secondary/70">
+        <div className="relative min-w-0 bg-secondary/70">
+          <div className="absolute right-3 top-3 z-30 flex flex-col items-center overflow-hidden rounded-xl border border-border bg-background/95 shadow-lg backdrop-blur lg:hidden" aria-label="Priblíženie obrázka">
+            <button type="button" onClick={() => changeZoom(1)} disabled={zoom === zoomSteps.at(-1)} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-5" /></button>
+            <span className="w-7 border-t border-border" />
+            <span className="py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+            <span className="w-7 border-t border-border" />
+            <button type="button" onClick={() => changeZoom(-1)} disabled={zoom === zoomSteps[0]} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-5" /></button>
+            <span className="w-7 border-t border-border" />
+            <button type="button" onClick={() => setZoom(1)} disabled={zoom === 1} className="grid size-10 place-items-center text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /></button>
+          </div>
+          <button type="button" onClick={() => setMobilePanelOpen(true)} className="absolute bottom-3 left-3 z-30 inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 text-xs font-semibold shadow-lg backdrop-blur lg:hidden" aria-label={`Otvoriť komentáre (${comments.length})`}>
+            <MessageCircle className="size-4 text-brand" /> {comments.length}
+          </button>
           <div ref={viewportRef} className="h-[64dvh] min-h-[30rem] overflow-auto overscroll-contain" aria-label="Náhľad obrázka s bodmi komentárov">
             <div className="relative" style={{ width: innerWidth, height: innerHeight }}>
               <div
@@ -427,7 +559,7 @@ export function SharedImageReview({
                   <button
                     ref={(node) => setMarkerRef('draft', node)}
                     type="button"
-                    onClick={(event) => { event.stopPropagation(); textareaRef.current?.focus() }}
+                    onClick={(event) => { event.stopPropagation(); if (mobileReview) setMobilePanelOpen(true); window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true })) }}
                     className="absolute z-30 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-brand text-white shadow-lg ring-4 ring-brand/20"
                     style={{ left: `${draft.positionX * 100}%`, top: `${draft.positionY * 100}%` }}
                     aria-label="Nový komentár"
@@ -440,7 +572,11 @@ export function SharedImageReview({
           </div>
         </div>
 
-        <aside className="relative z-30 flex min-h-0 flex-col border-t border-border bg-background lg:h-[64dvh] lg:min-h-[30rem] lg:border-l lg:border-t-0">
+        <aside
+          ref={mobilePanelRef}
+          style={mobileReview ? { bottom: visualViewport.bottom + 12, maxHeight: mobilePanelHeight } : undefined}
+          className={`${mobilePanelOpen ? 'fixed inset-x-3 z-50 flex overflow-hidden rounded-2xl border border-border shadow-2xl' : 'hidden'} min-h-0 flex-col bg-background lg:relative lg:inset-auto lg:z-30 lg:flex lg:h-[64dvh] lg:min-h-[30rem] lg:rounded-none lg:border-0 lg:border-l lg:shadow-none`}
+        >
           <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
             <div className="flex items-center gap-2">
               <MessageCircle className="size-4 text-brand" />
@@ -450,6 +586,7 @@ export function SharedImageReview({
             <button type="button" onClick={() => void refreshComments()} disabled={refreshing} className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-50" aria-label="Obnoviť komentáre" title="Obnoviť komentáre">
               <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
+            <button type="button" onClick={() => setMobilePanelOpen(false)} className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground lg:hidden" aria-label="Zavrieť komentáre"><X className="size-4" /></button>
           </div>
 
           <div ref={commentsScrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
