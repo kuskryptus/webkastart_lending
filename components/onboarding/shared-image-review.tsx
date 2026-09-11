@@ -309,6 +309,35 @@ export function SharedImageReview({
     }
   }, [centerReview, draft, mobileFormOpen, mobilePanelOpen, mobileReview, selectedId])
 
+  useEffect(() => {
+    if (!mobileFormOpen) return
+
+    let frame = 0
+    const revealFormActions = () => {
+      window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const scroll = commentsScrollRef.current
+        const editor = draft
+          ? draftCardRef.current
+          : editingId ? cardRefs.current.get(editingId) : null
+        if (!scroll || !editor) return
+
+        const scrollRect = scroll.getBoundingClientRect()
+        const editorRect = editor.getBoundingClientRect()
+        if (editorRect.bottom > scrollRect.bottom) {
+          scroll.scrollTop += editorRect.bottom - scrollRect.bottom + 4
+        }
+      })
+    }
+
+    revealFormActions()
+    const keyboardFrame = window.setTimeout(revealFormActions, 350)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(keyboardFrame)
+    }
+  }, [draft, editingId, mobileFormOpen, visualViewport.height])
+
   function setMarkerRef(id: string, node: HTMLButtonElement | null) {
     if (node) markerRefs.current.set(id, node)
     else markerRefs.current.delete(id)
@@ -616,10 +645,10 @@ export function SharedImageReview({
                   </label>
                   <label className="block">
                     <span className="sr-only">Komentár</span>
-                    <textarea ref={textareaRef} value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={4} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Čo chcete na tomto mieste zmeniť?" />
+                    <textarea ref={textareaRef} value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={3} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Čo chcete na tomto mieste zmeniť?" />
                   </label>
                   {error && <p role="alert" className="text-xs leading-5 text-destructive">{error}</p>}
-                  <button type="submit" disabled={!body.trim() || saving} className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45">
+                  <button type="submit" disabled={!body.trim() || saving} className="sticky bottom-0 z-10 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45">
                     {saving ? <><RefreshCw className="size-3.5 animate-spin" /> Ukladám…</> : <><Send className="size-3.5" /> Pridať komentár</>}
                   </button>
                 </form>
@@ -656,10 +685,10 @@ export function SharedImageReview({
                     </label>
                     <label className="block">
                       <span className="sr-only">Komentár</span>
-                      <textarea ref={editTextareaRef} value={editBody} onChange={(event) => setEditBody(event.target.value)} maxLength={2000} rows={4} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Text komentára" />
+                      <textarea ref={editTextareaRef} value={editBody} onChange={(event) => setEditBody(event.target.value)} maxLength={2000} rows={3} className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2.5 text-sm leading-5 outline-none placeholder:text-muted-foreground focus:border-brand" placeholder="Text komentára" />
                     </label>
                     {error && <p role="alert" className="text-xs leading-5 text-destructive">{error}</p>}
-                    <div className="flex gap-2">
+                    <div className="sticky bottom-0 z-10 flex gap-2 bg-brand-soft/95 py-1">
                       <button type="button" onClick={cancelEditing} disabled={savingEdit} className="min-h-10 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-semibold hover:bg-secondary disabled:opacity-45">Zrušiť</button>
                       <button type="submit" disabled={!editBody.trim() || savingEdit} className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-45">
                         {savingEdit ? <><RefreshCw className="size-3.5 animate-spin" /> Ukladám…</> : <><Save className="size-3.5" /> Uložiť</>}
@@ -702,7 +731,7 @@ export function SharedImageReview({
             {!draft && error && <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-xs leading-5 text-destructive">{error}</p>}
           </div>
 
-          <div className="flex items-center gap-2 border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
+          <div className={`${mobileFormOpen ? 'hidden' : 'flex'} items-center gap-2 border-t border-border px-4 py-3 text-[11px] text-muted-foreground lg:flex`}>
             <Check className="size-3.5 text-emerald-600" /> Body sa ukladajú presne aj pri priblížení.
           </div>
         </aside>
