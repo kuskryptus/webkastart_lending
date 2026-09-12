@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ExternalLink, FileText, FileVideo, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
+import { Check, ClipboardPaste, ExternalLink, FileText, FileVideo, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
 import { ShareLinkButton, sharedAssetPath } from './share-link-button'
 import {
@@ -46,6 +46,23 @@ function formatBytes(bytes: number) {
 
 function canPreviewImage(mimeType: string) {
   return ['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(mimeType)
+}
+
+function clipboardFile(blob: Blob, index: number, originalFile?: File) {
+  const mimeType = blob.type.toLowerCase()
+  const extensions = allowedUploadTypes[mimeType]
+  const originalExtension = originalFile?.name.split('.').pop()?.toLowerCase()
+  if (originalFile?.name && originalExtension && extensions?.includes(originalExtension)) {
+    return originalFile
+  }
+
+  const extension = extensions?.[0] || 'bin'
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const suffix = index > 0 ? `-${index + 1}` : ''
+  return new File([blob], `vlozeny-obrazok-${timestamp}${suffix}.${extension}`, {
+    lastModified: originalFile?.lastModified || Date.now(),
+    type: mimeType,
+  })
 }
 
 function storageErrorMessage(xhr: XMLHttpRequest) {
@@ -108,6 +125,7 @@ export function UploadField({
   const [items, setItems] = useState<LocalUpload[]>([])
   const [dragging, setDragging] = useState(false)
   const [notice, setNotice] = useState('')
+  const [readingClipboard, setReadingClipboard] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const queueRef = useRef<QueueItem[]>([])
   const activeRef = useRef(0)
@@ -342,6 +360,40 @@ export function UploadField({
     pumpQueue()
   }
 
+  function addPastedFiles(fileList: File[]) {
+    const images = fileList.filter((file) => file.type.toLowerCase().startsWith('image/'))
+    if (!images.length) {
+      setNotice('Schránka neobsahuje obrázok. Najprv obrázok skopírujte a skúste to znova.')
+      return
+    }
+    addFiles(images.map((file, index) => clipboardFile(file, index, file)))
+  }
+
+  async function pasteFromClipboard() {
+    if (!navigator.clipboard?.read) {
+      setNotice('Prehliadač neumožnil priamy prístup ku schránke. Označte túto plochu a stlačte ⌘V alebo Ctrl+V.')
+      return
+    }
+
+    setReadingClipboard(true)
+    setNotice('')
+    try {
+      const clipboardItems = await navigator.clipboard.read()
+      const images: File[] = []
+      for (const item of clipboardItems) {
+        const mimeType = item.types.find((type) => type.toLowerCase().startsWith('image/'))
+        if (!mimeType) continue
+        const blob = await item.getType(mimeType)
+        images.push(clipboardFile(blob, images.length))
+      }
+      addPastedFiles(images)
+    } catch {
+      setNotice('Prístup ku schránke bol zablokovaný. Označte túto plochu a stlačte ⌘V alebo Ctrl+V.')
+    } finally {
+      setReadingClipboard(false)
+    }
+  }
+
   function retry(item: LocalUpload) {
     const batchId = crypto.randomUUID()
     batchesRef.current.set(batchId, { pending: 1, uploadedIds: [] })
@@ -380,9 +432,7 @@ export function UploadField({
           event.target.value = ''
         }}
       />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
+      <div
         onDragEnter={(event) => { event.preventDefault(); setDragging(true) }}
         onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
         onDragLeave={(event) => {
@@ -394,21 +444,45 @@ export function UploadField({
           setDragging(false)
           addFiles(event.dataTransfer.files)
         }}
-        className={`group flex min-h-48 w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-10 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4 ${
+        onPaste={(event) => {
+          const files = Array.from(event.clipboardData.items)
+            .filter((item) => item.kind === 'file' && item.type.toLowerCase().startsWith('image/'))
+            .map((item) => item.getAsFile())
+            .filter((file): file is File => file !== null)
+          if (files.length) event.preventDefault()
+          addPastedFiles(files)
+        }}
+        className={`flex min-h-48 w-full flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-8 text-center transition-colors ${
           dragging ? 'border-brand bg-brand-soft' : 'border-border bg-white/45 hover:border-brand/50 hover:bg-white'
         }`}
       >
-        <span className="grid size-11 place-items-center rounded-full bg-brand-soft text-brand">
-          <UploadCloud className="size-5" aria-hidden="true" />
-        </span>
-        <span>
-          <span className="block text-base font-semibold text-foreground">Vyberte alebo sem presuňte súbory</span>
-          <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-            Originálne fotografie, videá a dokumenty · max. 5 GB na súbor
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="group flex w-full flex-col items-center justify-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-4"
+        >
+          <span className="grid size-11 place-items-center rounded-full bg-brand-soft text-brand">
+            <UploadCloud className="size-5" aria-hidden="true" />
           </span>
-          <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Veľké súbory sa nahrávajú po častiach a po výpadku ich môžete obnoviť.</span>
-        </span>
-      </button>
+          <span>
+            <span className="block text-base font-semibold text-foreground">Vyberte alebo sem presuňte súbory</span>
+            <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+              Originálne fotografie, videá a dokumenty · max. 5 GB na súbor
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Veľké súbory sa nahrávajú po častiach a po výpadku ich môžete obnoviť.</span>
+          </span>
+        </button>
+        <button
+          type="button"
+          disabled={readingClipboard}
+          onClick={() => void pasteFromClipboard()}
+          className="mt-5 inline-flex min-h-9 items-center gap-2 rounded-lg bg-brand-soft px-3.5 text-xs font-semibold text-brand transition-colors hover:bg-brand/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+        >
+          {readingClipboard ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <ClipboardPaste className="size-4" aria-hidden="true" />}
+          {readingClipboard ? 'Čítam schránku…' : 'Vložiť obrázok zo schránky'}
+        </button>
+        <span className="mt-2 text-xs text-muted-foreground">Funguje aj cez ⌘V alebo Ctrl+V, keď je plocha označená.</span>
+      </div>
 
       {notice && <p className="flex items-start gap-2 text-sm text-destructive"><X className="mt-0.5 size-4 shrink-0" />{notice}</p>}
 
