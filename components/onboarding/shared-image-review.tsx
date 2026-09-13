@@ -4,7 +4,9 @@ import Image from 'next/image'
 import {
   Check,
   LocateFixed,
+  Maximize2,
   MessageCircle,
+  Minimize2,
   Minus,
   Pencil,
   Plus,
@@ -146,6 +148,7 @@ export function SharedImageReview({
   const [error, setError] = useState('')
   const [connector, setConnector] = useState<Connector | null>(null)
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [visualViewport, setVisualViewport] = useState(readVisualViewport)
   const mobileReview = useSyncExternalStore(subscribeToMobileReview, isMobileReview, isServerMobileReview)
   const mobileFormOpen = mobileReview && mobilePanelOpen && Boolean(draft || editingId)
@@ -157,6 +160,7 @@ export function SharedImageReview({
   const mobilePanelRef = useRef<HTMLElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const nativeFullscreenRef = useRef(false)
   const markerRefs = useRef(new Map<string, HTMLButtonElement>())
   const cardRefs = useRef(new Map<string, HTMLDivElement>())
 
@@ -183,6 +187,36 @@ export function SharedImageReview({
       window.removeEventListener('resize', measure)
     }
   }, [])
+
+  useEffect(() => {
+    const updateFullscreen = () => {
+      if (document.fullscreenElement === rootRef.current) {
+        nativeFullscreenRef.current = true
+        setIsFullscreen(true)
+      } else if (nativeFullscreenRef.current) {
+        nativeFullscreenRef.current = false
+        setIsFullscreen(false)
+      }
+    }
+    document.addEventListener('fullscreenchange', updateFullscreen)
+    return () => document.removeEventListener('fullscreenchange', updateFullscreen)
+  }, [])
+
+  useEffect(() => {
+    if (!isFullscreen) return
+
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !document.fullscreenElement) setIsFullscreen(false)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', closeOnEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isFullscreen])
 
   const activeZoom = useMemo(
     () => zoom ?? recommendedInitialZoom(imageSize, viewportSize),
@@ -403,6 +437,33 @@ export function SharedImageReview({
     setZoom(zoomSteps[nextIndex] ?? 1)
   }
 
+  async function toggleFullscreen() {
+    const root = rootRef.current
+    if (!root) return
+
+    if (isFullscreen) {
+      if (document.fullscreenElement === root) {
+        try {
+          await document.exitFullscreen()
+        } catch {
+          // The in-page fullscreen fallback still closes below.
+        }
+      }
+      setIsFullscreen(false)
+      return
+    }
+
+    setIsFullscreen(true)
+    if (!document.fullscreenElement && document.fullscreenEnabled) {
+      try {
+        await root.requestFullscreen()
+      } catch {
+        // Some embedded and mobile browsers block the native API. The fixed
+        // in-page fullscreen layout remains available in those browsers.
+      }
+    }
+  }
+
   async function submitComment(event: FormEvent) {
     event.preventDefault()
     if (!draft || !body.trim() || saving) return
@@ -536,16 +597,22 @@ export function SharedImageReview({
           <h2 className="text-base font-semibold tracking-tight">Pripomienky k obrázku</h2>
           <p className="mt-1 text-sm text-muted-foreground">Priblížte si návrh a kliknite presne na miesto, ktoré chcete okomentovať.</p>
         </div>
-        <div className="hidden w-fit items-center gap-1 rounded-xl border border-border bg-background p-1 lg:flex" aria-label="Priblíženie obrázka">
-          <button type="button" onClick={() => changeZoom(-1)} disabled={activeZoom <= zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
-          <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(activeZoom * 100)} %</span>
-          <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
-          <span className="mx-1 h-5 w-px bg-border" />
-          <button type="button" onClick={() => setZoom(1)} disabled={activeZoom === 1} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /> Prispôsobiť</button>
+        <div className="flex w-fit items-center gap-1 rounded-xl border border-border bg-background p-1">
+          <div className="hidden items-center gap-1 lg:flex" aria-label="Priblíženie obrázka">
+            <button type="button" onClick={() => changeZoom(-1)} disabled={activeZoom <= zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
+            <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(activeZoom * 100)} %</span>
+            <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
+            <span className="mx-1 h-5 w-px bg-border" />
+            <button type="button" onClick={() => setZoom(1)} disabled={activeZoom === 1} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /> Prispôsobiť</button>
+            <span className="mx-1 h-5 w-px bg-border" />
+          </div>
+          <button type="button" onClick={() => void toggleFullscreen()} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground" aria-label="Otvoriť na celú obrazovku">
+            <Maximize2 className="size-4" /> Celá obrazovka
+          </button>
         </div>
       </div>
 
-      <div ref={rootRef} className="relative grid overflow-hidden rounded-2xl border border-border bg-card lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <div ref={rootRef} className={`relative grid overflow-hidden bg-card lg:grid-cols-[minmax(0,1fr)_21rem] ${isFullscreen ? 'fixed inset-0 z-[100] h-dvh w-screen rounded-none border-0' : 'rounded-2xl border border-border'}`}>
         {mobileReview && mobilePanelOpen && (
           <button type="button" className="fixed inset-0 z-40 bg-black/15 lg:hidden" onClick={() => setMobilePanelOpen(false)} aria-label="Zavrieť okno komentára" />
         )}
@@ -562,6 +629,20 @@ export function SharedImageReview({
         )}
 
         <div className="relative min-w-0 bg-secondary/70">
+          {isFullscreen && (
+            <button type="button" onClick={() => void toggleFullscreen()} className="absolute left-3 top-3 z-30 inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background/95 px-3 text-xs font-semibold text-foreground shadow-lg backdrop-blur hover:bg-secondary" aria-label="Ukončiť celú obrazovku" title="Ukončiť celú obrazovku">
+              <Minimize2 className="size-4" /> <span className="hidden sm:inline">Ukončiť celú obrazovku</span>
+            </button>
+          )}
+          {isFullscreen && (
+            <div className="absolute right-3 top-3 z-30 hidden items-center gap-1 rounded-xl border border-border bg-background/95 p-1 shadow-lg backdrop-blur lg:flex" aria-label="Priblíženie obrázka">
+              <button type="button" onClick={() => changeZoom(-1)} disabled={activeZoom <= zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
+              <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(activeZoom * 100)} %</span>
+              <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
+              <span className="mx-1 h-5 w-px bg-border" />
+              <button type="button" onClick={() => setZoom(1)} disabled={activeZoom === 1} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /> Prispôsobiť</button>
+            </div>
+          )}
           <div className="absolute right-3 top-3 z-30 flex flex-col items-center overflow-hidden rounded-xl border border-border bg-background/95 shadow-lg backdrop-blur lg:hidden" aria-label="Priblíženie obrázka">
             <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-5" /></button>
             <span className="w-7 border-t border-border" />
@@ -574,7 +655,7 @@ export function SharedImageReview({
           <button type="button" onClick={() => setMobilePanelOpen(true)} className="absolute bottom-3 left-3 z-30 inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 text-xs font-semibold shadow-lg backdrop-blur lg:hidden" aria-label={`Otvoriť komentáre (${comments.length})`}>
             <MessageCircle className="size-4 text-brand" /> {comments.length}
           </button>
-          <div ref={viewportRef} className="h-[64dvh] min-h-[30rem] overflow-auto overscroll-contain" aria-label="Náhľad obrázka s bodmi komentárov">
+          <div ref={viewportRef} className={`${isFullscreen ? 'h-dvh min-h-0' : 'h-[64dvh] min-h-[30rem]'} overflow-auto overscroll-contain`} aria-label="Náhľad obrázka s bodmi komentárov">
             <div className="relative" style={{ width: innerWidth, height: innerHeight }}>
               <div
                 className="absolute cursor-crosshair select-none bg-white shadow-sm"
@@ -635,7 +716,7 @@ export function SharedImageReview({
             ? { maxHeight: mobilePanelHeight, top: visualViewport.top + 12 }
             : { bottom: visualViewport.bottom + 12, maxHeight: mobilePanelHeight }
             : undefined}
-          className={`${mobilePanelOpen ? 'fixed inset-x-3 z-50 flex overflow-hidden rounded-2xl border border-border shadow-2xl' : 'hidden'} min-h-0 flex-col bg-background lg:relative lg:inset-auto lg:z-30 lg:flex lg:h-[64dvh] lg:min-h-[30rem] lg:rounded-none lg:border-0 lg:border-l lg:shadow-none`}
+          className={`${mobilePanelOpen ? 'fixed inset-x-3 z-50 flex overflow-hidden rounded-2xl border border-border shadow-2xl' : 'hidden'} min-h-0 flex-col bg-background lg:relative lg:inset-auto lg:z-30 lg:flex lg:rounded-none lg:border-0 lg:border-l lg:shadow-none ${isFullscreen ? 'lg:h-dvh lg:min-h-0' : 'lg:h-[64dvh] lg:min-h-[30rem]'}`}
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
             <div className="flex items-center gap-2">

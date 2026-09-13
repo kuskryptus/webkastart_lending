@@ -16,6 +16,10 @@ and pnpm.
 
 - Public landing page: `app/page.tsx` and `components/`.
 - Contact API: `app/api/contact/route.ts`.
+- Public consultation booking: `/rezervacia`, backed by `/api/bookings` and the
+  `consultation_bookings` table. The authenticated Team Go integration lives at
+  `/api/team-go/bookings`; its contract is documented in
+  `docs/TEAM_GO_BOOKING_API.md`.
 - Shared client workspace: the permanent bearer link is `/portal/[token]`, backed
   by `/api/portal/[token]`. Core, Discovery 2, and files use the same records as
   admin; legacy `/start/[token]` and Discovery links remain compatible.
@@ -77,6 +81,16 @@ and pnpm.
   must not create a second upload flow.
 - Answers remain structured according to their form types; sanitize all writes at
   the API boundary so the future AI boundary remains stable.
+
+## Booking invariants
+
+- Public slots use the configured Bratislava-local weekly schedule, lead time,
+  window, and one fixed duration. Always revalidate a selected slot server-side.
+- Booking creation takes a PostgreSQL advisory transaction lock and checks time
+  overlap before insert; never weaken this to a client-only availability check.
+- Team Go endpoints require `BOOKING_API_KEY`. Never expose that key in public
+  client code. Use `externalId` for idempotent Team Go creation and preserve
+  cancelled records so incremental synchronization can observe status changes.
 
 ## Verification
 

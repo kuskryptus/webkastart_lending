@@ -1,20 +1,8 @@
-'use client'
-
 import { ArrowRight, Clock3 } from 'lucide-react'
+import Link from 'next/link'
 import { SectionLabel } from '@/components/section-label'
 
 export function Pricing() {
-  function handleContactClick() {
-    window.history.pushState(null, '', '#kontakt-formular')
-    window.dispatchEvent(
-      new CustomEvent('open-contact-form', {
-        detail: {
-          message: 'Mám záujem o spoluprácu za hodinovú sadzbu 60 €/hod.\n\nPotrebujem vyriešiť:',
-        },
-      }),
-    )
-  }
-
   return (
     <section className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
       <div className="mx-auto max-w-2xl text-center">
@@ -37,14 +25,13 @@ export function Pricing() {
           Platíte za skutočne odpracovaný čas. O priebehu práce aj nákladoch budete mať prehľad.
         </p>
 
-        <button
-          type="button"
-          onClick={handleContactClick}
+        <Link
+          href="/rezervacia"
           className="mt-8 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
         >
-          Chcem sa poradiť
+          Rezervovať konzultáciu
           <ArrowRight className="size-4" aria-hidden="true" />
-        </button>
+        </Link>
       </div>
     </section>
   )

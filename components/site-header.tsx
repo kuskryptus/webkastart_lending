@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
 import { Logo } from '@/components/logo'
 import { SectionLink } from '@/components/section-link'
@@ -15,7 +15,6 @@ const navItems = [
 ]
 
 export function SiteHeader() {
-  const router = useRouter()
   const lastScrollY = useRef(0)
   const [isHeaderVisible, setIsHeaderVisible] = useState(true)
 
@@ -33,16 +32,6 @@ export function SiteHeader() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  function handleContactClick() {
-    if (window.location.pathname !== '/') {
-      router.push('/#kontakt-formular')
-      return
-    }
-
-    window.history.pushState(null, '', '#kontakt-formular')
-    window.dispatchEvent(new Event('open-contact-form'))
-  }
 
   return (
     <>
@@ -81,15 +70,14 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <button
-            type="button"
-            onClick={handleContactClick}
-            aria-label="Máte nápad? Kontaktujte ma"
+          <Link
+            href="/rezervacia"
+            aria-label="Máte nápad? Rezervujte si konzultáciu"
             className="group inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-secondary hover:text-foreground sm:px-4 sm:py-2.5 sm:text-sm"
           >
             Máte nápad?
             <MessageCircle className="size-3.5 text-brand sm:size-4" aria-hidden="true" />
-          </button>
+          </Link>
         </div>
       </header>
     </>

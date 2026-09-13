@@ -28,6 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: `${siteUrl}/rezervacia`,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
     ...articlePages,
   ]
 }
