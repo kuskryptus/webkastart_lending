@@ -8,11 +8,11 @@ export function ArticlesSection() {
   const featuredArticle = articles[0]
 
   return (
-    <section id="clanky" className="mx-auto max-w-6xl px-5 py-16 sm:px-6 lg:py-24">
+    <section id="clanky" className="mx-auto max-w-6xl px-5 py-14 sm:px-6 lg:py-20">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-3xl">
+        <div className="max-w-4xl">
           <SectionLabel>Články</SectionLabel>
-          <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
+          <h2 className="mt-3 text-pretty text-[clamp(2.125rem,5vw,2.75rem)] font-bold leading-[1.08] tracking-[-0.04em]">
             Problémy z praxe. Jednoduchšie riešenia.
           </h2>
         </div>
@@ -28,8 +28,8 @@ export function ArticlesSection() {
         )}
       </div>
 
-      <div className="mt-10 lg:mt-12">
-        <ArticleFeature article={featuredArticle} />
+      <div className="mt-8 lg:mt-9">
+        <ArticleFeature article={featuredArticle} compact />
       </div>
     </section>
   )

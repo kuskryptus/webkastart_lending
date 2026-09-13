@@ -39,8 +39,21 @@ type Size = { height: number; width: number }
 type Connector = { endX: number; endY: number; height: number; startX: number; startY: number; width: number }
 type MobilePanelPlacement = 'none' | 'bottom' | 'top'
 
-const zoomSteps = [1, 1.5, 2, 3, 4, 6, 8]
+const zoomSteps = [1, 1.5, 2, 3, 4, 6, 8, 12, 16]
 const mobileReviewQuery = '(max-width: 1023px)'
+
+function recommendedInitialZoom(imageSize: Size | null, viewportSize: Size) {
+  if (!imageSize) return 1
+  const availableWidth = Math.max(1, viewportSize.width - 48)
+  const availableHeight = Math.max(1, viewportSize.height - 48)
+  const fitScale = Math.min(1, availableWidth / imageSize.width, availableHeight / imageSize.height)
+  const fittedWidth = imageSize.width * fitScale
+  const readableWidth = Math.min(imageSize.width, Math.max(320, availableWidth * 0.32))
+  if (fittedWidth >= readableWidth) return 1
+
+  const maxZoom = zoomSteps.at(-1) ?? 1
+  return Math.min(maxZoom, Math.round((readableWidth / fittedWidth) * 100) / 100)
+}
 
 function subscribeToMobileReview(callback: () => void) {
   const media = window.matchMedia(mobileReviewQuery)
@@ -119,7 +132,7 @@ export function SharedImageReview({
   const [selectedId, setSelectedId] = useState<string | null>(initialComments[0]?.id ?? null)
   const [authorName, setAuthorName] = useState(storedAuthorName)
   const [body, setBody] = useState('')
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState<number | null>(null)
   const [imageSize, setImageSize] = useState<Size | null>(null)
   const [viewportSize, setViewportSize] = useState<Size>({ height: 640, width: 900 })
   const [saving, setSaving] = useState(false)
@@ -171,16 +184,21 @@ export function SharedImageReview({
     }
   }, [])
 
+  const activeZoom = useMemo(
+    () => zoom ?? recommendedInitialZoom(imageSize, viewportSize),
+    [imageSize, viewportSize, zoom],
+  )
+
   const fittedImageSize = useMemo(() => {
     if (!imageSize) return { height: 1, width: 1 }
     const availableWidth = Math.max(1, viewportSize.width - 48)
     const availableHeight = Math.max(1, viewportSize.height - 48)
     const fitScale = Math.min(1, availableWidth / imageSize.width, availableHeight / imageSize.height)
     return {
-      width: Math.round(imageSize.width * fitScale * zoom),
-      height: Math.round(imageSize.height * fitScale * zoom),
+      width: Math.round(imageSize.width * fitScale * activeZoom),
+      height: Math.round(imageSize.height * fitScale * activeZoom),
     }
-  }, [imageSize, viewportSize, zoom])
+  }, [activeZoom, imageSize, viewportSize])
 
   const updateConnector = useCallback(() => {
     const root = rootRef.current
@@ -378,9 +396,9 @@ export function SharedImageReview({
   }
 
   function changeZoom(direction: -1 | 1) {
-    const currentIndex = zoomSteps.findIndex((step) => step >= zoom)
+    const currentIndex = zoomSteps.findIndex((step) => step >= activeZoom)
     const nextIndex = direction > 0
-      ? Math.min(zoomSteps.length - 1, currentIndex + (zoomSteps[currentIndex] === zoom ? 1 : 0))
+      ? Math.min(zoomSteps.length - 1, currentIndex + (zoomSteps[currentIndex] === activeZoom ? 1 : 0))
       : Math.max(0, currentIndex - 1)
     setZoom(zoomSteps[nextIndex] ?? 1)
   }
@@ -519,11 +537,11 @@ export function SharedImageReview({
           <p className="mt-1 text-sm text-muted-foreground">Priblížte si návrh a kliknite presne na miesto, ktoré chcete okomentovať.</p>
         </div>
         <div className="hidden w-fit items-center gap-1 rounded-xl border border-border bg-background p-1 lg:flex" aria-label="Priblíženie obrázka">
-          <button type="button" onClick={() => changeZoom(-1)} disabled={zoom === zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
-          <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(zoom * 100)} %</span>
-          <button type="button" onClick={() => changeZoom(1)} disabled={zoom === zoomSteps.at(-1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
+          <button type="button" onClick={() => changeZoom(-1)} disabled={activeZoom <= zoomSteps[0]} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-4" /></button>
+          <span className="min-w-14 text-center text-xs font-semibold tabular-nums">{Math.round(activeZoom * 100)} %</span>
+          <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-4" /></button>
           <span className="mx-1 h-5 w-px bg-border" />
-          <button type="button" onClick={() => setZoom(1)} disabled={zoom === 1} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /> Prispôsobiť</button>
+          <button type="button" onClick={() => setZoom(1)} disabled={activeZoom === 1} className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /> Prispôsobiť</button>
         </div>
       </div>
 
@@ -545,13 +563,13 @@ export function SharedImageReview({
 
         <div className="relative min-w-0 bg-secondary/70">
           <div className="absolute right-3 top-3 z-30 flex flex-col items-center overflow-hidden rounded-xl border border-border bg-background/95 shadow-lg backdrop-blur lg:hidden" aria-label="Priblíženie obrázka">
-            <button type="button" onClick={() => changeZoom(1)} disabled={zoom === zoomSteps.at(-1)} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-5" /></button>
+            <button type="button" onClick={() => changeZoom(1)} disabled={activeZoom >= (zoomSteps.at(-1) ?? 1)} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Priblížiť obrázok"><Plus className="size-5" /></button>
             <span className="w-7 border-t border-border" />
-            <span className="py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{Math.round(zoom * 100)}%</span>
+            <span className="py-1 text-[10px] font-bold tabular-nums text-muted-foreground">{Math.round(activeZoom * 100)}%</span>
             <span className="w-7 border-t border-border" />
-            <button type="button" onClick={() => changeZoom(-1)} disabled={zoom === zoomSteps[0]} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-5" /></button>
+            <button type="button" onClick={() => changeZoom(-1)} disabled={activeZoom <= zoomSteps[0]} className="grid size-11 place-items-center text-foreground hover:bg-secondary disabled:opacity-35" aria-label="Oddialiť obrázok"><Minus className="size-5" /></button>
             <span className="w-7 border-t border-border" />
-            <button type="button" onClick={() => setZoom(1)} disabled={zoom === 1} className="grid size-10 place-items-center text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /></button>
+            <button type="button" onClick={() => setZoom(1)} disabled={activeZoom === 1} className="grid size-10 place-items-center text-muted-foreground hover:bg-secondary hover:text-foreground disabled:opacity-35" aria-label="Prispôsobiť obrázok oknu"><LocateFixed className="size-4" /></button>
           </div>
           <button type="button" onClick={() => setMobilePanelOpen(true)} className="absolute bottom-3 left-3 z-30 inline-flex min-h-10 items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 text-xs font-semibold shadow-lg backdrop-blur lg:hidden" aria-label={`Otvoriť komentáre (${comments.length})`}>
             <MessageCircle className="size-4 text-brand" /> {comments.length}
