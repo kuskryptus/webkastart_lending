@@ -13,6 +13,7 @@ import {
   UploadPartCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { PassThrough, Readable } from 'node:stream'
 
 let storage: S3Client | undefined
 
@@ -64,6 +65,43 @@ function getStorage() {
     },
   })
   return { bucket: config.bucket, client: storage }
+}
+
+class LazyObjectReadStream extends PassThrough {
+  private source?: Readable
+  private started = false
+
+  constructor(private readonly load: () => Promise<Readable>) {
+    super()
+  }
+
+  override _read(size: number) {
+    if (!this.started) {
+      this.started = true
+      void this.load()
+        .then((source) => {
+          this.source = source
+          source.on('error', (error) => this.destroy(error))
+          source.pipe(this)
+        })
+        .catch((error: unknown) => this.destroy(error instanceof Error ? error : new Error(String(error))))
+    }
+    super._read(size)
+  }
+
+  override _destroy(error: Error | null, callback: (error?: Error | null) => void) {
+    this.source?.destroy()
+    callback(error)
+  }
+}
+
+export function createObjectReadStream(key: string) {
+  const { bucket, client } = getStorage()
+  return new LazyObjectReadStream(async () => {
+    const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+    if (!(result.Body instanceof Readable)) throw new Error('Storage did not return a readable object body')
+    return result.Body
+  })
 }
 
 export async function createUploadUrl(options: {
