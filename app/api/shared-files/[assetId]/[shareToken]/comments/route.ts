@@ -3,6 +3,7 @@ import {
   deleteSharedImageComment,
   findSharedAsset,
   listSharedImageComments,
+  setSharedImageCommentResolved,
   updateSharedImageComment,
   type SharedImageComment,
 } from '@/lib/onboarding/asset-share'
@@ -19,6 +20,7 @@ function serializeComment(comment: SharedImageComment) {
   return {
     ...comment,
     createdAt: comment.createdAt.toISOString(),
+    resolvedAt: comment.resolvedAt?.toISOString() ?? null,
   }
 }
 
@@ -124,6 +126,20 @@ export async function PATCH(request: Request, { params }: Context) {
 
     const record = input as Record<string, unknown>
     const commentId = typeof record.commentId === 'string' ? record.commentId : ''
+    if (typeof record.resolved === 'boolean') {
+      if (!UUID_PATTERN.test(commentId)) {
+        return privateJson({ error: 'Komentár nemá správny formát.' }, { status: 400 })
+      }
+
+      const comment = await setSharedImageCommentResolved({
+        assetId: asset.id,
+        commentId,
+        resolved: record.resolved,
+      })
+      if (!comment) return privateJson({ error: 'Komentár sa nenašiel.' }, { status: 404 })
+      return privateJson({ comment: serializeComment(comment) })
+    }
+
     const authorName = typeof record.authorName === 'string' ? record.authorName.trim() : ''
     const body = typeof record.body === 'string' ? record.body.trim() : ''
     if (!UUID_PATTERN.test(commentId) || authorName.length > 80 || body.length < 1 || body.length > 2000) {

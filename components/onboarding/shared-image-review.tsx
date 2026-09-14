@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import {
   Check,
+  CheckCircle2,
+  Copy,
   LocateFixed,
   Maximize2,
   MessageCircle,
@@ -34,6 +36,7 @@ export type ImageReviewComment = {
   positionX: number
   positionY: number
   createdAt: string
+  resolvedAt: string | null
 }
 
 type Point = { positionX: number; positionY: number }
@@ -144,6 +147,8 @@ export function SharedImageReview({
   const [editBody, setEditBody] = useState('')
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [copiedCommentId, setCopiedCommentId] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [connector, setConnector] = useState<Connector | null>(null)
@@ -160,6 +165,7 @@ export function SharedImageReview({
   const mobilePanelRef = useRef<HTMLElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const editTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const copiedFeedbackTimerRef = useRef<number | null>(null)
   const nativeFullscreenRef = useRef(false)
   const markerRefs = useRef(new Map<string, HTMLButtonElement>())
   const cardRefs = useRef(new Map<string, HTMLDivElement>())
@@ -173,6 +179,12 @@ export function SharedImageReview({
     const observer = new ResizeObserver(measure)
     observer.observe(viewport)
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => () => {
+    if (copiedFeedbackTimerRef.current !== null) {
+      window.clearTimeout(copiedFeedbackTimerRef.current)
+    }
   }, [])
 
   useEffect(() => {
@@ -510,6 +522,65 @@ export function SharedImageReview({
     setError('')
   }
 
+  async function copyComment(comment: ImageReviewComment) {
+    setError('')
+
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard API is unavailable.')
+      await navigator.clipboard.writeText(comment.body)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = comment.body
+      input.setAttribute('readonly', '')
+      input.style.position = 'fixed'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+
+      try {
+        input.focus({ preventScroll: true })
+        input.select()
+        input.setSelectionRange(0, comment.body.length)
+        if (!document.execCommand('copy')) throw new Error('Fallback copy failed.')
+      } catch {
+        setError('Komentár sa nepodarilo skopírovať. Označte jeho text a skopírujte ho ručne.')
+        return
+      } finally {
+        input.remove()
+      }
+    }
+
+    if (copiedFeedbackTimerRef.current !== null) {
+      window.clearTimeout(copiedFeedbackTimerRef.current)
+    }
+    setCopiedCommentId(comment.id)
+    copiedFeedbackTimerRef.current = window.setTimeout(() => {
+      setCopiedCommentId(null)
+      copiedFeedbackTimerRef.current = null
+    }, 1800)
+  }
+
+  async function toggleResolved(comment: ImageReviewComment) {
+    if (resolvingId) return
+    setResolvingId(comment.id)
+    setError('')
+
+    try {
+      const response = await fetch(commentsUrl, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ commentId: comment.id, resolved: !comment.resolvedAt }),
+      })
+      if (!response.ok) throw new Error(await responseError(response, 'Stav komentára sa nepodarilo zmeniť.'))
+
+      const data = await response.json() as { comment: ImageReviewComment }
+      setComments((current) => current.map((item) => item.id === data.comment.id ? data.comment : item))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Stav komentára sa nepodarilo zmeniť.')
+    } finally {
+      setResolvingId(null)
+    }
+  }
+
   async function submitEdit(event: FormEvent) {
     event.preventDefault()
     if (!editingId || !editBody.trim() || savingEdit) return
@@ -685,9 +756,9 @@ export function SharedImageReview({
                     ref={(node) => setMarkerRef(comment.id, node)}
                     type="button"
                     onClick={(event) => { event.stopPropagation(); selectComment(comment.id, true) }}
-                    className={`absolute z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 text-[11px] font-bold shadow-md transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${activeMarkerId === comment.id ? 'border-white bg-brand text-white' : 'border-white bg-primary text-primary-foreground'}`}
+                    className={`absolute z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 text-[11px] font-bold shadow-md transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 ${comment.resolvedAt ? 'border-white bg-emerald-600 text-white' : activeMarkerId === comment.id ? 'border-white bg-brand text-white' : 'border-white bg-primary text-primary-foreground'}`}
                     style={{ left: `${comment.positionX * 100}%`, top: `${comment.positionY * 100}%` }}
-                    aria-label={`Zobraziť komentár ${index + 1}`}
+                    aria-label={`Zobraziť komentár ${index + 1}${comment.resolvedAt ? ' (vybavený)' : ''}`}
                   >
                     {index + 1}
                   </button>
@@ -758,7 +829,7 @@ export function SharedImageReview({
               <div
                 key={comment.id}
                 ref={(node) => setCardRef(comment.id, node)}
-                className={`overflow-hidden rounded-xl border transition-colors ${selectedId === comment.id && !draft ? 'border-brand bg-brand-soft/45' : 'border-border bg-card hover:border-brand/40'}`}
+                className={`overflow-hidden rounded-xl border transition-colors ${selectedId === comment.id && !draft ? 'border-brand bg-brand-soft/45' : comment.resolvedAt ? 'border-emerald-200 bg-emerald-50/35' : 'border-border bg-card hover:border-brand/40'}`}
               >
                 {confirmingDeleteId === comment.id ? (
                   <div className="p-3">
@@ -798,10 +869,13 @@ export function SharedImageReview({
                   <>
                     <button type="button" onClick={() => selectComment(comment.id)} className="w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand">
                       <span className="flex items-start gap-2.5">
-                        <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-bold ${selectedId === comment.id && !draft ? 'bg-brand text-white' : 'bg-primary text-primary-foreground'}`}>{index + 1}</span>
+                        <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[10px] font-bold ${comment.resolvedAt ? 'bg-emerald-600 text-white' : selectedId === comment.id && !draft ? 'bg-brand text-white' : 'bg-primary text-primary-foreground'}`}>{index + 1}</span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-baseline justify-between gap-2">
-                            <span className="truncate text-xs font-semibold">{comment.authorName || 'Anonymný komentár'}</span>
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className="truncate text-xs font-semibold">{comment.authorName || 'Anonymný komentár'}</span>
+                              {comment.resolvedAt && <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-emerald-700"><CheckCircle2 className="size-3" aria-hidden="true" /> Vybavené</span>}
+                            </span>
                             <span className="shrink-0 text-[10px] text-muted-foreground">{displayDate(comment.createdAt)}</span>
                           </span>
                           <span className="mt-1.5 block whitespace-pre-wrap break-words text-sm leading-5 text-foreground">{comment.body}</span>
@@ -809,7 +883,15 @@ export function SharedImageReview({
                       </span>
                     </button>
                     {selectedId === comment.id && !draft && (
-                      <div className="flex justify-end gap-1 border-t border-brand/15 px-2 py-1.5">
+                      <div className="flex flex-wrap justify-end gap-1 border-t border-brand/15 px-2 py-1.5">
+                        <button type="button" onClick={() => void toggleResolved(comment)} disabled={resolvingId === comment.id} aria-pressed={Boolean(comment.resolvedAt)} className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold disabled:opacity-50 ${comment.resolvedAt ? 'bg-emerald-100/70 text-emerald-700 hover:bg-emerald-100' : 'text-emerald-700 hover:bg-emerald-50'}`} aria-label={comment.resolvedAt ? `Označiť komentár ${index + 1} ako nevyriešený` : `Označiť komentár ${index + 1} ako vybavený`}>
+                          {resolvingId === comment.id ? <RefreshCw className="size-3.5 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="size-3.5" aria-hidden="true" />}
+                          {comment.resolvedAt ? 'Vybavené' : 'Vybaviť'}
+                        </button>
+                        <button type="button" onClick={() => void copyComment(comment)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground hover:bg-background hover:text-foreground" aria-label={`Kopírovať komentár ${index + 1}`}>
+                          {copiedCommentId === comment.id ? <Check className="size-3.5 text-emerald-600" aria-hidden="true" /> : <Copy className="size-3.5" aria-hidden="true" />}
+                          <span aria-live="polite">{copiedCommentId === comment.id ? 'Skopírované' : 'Kopírovať'}</span>
+                        </button>
                         <button type="button" onClick={() => startEditing(comment)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-brand hover:bg-background" aria-label={`Upraviť komentár ${index + 1}`}><Pencil className="size-3.5" /> Upraviť</button>
                         <button type="button" onClick={() => confirmDelete(comment.id)} className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-destructive hover:bg-destructive/10" aria-label={`Vymazať komentár ${index + 1}`}><Trash2 className="size-3.5" /> Vymazať</button>
                       </div>

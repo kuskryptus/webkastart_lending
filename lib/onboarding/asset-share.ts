@@ -21,6 +21,7 @@ export type SharedImageComment = {
   positionX: number
   positionY: number
   createdAt: Date
+  resolvedAt: Date | null
 }
 
 function shareSecret() {
@@ -80,7 +81,8 @@ export async function listSharedImageComments(assetId: string): Promise<SharedIm
       comment.body,
       comment.position_x as "positionX",
       comment.position_y as "positionY",
-      comment.created_at as "createdAt"
+      comment.created_at as "createdAt",
+      comment.resolved_at as "resolvedAt"
     from (
       select *
       from shared_image_comments
@@ -121,7 +123,8 @@ export async function createSharedImageComment(input: {
         body,
         position_x as "positionX",
         position_y as "positionY",
-        created_at as "createdAt"
+        created_at as "createdAt",
+        resolved_at as "resolvedAt"
     `
     await transaction`
       update clients
@@ -155,7 +158,40 @@ export async function updateSharedImageComment(input: {
         body,
         position_x as "positionX",
         position_y as "positionY",
-        created_at as "createdAt"
+        created_at as "createdAt",
+        resolved_at as "resolvedAt"
+    `
+    if (!rows[0]) return null
+
+    await transaction`
+      update clients
+      set updated_at = now()
+      where id = (select client_id from onboarding_assets where id = ${input.assetId})
+    `
+    return rows[0]
+  }) as Promise<SharedImageComment | null>
+}
+
+export async function setSharedImageCommentResolved(input: {
+  assetId: string
+  commentId: string
+  resolved: boolean
+}): Promise<SharedImageComment | null> {
+  const sql = getDatabase()
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<SharedImageComment[]>`
+      update shared_image_comments
+      set resolved_at = case when ${input.resolved} then now() else null end
+      where id = ${input.commentId}
+        and asset_id = ${input.assetId}
+      returning
+        id,
+        author_name as "authorName",
+        body,
+        position_x as "positionX",
+        position_y as "positionY",
+        created_at as "createdAt",
+        resolved_at as "resolvedAt"
     `
     if (!rows[0]) return null
 

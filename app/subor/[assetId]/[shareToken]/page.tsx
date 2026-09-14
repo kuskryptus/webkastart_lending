@@ -37,6 +37,7 @@ export default async function SharedFilePage({
     ? (await listSharedImageComments(asset.id)).map((comment) => ({
         ...comment,
         createdAt: comment.createdAt.toISOString(),
+        resolvedAt: comment.resolvedAt?.toISOString() ?? null,
       }))
     : []
 

@@ -32,8 +32,9 @@ and pnpm.
   rewriting Core answers. Migration 004 preserves previously issued portal tokens
   for lookup and, when available, admin re-copy. Migration 005 adds the fast-choice
   and structured product fields while retaining the original Discovery text columns.
-  Migration 007 separates client source materials from admin deliverables, and
-  migration 008 adds comments anchored to shared images.
+  Migration 007 separates client source materials from admin deliverables,
+  migration 008 adds comments anchored to shared images, and migration 010 adds
+  a reversible resolved state to those comments.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
