@@ -31,8 +31,8 @@ export const projects: Project[] = [
   {
     slug: 'socia-sprava-socialnych-sieti',
     category: 'Sociálne siete',
-    title: 'Všetky siete na jednom mieste',
-    summary: 'Príspevok pripravíte raz, upravíte podľa potreby a jedným klikom ho zverejníte na všetky siete.',
+    title: 'Správa sociálnych sietí s AI',
+    summary: 'AI pomáha tvoriť obsah, plánovať príspevky a spravovať komunikáciu na jednom mieste.',
     result: 'Hashtagy, správy, štatistiky aj dosah máte pokope bez preklikávania medzi nástrojmi.',
     scope: '#príspevky #hashtagy #štatistiky #dosah #správy',
     showcase: {

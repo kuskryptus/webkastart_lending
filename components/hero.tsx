@@ -85,10 +85,10 @@ export function Hero() {
 
             <div className="w-64 pt-0.5">
               <p className="text-sm font-semibold leading-snug text-foreground">
-                Jedným klikom na všetky siete.
+                Správa sociálnych sietí s AI.
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Príspevok pripravíte raz, upravíte podľa potreby a jedným klikom ho zverejníte na všetky siete.
+                AI pomáha tvoriť obsah, plánovať príspevky a spravovať komunikáciu na jednom mieste.
               </p>
             </div>
           </figcaption>
