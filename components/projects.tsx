@@ -37,7 +37,7 @@ export const projects: Project[] = [
     scope: '#príspevky #hashtagy #štatistiky #dosah #správy',
     showcase: {
       device: 'image',
-      src: '/postly-laptop-stone-socia.png',
+      src: '/postly-laptop-stone-mefi-v2.png',
       alt: 'Aplikácia na správu sociálnych sietí zobrazená na notebooku',
     },
   },

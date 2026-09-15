@@ -94,7 +94,7 @@ export function Hero() {
           </figcaption>
 
           <Image
-            src="/postly-laptop-stone-socia.png"
+            src="/postly-laptop-stone-mefi-v2.png"
             alt="Aplikácia na správu sociálnych sietí zobrazená na notebooku"
             width={1442}
             height={960}
