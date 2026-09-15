@@ -7,7 +7,6 @@ import {
   Building2,
   CheckCircle2,
   Copy,
-  ExternalLink,
   IdCard,
   LoaderCircle,
   Mail,
@@ -21,7 +20,6 @@ import {
 const contactEmail = 'kampczykristian@gmail.com'
 const contactPhone = '+421 950 591 354'
 const contactPhoneHref = 'tel:+421950591354'
-const businessRegisterUrl = 'https://zrsr.sk/Detail/eHqSPk-psW-veY-qc0QOg4PXyDh5iWz6CDFeEpTooHk'
 
 const inputClassName =
   'h-11 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-brand focus:outline-none focus:ring-3 focus:ring-brand/15'
@@ -382,22 +380,6 @@ export function ContactBanner() {
             </dd>
           </div>
 
-          <div className="grid gap-1">
-            <dt className="inline-flex items-center gap-2 font-medium text-foreground">
-              <ExternalLink className="size-4 text-brand" aria-hidden="true" />
-              Register
-            </dt>
-            <dd>
-              <a
-                href={businessRegisterUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground"
-              >
-                Živnostenský register
-              </a>
-            </dd>
-          </div>
         </dl>
       </div>
     </section>
