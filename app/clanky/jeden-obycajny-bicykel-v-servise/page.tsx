@@ -16,7 +16,7 @@ import { SiteHeader } from '@/components/site-header'
 import { articles } from '@/lib/articles'
 import { siteName, siteUrl } from '@/lib/site'
 
-const article = articles[0]
+const article = articles.find(({ slug }) => slug === 'jeden-obycajny-bicykel-v-servise')!
 const articleUrl = `${siteUrl}/clanky/${article.slug}`
 
 export const metadata: Metadata = {
