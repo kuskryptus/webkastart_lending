@@ -2,9 +2,26 @@
 
 import { type TouchEvent, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { ArrowLeft, ArrowRight, Maximize2, X } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  BarChart3,
+  CheckCircle2,
+  FileText,
+  Maximize2,
+  Settings2,
+  X,
+} from 'lucide-react'
+import { ContactFormLink } from '@/components/contact-form-link'
 import type { Project } from '@/components/projects'
 import { ProjectVisual } from '@/components/project-visual'
+
+const expenseWorkflow = [
+  { label: 'Bloček / výpis', icon: FileText },
+  { label: 'Spracovanie', icon: Settings2 },
+  { label: 'Kontrola', icon: CheckCircle2 },
+  { label: 'Prehľad', icon: BarChart3 },
+]
 
 function ProjectNavButtons({
   className = '',
@@ -95,6 +112,20 @@ function ProjectSlide({
   project: Project
   projectCount: number
 }) {
+  if (project.caseStudy) {
+    return (
+      <ExpenseCaseStudySlide
+        activeIndex={activeIndex}
+        caseStudy={project.caseStudy}
+        onNext={onNext}
+        onPrevious={onPrevious}
+        onSelect={onSelect}
+        project={project}
+        projectCount={projectCount}
+      />
+    )
+  }
+
   const isHashtagScope = project.scope.startsWith('#')
 
   return (
@@ -175,6 +206,173 @@ function ProjectSlide({
         </div>
       </div>
     </article>
+  )
+}
+
+function ExpenseCaseStudySlide({
+  activeIndex,
+  caseStudy,
+  onNext,
+  onPrevious,
+  onSelect,
+  project,
+  projectCount,
+}: {
+  activeIndex: number
+  caseStudy: NonNullable<Project['caseStudy']>
+  onNext: () => void
+  onPrevious: () => void
+  onSelect: (index: number) => void
+  project: Project
+  projectCount: number
+}) {
+  return (
+    <div>
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <p className="flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
+          <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
+          <span>{project.category}</span>
+        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
+          <ProjectNavButtons className="hidden sm:flex" onNext={onNext} onPrevious={onPrevious} />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-14">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {caseStudy.name}
+          </p>
+          <h3 className="mt-3 max-w-[18ch] text-pretty text-[clamp(2rem,7vw,3rem)] font-bold leading-[1.03] tracking-[-0.04em]">
+            {project.title}
+          </h3>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
+          <div className="border-t border-black/[0.08] pt-4">
+            <h4 className="text-sm font-semibold text-foreground">Problém</h4>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+              {caseStudy.problem}
+            </p>
+          </div>
+          <div className="border-t border-black/[0.08] pt-4">
+            <h4 className="text-sm font-semibold text-foreground">Riešenie</h4>
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
+              {caseStudy.solution}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <section aria-labelledby="expense-workflow-title" className="mt-10">
+        <h4 id="expense-workflow-title" className="sr-only">Ako funguje spracovanie výdavkov</h4>
+        <ol className="grid gap-3 sm:grid-cols-4 sm:gap-0">
+          {expenseWorkflow.map(({ icon: Icon, label }, index) => (
+            <li
+              key={label}
+              className="relative flex items-center gap-3 border-t border-black/[0.08] py-3 sm:border-y sm:px-4 sm:first:pl-0 sm:last:pr-0"
+            >
+              <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand">
+                <Icon className="size-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  0{index + 1}
+                </span>
+                <span className="mt-0.5 block text-sm font-semibold text-foreground">{label}</span>
+              </span>
+              {index < expenseWorkflow.length - 1 ? (
+                <ArrowRight
+                  className="absolute right-1 hidden size-4 translate-x-1/2 text-foreground/25 sm:block"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="mt-8 grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-14">
+        <div
+          className="bg-[radial-gradient(circle_at_50%_50%,rgba(95,82,232,0.07),transparent_66%)]"
+          aria-label={`Interaktívna ukážka projektu ${project.title}`}
+        >
+          <ProjectVisual compactMobile priority showcase={project.showcase} />
+        </div>
+
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-brand">Výsledok</p>
+          <p className="mt-2 max-w-xl text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl">
+            {project.result}
+          </p>
+
+          <section aria-labelledby="expense-includes-title" className="mt-7 border-t border-black/[0.08] pt-6">
+            <h4 id="expense-includes-title" className="text-sm font-semibold text-foreground">
+              Čo riešenie obsahuje
+            </h4>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {caseStudy.includes.map((item) => (
+                <li key={item} className="rounded-md bg-secondary px-2.5 py-1.5 text-xs font-medium text-foreground">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section aria-labelledby="expense-comparison-title" className="mt-7 border-t border-black/[0.08] pt-6">
+            <h4 id="expense-comparison-title" className="sr-only">Predtým a potom</h4>
+            <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Predtým</p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{caseStudy.before}</p>
+              </div>
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand">Potom</p>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{project.result}</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section aria-labelledby="expense-work-title" className="mt-9 border-t border-black/[0.08] pt-6">
+        <div className="grid gap-4 lg:grid-cols-[minmax(140px,0.25fr)_1fr] lg:items-start lg:gap-8">
+          <h4 id="expense-work-title" className="text-sm font-semibold text-foreground">Moja práca</h4>
+          <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            {caseStudy.work.map((item) => (
+              <li key={item} className="flex items-center gap-2">
+                <span className="size-1 rounded-full bg-brand" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <aside className="mt-9 rounded-2xl border border-brand/10 bg-brand-soft/70 px-5 py-6 sm:px-7 sm:py-7">
+        <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <p className="text-pretty text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+              Máte vo firme podobný proces, ktorý dnes robíte ručne?
+            </p>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Podobným spôsobom viem navrhnúť jednoduchý interný nástroj alebo automatizáciu aj pre váš proces.
+            </p>
+          </div>
+          <ContactFormLink
+            message="Dobrý deň, chcel/a by som prebrať firemný proces, ktorý dnes robíme ručne."
+            className="inline-flex w-fit items-center justify-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+          >
+            Prebrať môj proces
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </ContactFormLink>
+        </div>
+      </aside>
+
+      <ProjectNavButtons className="mt-5 flex justify-end sm:hidden" onNext={onNext} onPrevious={onPrevious} />
+    </div>
   )
 }
 

@@ -8,6 +8,52 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
+## General
+
+- Preserve the existing visual identity and design system.
+
+- Prefer small, targeted changes over broad redesigns.
+
+- Do not refactor unrelated code.
+
+- Reuse existing components and patterns before creating new ones.
+
+- Do not add dependencies unless clearly necessary.
+
+## UI
+
+- Every UI change must work on desktop and mobile.
+
+- Preserve existing typography, spacing, colors and component style.
+
+- Avoid generic AI-generated landing-page aesthetics.
+
+- Do not redesign sections outside the requested scope.
+
+## Content
+
+- Website copy is primarily Slovak.
+
+- Do not invent metrics, clients, testimonials or product capabilities.
+
+- Prefer concrete business language over developer jargon.
+
+## Verification
+
+After UI changes:
+
+1. Run the existing lint/typecheck/build commands.
+
+2. Verify that the production build succeeds.
+
+3. Check for obvious responsive regressions.
+
+4. If browser/screenshot capability is available, inspect desktop and mobile visually.
+
+## Scope discipline
+
+If something is unrelated to the requested task, leave it unchanged.
+
 ## Project map
 
 WebkaStart is a Slovak Next.js 16 App Router site. It uses React 19, TypeScript,

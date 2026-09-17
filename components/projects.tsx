@@ -3,6 +3,14 @@ import { ProjectVisual, type ProjectShowcase } from '@/components/project-visual
 import { SectionLabel } from '@/components/section-label'
 
 export type Project = {
+  caseStudy?: {
+    before: string
+    includes: string[]
+    name: string
+    problem: string
+    solution: string
+    work: string[]
+  }
   slug: string
   category: string
   title: string
@@ -15,11 +23,34 @@ export type Project = {
 export const projects: Project[] = [
   {
     slug: 'financny-prehlad-vydavkov',
-    category: 'Osobná evidencia',
-    title: 'Výdavky pod kontrolou za pár sekúnd',
-    summary: 'Jednoduché zapisovanie výdavkov, kategórie a rýchla orientácia v tom, kam idú peniaze.',
-    result: 'Prehľadná mobilná aplikácia s históriou, štatistikami a rýchlym spracovaním bločkov aj výpisov z banky.',
-    scope: 'Mobilná aplikácia · financie · bločky · bankové výpisy',
+    category: 'Aplikácia & automatizácia',
+    title: 'Z bločku alebo bankového výpisu rovno do prehľadu',
+    summary: 'Menej ručného prepisovania, viac kontroly nad pripravenými údajmi o výdavkoch.',
+    result: 'Používateľ nahrá podklad a kontroluje už spracované údaje v prehľadnej mobilnej aplikácii.',
+    scope: 'Spracovanie dát · kontrola · prehľad',
+    caseStudy: {
+      name: 'Výdavky pod kontrolou za pár sekúnd',
+      problem: 'Ručné prepisovanie výdavkov z bločkov a bankových výpisov je pomalé a pri väčšom množstve transakcií neprehľadné.',
+      solution: 'Vytvoril som aplikáciu, ktorá spracuje podklady, pripraví údaje o transakciách a zobrazí ich v jednom prehľade.',
+      includes: [
+        'Spracovanie bločkov',
+        'Import bankových výpisov',
+        'Kategorizácia',
+        'Kontrola údajov',
+        'História',
+        'Štatistiky',
+      ],
+      before: 'Jednotlivé transakcie je potrebné ručne prepisovať z podkladov.',
+      work: [
+        'Návrh riešenia',
+        'UI/UX',
+        'Vývoj aplikácie',
+        'Spracovanie dát',
+        'Import bankových výpisov',
+        'Spracovanie bločkov',
+        'Automatizácia procesu',
+      ],
+    },
     showcase: {
       device: 'phone',
       phoneTone: 'light',
