@@ -13,7 +13,7 @@ export function Hero() {
       <div className="grid items-center gap-x-12 gap-y-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-y-0">
         {/* Left */}
         <div className="max-w-xl lg:col-start-1 lg:row-start-1">
-          <span className="inline-flex max-w-full items-center gap-x-4 text-[11px] font-semibold uppercase leading-none tracking-wide text-brand sm:gap-x-5 sm:text-xs">
+          <span className="font-display inline-flex max-w-full items-center gap-x-4 text-[11px] font-semibold uppercase leading-none tracking-wide text-brand sm:gap-x-5 sm:text-xs">
             <span className="inline-flex items-center gap-1.5">
               <Code2 className="size-3.5" aria-hidden="true" />
               Weby
@@ -28,11 +28,11 @@ export function Hero() {
             </span>
           </span>
 
-          <h1 className="mt-5 text-balance text-[2.6rem] font-bold leading-[1.04] tracking-tight text-foreground sm:mt-6 sm:text-6xl">
-            Web stránky, aplikácie
-            <br />
-            a <span className="text-brand">automatizácie</span>{' '}
-            <span className="whitespace-nowrap">pre firmy.</span>
+          <h1 className="font-display mt-5 text-balance text-[2.6rem] font-bold leading-[1.04] tracking-tight text-foreground sm:mt-6 sm:text-6xl">
+            <span className="block">Web stránky,</span>
+            <span className="block">aplikácie a</span>
+            <span className="block text-brand">automatizácie</span>
+            <span className="block">pre firmy.</span>
           </h1>
 
           <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:mt-6">
@@ -84,7 +84,7 @@ export function Hero() {
             </svg>
 
             <div className="w-64 pt-0.5">
-              <p className="text-sm font-semibold leading-snug text-foreground">
+              <p className="font-display text-sm font-semibold leading-snug tracking-tight text-foreground">
                 Správa sociálnych sietí s AI.
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -109,7 +109,7 @@ export function Hero() {
             <div key={f.title} className="flex items-start gap-2.5">
               <f.icon className="mt-0.5 size-4 text-brand" aria-hidden="true" />
               <div>
-                <dt className="text-sm font-semibold">{f.title}</dt>
+                <dt className="font-display text-sm font-semibold tracking-tight">{f.title}</dt>
                 <dd className="text-sm text-muted-foreground">{f.desc}</dd>
               </div>
             </div>

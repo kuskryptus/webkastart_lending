@@ -57,41 +57,22 @@ function ProjectNavButtons({
   )
 }
 
-function ProjectDots({
+function ProjectPosition({
   activeIndex,
   count,
-  onSelect,
 }: {
   activeIndex: number
   count: number
-  onSelect: (index: number) => void
 }) {
   return (
-    <div
-      className="flex items-center gap-0.5"
-      role="group"
-      aria-label="Výber projektu"
+    <p
+      className="font-display min-w-[3.75rem] text-center text-[11px] font-semibold tabular-nums tracking-[0.08em] text-muted-foreground"
+      aria-label={`Projekt ${activeIndex + 1} z ${count}`}
     >
-      {Array.from({ length: count }, (_, index) => (
-        <button
-          key={index}
-          type="button"
-          onClick={() => onSelect(index)}
-          className="group inline-flex size-6 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"
-          aria-label={`Zobraziť projekt ${index + 1} z ${count}`}
-          aria-current={index === activeIndex ? 'true' : undefined}
-        >
-          <span
-            className={`h-1.5 rounded-full transition-all duration-200 ${
-              index === activeIndex
-                ? 'w-4 bg-brand'
-                : 'w-1.5 bg-foreground/20 group-hover:bg-foreground/35'
-            }`}
-            aria-hidden="true"
-          />
-        </button>
-      ))}
-    </div>
+      <span className="text-brand">{String(activeIndex + 1).padStart(2, '0')}</span>
+      <span className="mx-1 text-foreground/25" aria-hidden="true">/</span>
+      <span>{String(count).padStart(2, '0')}</span>
+    </p>
   )
 }
 
@@ -100,7 +81,6 @@ function ProjectSlide({
   onOpenDetail,
   onNext,
   onPrevious,
-  onSelect,
   project,
   projectCount,
 }: {
@@ -108,7 +88,6 @@ function ProjectSlide({
   onOpenDetail: () => void
   onNext: () => void
   onPrevious: () => void
-  onSelect: (index: number) => void
   project: Project
   projectCount: number
 }) {
@@ -119,7 +98,6 @@ function ProjectSlide({
         caseStudy={project.caseStudy}
         onNext={onNext}
         onPrevious={onPrevious}
-        onSelect={onSelect}
         project={project}
         projectCount={projectCount}
       />
@@ -133,12 +111,12 @@ function ProjectSlide({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-center lg:gap-12 xl:gap-16">
         <div className="max-w-xl">
           <div className="flex min-h-9 items-center gap-4">
-            <p className="flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
+            <p className="font-display flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
               <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
               <span className="truncate">{project.category}</span>
             </p>
           </div>
-          <h3 className="mt-3 max-w-[15ch] text-pretty text-[clamp(1.8rem,8vw,2.3rem)] font-bold leading-[1.03] tracking-[-0.035em] sm:mt-[18px] lg:text-[2.75rem] xl:text-5xl">
+          <h3 className="font-display mt-3 max-w-[15ch] text-pretty text-[clamp(1.8rem,8vw,2.3rem)] font-bold leading-[1.03] tracking-[-0.035em] sm:mt-[18px] lg:text-[2.75rem] xl:text-5xl">
             {project.title}
           </h3>
           <p className="mt-3 text-[15px] leading-[1.5] text-muted-foreground sm:mt-5 sm:text-[17px] sm:leading-[1.55] lg:max-w-lg">
@@ -163,7 +141,7 @@ function ProjectSlide({
 
         <div className="bg-[radial-gradient(circle_at_50%_50%,rgba(95,82,232,0.07),transparent_66%)]">
           <div className="flex items-center justify-start gap-3 pb-3 sm:pb-4">
-            <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
+            <ProjectPosition activeIndex={activeIndex} count={projectCount} />
             <ProjectNavButtons
               className="flex shrink-0"
               onNext={onNext}
@@ -214,7 +192,6 @@ function ExpenseCaseStudySlide({
   caseStudy,
   onNext,
   onPrevious,
-  onSelect,
   project,
   projectCount,
 }: {
@@ -222,42 +199,41 @@ function ExpenseCaseStudySlide({
   caseStudy: NonNullable<Project['caseStudy']>
   onNext: () => void
   onPrevious: () => void
-  onSelect: (index: number) => void
   project: Project
   projectCount: number
 }) {
   return (
     <div>
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <p className="flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
+        <p className="font-display flex min-w-0 items-center gap-2 text-[12px] font-bold uppercase tracking-[0.11em] text-brand sm:text-[13px] sm:tracking-[0.12em]">
           <span className="size-1.5 shrink-0 rounded-full bg-brand" aria-hidden="true" />
           <span>{project.category}</span>
         </p>
         <div className="flex shrink-0 items-center gap-2">
-          <ProjectDots activeIndex={activeIndex} count={projectCount} onSelect={onSelect} />
+          <ProjectPosition activeIndex={activeIndex} count={projectCount} />
           <ProjectNavButtons className="hidden sm:flex" onNext={onNext} onPrevious={onPrevious} />
         </div>
       </div>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end lg:gap-14">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             {caseStudy.name}
           </p>
-          <h3 className="mt-3 max-w-[18ch] text-pretty text-[clamp(2rem,7vw,3rem)] font-bold leading-[1.03] tracking-[-0.04em]">
+          <h3 className="font-display mt-3 max-w-[18ch] text-pretty text-[clamp(2rem,7vw,3rem)] font-bold leading-[1.03] tracking-[-0.04em]">
             {project.title}
           </h3>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
           <div className="border-t border-black/[0.08] pt-4">
-            <h4 className="text-sm font-semibold text-foreground">Problém</h4>
+            <h4 className="font-display text-sm font-semibold tracking-tight text-foreground">Problém</h4>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               {caseStudy.problem}
             </p>
           </div>
           <div className="border-t border-black/[0.08] pt-4">
-            <h4 className="text-sm font-semibold text-foreground">Riešenie</h4>
+            <h4 className="font-display text-sm font-semibold tracking-tight text-foreground">Riešenie</h4>
             <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               {caseStudy.solution}
             </p>
@@ -277,7 +253,7 @@ function ExpenseCaseStudySlide({
                 <Icon className="size-4" strokeWidth={1.8} aria-hidden="true" />
               </span>
               <span>
-                <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                <span className="font-display block text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   0{index + 1}
                 </span>
                 <span className="mt-0.5 block text-sm font-semibold text-foreground">{label}</span>
@@ -303,13 +279,13 @@ function ExpenseCaseStudySlide({
         </div>
 
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-brand">Výsledok</p>
+          <p className="font-display text-[11px] font-bold uppercase tracking-[0.13em] text-brand">Výsledok</p>
           <p className="mt-2 max-w-xl text-lg font-semibold leading-snug tracking-tight text-foreground sm:text-xl">
             {project.result}
           </p>
 
           <section aria-labelledby="expense-includes-title" className="mt-7 border-t border-black/[0.08] pt-6">
-            <h4 id="expense-includes-title" className="text-sm font-semibold text-foreground">
+            <h4 id="expense-includes-title" className="font-display text-sm font-semibold tracking-tight text-foreground">
               Čo riešenie obsahuje
             </h4>
             <ul className="mt-3 flex flex-wrap gap-2">
@@ -325,11 +301,11 @@ function ExpenseCaseStudySlide({
             <h4 id="expense-comparison-title" className="sr-only">Predtým a potom</h4>
             <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Predtým</p>
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Predtým</p>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{caseStudy.before}</p>
               </div>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand">Potom</p>
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.12em] text-brand">Potom</p>
                 <p className="mt-2 text-sm font-medium leading-relaxed text-foreground">{project.result}</p>
               </div>
             </div>
@@ -339,7 +315,7 @@ function ExpenseCaseStudySlide({
 
       <section aria-labelledby="expense-work-title" className="mt-9 border-t border-black/[0.08] pt-6">
         <div className="grid gap-4 lg:grid-cols-[minmax(140px,0.25fr)_1fr] lg:items-start lg:gap-8">
-          <h4 id="expense-work-title" className="text-sm font-semibold text-foreground">Moja práca</h4>
+          <h4 id="expense-work-title" className="font-display text-sm font-semibold tracking-tight text-foreground">Moja práca</h4>
           <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
             {caseStudy.work.map((item) => (
               <li key={item} className="flex items-center gap-2">
@@ -354,7 +330,7 @@ function ExpenseCaseStudySlide({
       <aside className="mt-9 rounded-2xl border border-brand/10 bg-brand-soft/70 px-5 py-6 sm:px-7 sm:py-7">
         <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-center">
           <div>
-            <p className="text-pretty text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+            <p className="font-display text-pretty text-lg font-semibold tracking-tight text-foreground sm:text-xl">
               Máte vo firme podobný proces, ktorý dnes robíte ručne?
             </p>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -427,7 +403,6 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
             onOpenDetail={() => setDetailOpen(true)}
             onNext={() => goToProject(1)}
             onPrevious={() => goToProject(-1)}
-            onSelect={setActiveIndex}
             project={activeProject}
             projectCount={projects.length}
           />
@@ -444,10 +419,10 @@ export function ProjectCarousel({ projects }: { projects: Project[] }) {
           <Dialog.Popup className="relative flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground outline-none transition-all data-[ending-style]:scale-[0.985] data-[ending-style]:opacity-0 data-[starting-style]:scale-[0.985] data-[starting-style]:opacity-0 sm:h-[min(92dvh,860px)] sm:max-w-7xl sm:rounded-3xl sm:shadow-[0_28px_90px_rgb(24_23_22_/_24%)]">
             <div className="flex shrink-0 items-start justify-between gap-5 px-5 py-4 sm:px-7 sm:py-5">
               <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand">
+                <p className="font-display text-[11px] font-bold uppercase tracking-[0.12em] text-brand">
                   {activeProject.category}
                 </p>
-                <Dialog.Title className="mt-1 line-clamp-2 text-pretty text-base font-semibold leading-tight tracking-tight sm:text-xl">
+                <Dialog.Title className="font-display mt-1 line-clamp-2 text-pretty text-base font-semibold leading-tight tracking-tight sm:text-xl">
                   {activeProject.title}
                 </Dialog.Title>
               </div>

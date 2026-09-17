@@ -161,10 +161,10 @@ export function ProjectFeatureShowcase({
     >
       <div className="grid gap-8 lg:grid-cols-[0.76fr_1.24fr] lg:items-center lg:gap-10">
         <div className={`max-w-xl ${reversed ? 'lg:order-2 lg:pl-4' : ''}`}>
-          <span className="inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
+          <span className="font-display inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
             {project.category}
           </span>
-          <h3 className="mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
+          <h3 className="font-display mt-4 text-pretty text-3xl font-bold tracking-tight sm:text-4xl">
             {project.title}
           </h3>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
@@ -201,7 +201,7 @@ export function Projects() {
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <SectionLabel>Moje projekty</SectionLabel>
-          <h2 className="mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
+          <h2 className="font-display mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
             Produkty v praxi
           </h2>
         </div>

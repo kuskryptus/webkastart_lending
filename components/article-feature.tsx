@@ -44,17 +44,17 @@ export function ArticleFeature({
 
         <div className={`max-w-xl ${compact ? 'lg:py-2' : 'lg:py-4'}`}>
           {compact ? (
-            <span className="inline-flex w-fit items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand">
+            <span className="font-display inline-flex w-fit items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand">
               <span className="h-px w-5 bg-brand/50" aria-hidden="true" />
               {article.category}
             </span>
           ) : (
-            <span className="inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
+            <span className="font-display inline-flex w-fit items-center rounded-md bg-brand-soft px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-brand">
               {article.category}
             </span>
           )}
           <Heading
-            className={`text-pretty font-bold leading-tight tracking-tight ${
+            className={`font-display text-pretty font-bold leading-tight tracking-tight ${
               compact
                 ? 'mt-3 text-3xl lg:text-[2.25rem]'
                 : 'mt-4 text-3xl sm:text-4xl lg:text-[2.65rem]'

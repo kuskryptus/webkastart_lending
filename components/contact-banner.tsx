@@ -142,7 +142,7 @@ export function ContactBanner() {
         <div className="rounded-3xl border border-brand/10 bg-brand-soft/70 px-6 py-9 shadow-card sm:px-10 lg:px-12 lg:py-11">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <h2 className="text-pretty text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
+              <h2 className="font-display text-pretty text-2xl font-bold leading-snug tracking-tight sm:text-3xl">
                 Potrebujete web, automatizáciu alebo úpravu systému?
               </h2>
               <p className="mt-3 text-base text-muted-foreground">
@@ -182,7 +182,7 @@ export function ContactBanner() {
                   <div className="mb-3 inline-flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand">
                     <MessageSquareText className="size-5" aria-hidden="true" />
                   </div>
-                  <Dialog.Title className="text-xl font-semibold tracking-tight">
+                  <Dialog.Title className="font-display text-xl font-semibold tracking-tight">
                     Čo potrebujete vyriešiť?
                   </Dialog.Title>
                   <Dialog.Description className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
@@ -327,10 +327,10 @@ export function ContactBanner() {
 
       <div className="mt-6 grid gap-6 rounded-2xl border border-border bg-card px-5 py-6 shadow-sm sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+          <p className="font-display text-xs font-semibold uppercase tracking-wide text-brand">
             Kontaktné a obchodné údaje
           </p>
-          <h3 className="mt-3 text-xl font-semibold tracking-tight">
+          <h3 className="font-display mt-3 text-xl font-semibold tracking-tight">
             Kristián Kampczyk
           </h3>
           <div className="mt-4 grid gap-3 text-sm text-muted-foreground">

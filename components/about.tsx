@@ -22,7 +22,7 @@ export function About() {
         {/* Text */}
         <div className="min-w-0">
           <SectionLabel>Prečo WebkaStart?</SectionLabel>
-          <h2 className="mt-4 text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+          <h2 className="font-display mt-4 text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
             Kristián Kampczyk
           </h2>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">

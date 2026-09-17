@@ -12,7 +12,7 @@ export function ArticlesSection() {
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-4xl">
           <SectionLabel>Články</SectionLabel>
-          <h2 className="mt-3 text-pretty text-[clamp(2.125rem,5vw,2.75rem)] font-bold leading-[1.08] tracking-[-0.04em]">
+          <h2 className="font-display mt-3 text-pretty text-[clamp(2.125rem,5vw,2.75rem)] font-bold leading-[1.08] tracking-[-0.04em]">
             Problémy z praxe. Jednoduchšie riešenia.
           </h2>
         </div>

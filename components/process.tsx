@@ -29,7 +29,7 @@ export function Process() {
     <section id="proces" className="mx-auto max-w-6xl px-5 py-6 sm:px-6">
       <div className="rounded-3xl bg-brand-soft/50 px-5 py-7 sm:px-10 sm:py-12 lg:px-12 lg:py-14">
         <SectionLabel>Ako prebieha spolupráca</SectionLabel>
-        <h2 className="mt-3 text-pretty text-[1.75rem] font-bold leading-tight tracking-tight sm:mt-4 sm:text-4xl">
+        <h2 className="font-display mt-3 text-pretty text-[1.75rem] font-bold leading-tight tracking-tight sm:mt-4 sm:text-4xl">
           Najprv si ujasníme, čo má riešenie robiť
         </h2>
 
@@ -52,7 +52,7 @@ export function Process() {
                 />
               )}
               <div className="min-w-0">
-                <h3 className="text-base font-semibold sm:mt-4">{step.title}</h3>
+                <h3 className="font-display text-base font-semibold tracking-tight sm:mt-4">{step.title}</h3>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground sm:mt-2">
                   {step.desc}
                 </p>

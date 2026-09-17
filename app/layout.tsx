@@ -1,12 +1,18 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Geist_Mono, Inter } from 'next/font/google'
 import { siteDescription, siteImageUrl, siteName, siteTitle, siteUrl } from '@/lib/site'
 import './globals.css'
 
 const inter = Inter({
   subsets: ['latin', 'latin-ext'],
   variable: '--font-inter',
+  display: 'swap',
+})
+
+const geistMono = Geist_Mono({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-geist-mono',
   display: 'swap',
 })
 
@@ -75,7 +81,7 @@ export default function RootLayout({
   const showVercelAnalytics = process.env.VERCEL === '1'
 
   return (
-    <html lang="sk" className={`${inter.variable} bg-background`}>
+    <html lang="sk" className={`${inter.variable} ${geistMono.variable} bg-background`}>
       <body className="font-sans antialiased">
         {children}
         {showVercelAnalytics && <Analytics />}
