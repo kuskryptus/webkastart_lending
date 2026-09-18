@@ -1,16 +1,8 @@
+import { BriefcaseBusiness } from 'lucide-react'
 import { ProjectCarousel } from '@/components/project-carousel'
 import { ProjectVisual, type ProjectShowcase } from '@/components/project-visual'
-import { SectionLabel } from '@/components/section-label'
 
 export type Project = {
-  caseStudy?: {
-    before: string
-    includes: string[]
-    name: string
-    problem: string
-    solution: string
-    work: string[]
-  }
   slug: string
   category: string
   title: string
@@ -24,33 +16,10 @@ export const projects: Project[] = [
   {
     slug: 'financny-prehlad-vydavkov',
     category: 'Aplikácia & automatizácia',
-    title: 'Z bločku alebo bankového výpisu rovno do prehľadu',
-    summary: 'Menej ručného prepisovania, viac kontroly nad pripravenými údajmi o výdavkoch.',
+    title: 'Bločky a výpisy v jednom prehľade',
+    summary: 'Menej prepisovania, viac kontroly nad výdavkami.',
     result: 'Používateľ nahrá podklad a kontroluje už spracované údaje v prehľadnej mobilnej aplikácii.',
     scope: 'Spracovanie dát · kontrola · prehľad',
-    caseStudy: {
-      name: 'Výdavky pod kontrolou za pár sekúnd',
-      problem: 'Ručné prepisovanie výdavkov z bločkov a bankových výpisov je pomalé a pri väčšom množstve transakcií neprehľadné.',
-      solution: 'Vytvoril som aplikáciu, ktorá spracuje podklady, pripraví údaje o transakciách a zobrazí ich v jednom prehľade.',
-      includes: [
-        'Spracovanie bločkov',
-        'Import bankových výpisov',
-        'Kategorizácia',
-        'Kontrola údajov',
-        'História',
-        'Štatistiky',
-      ],
-      before: 'Jednotlivé transakcie je potrebné ručne prepisovať z podkladov.',
-      work: [
-        'Návrh riešenia',
-        'UI/UX',
-        'Vývoj aplikácie',
-        'Spracovanie dát',
-        'Import bankových výpisov',
-        'Spracovanie bločkov',
-        'Automatizácia procesu',
-      ],
-    },
     showcase: {
       device: 'phone',
       phoneTone: 'light',
@@ -157,7 +126,7 @@ export function ProjectFeatureShowcase({
   return (
     <article
       id={project.slug}
-      className="scroll-mt-8 border-t border-border py-12 first:border-t-0 first:pt-0 lg:py-16"
+      className="scroll-mt-8 py-12 first:pt-0 lg:py-16"
     >
       <div className="grid gap-8 lg:grid-cols-[0.76fr_1.24fr] lg:items-center lg:gap-10">
         <div className={`max-w-xl ${reversed ? 'lg:order-2 lg:pl-4' : ''}`}>
@@ -196,11 +165,12 @@ export function Projects() {
   return (
     <section
       id="projekty"
-      className="mx-auto max-w-6xl px-5 pb-20 pt-16 sm:px-6 lg:pb-28 lg:pt-24"
+      className="mx-auto max-w-6xl px-5 pb-16 pt-14 sm:px-6 lg:pb-20 lg:pt-20"
     >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          <SectionLabel>Moje projekty</SectionLabel>
+          <BriefcaseBusiness className="size-6 text-brand" aria-hidden="true" />
+          <span className="sr-only">Moje projekty</span>
           <h2 className="font-display mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
             Produkty v praxi
           </h2>

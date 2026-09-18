@@ -144,7 +144,7 @@ export function SiteHeader() {
         {isMobileMenuOpen ? (
           <div
             id="mobile-navigation"
-            className="animate-in border-t border-border/70 fade-in slide-in-from-top-2 duration-200 motion-reduce:animate-none lg:hidden"
+            className="animate-in fade-in slide-in-from-top-2 duration-200 motion-reduce:animate-none lg:hidden"
           >
             <div className="mx-auto max-w-7xl px-5 pb-5 pt-4 sm:px-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-brand">Rýchla navigácia</p>
@@ -154,7 +154,7 @@ export function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     onClick={() => updateMobileMenu(false)}
-                    className="flex min-h-12 items-center border-b border-border/70 text-sm font-semibold text-foreground transition-colors hover:text-brand focus:outline-none focus-visible:text-brand"
+                    className="flex min-h-12 items-center text-sm font-semibold text-foreground transition-colors hover:text-brand focus:outline-none focus-visible:text-brand"
                   >
                     {item.label}
                   </SectionLink>

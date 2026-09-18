@@ -56,7 +56,7 @@ export function Pricing() {
             </ContactFormLink>
           </div>
 
-          <div className="border-t border-brand/10 p-6 sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+          <div className="p-6 sm:p-8 lg:p-10">
             <h3 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
               S čím vám môžem pomôcť
             </h3>

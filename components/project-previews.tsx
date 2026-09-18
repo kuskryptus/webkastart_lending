@@ -35,7 +35,7 @@ export function FlowPreview() {
         { label: 'Doklad', tone: 'bg-secondary text-muted-foreground' },
         { label: 'Spracovanie', tone: 'bg-brand-soft text-brand' },
         { label: 'Faktúra', tone: 'bg-card text-foreground ring-1 ring-border' },
-      ].map((node, i) => (
+      ].map((node) => (
         <div key={node.label} className="flex flex-col items-start gap-2">
           <div
             className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-[8px] font-medium ${node.tone}`}
@@ -43,7 +43,6 @@ export function FlowPreview() {
             <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
             {node.label}
           </div>
-          {i < 2 && <span className="ml-2 h-2 w-px bg-border" aria-hidden="true" />}
         </div>
       ))}
     </div>

@@ -177,7 +177,7 @@ export function ContactBanner() {
           <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/35 backdrop-blur-sm transition-opacity data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
           <Dialog.Viewport className="fixed inset-0 z-50 grid place-items-center overflow-y-auto px-4 py-6">
             <Dialog.Popup className="relative w-full max-w-2xl rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-card-hover outline-none transition-all data-[ending-style]:scale-98 data-[ending-style]:opacity-0 data-[starting-style]:scale-98 data-[starting-style]:opacity-0">
-              <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-5 sm:px-6">
+              <div className="flex items-start justify-between gap-4 px-5 py-5 sm:px-6">
                 <div>
                   <div className="mb-3 inline-flex size-10 items-center justify-center rounded-lg bg-brand-soft text-brand">
                     <MessageSquareText className="size-5" aria-hidden="true" />
@@ -287,7 +287,7 @@ export function ContactBanner() {
                   ) : null}
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col-reverse gap-3 pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <button
                     type="button"
                     onClick={handleCopyEmail}

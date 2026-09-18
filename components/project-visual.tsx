@@ -35,7 +35,7 @@ export function PhoneMockup({
   tone = 'light',
 }: MockupProps) {
   const widthClassName = interactive
-    ? 'w-[min(72vw,250px)] sm:w-[240px] lg:w-[250px]'
+    ? 'w-[min(58vw,210px)] sm:w-[220px] lg:w-[225px]'
     : detail
     ? 'w-[min(76vw,32dvh,340px)]'
     : compactMobile

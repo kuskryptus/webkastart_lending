@@ -19,7 +19,7 @@ export function ArticleFeature({
     <Link
       href={`/clanky/${article.slug}`}
       aria-label={`Prečítať článok: ${article.title}`}
-      className={`group block border-y border-border focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 ${
+      className={`group block focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 ${
         compact ? 'py-6 sm:py-7' : 'py-7 sm:py-9'
       }`}
     >
@@ -45,7 +45,7 @@ export function ArticleFeature({
         <div className={`max-w-xl ${compact ? 'lg:py-2' : 'lg:py-4'}`}>
           {compact ? (
             <span className="font-display inline-flex w-fit items-center gap-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-brand">
-              <span className="h-px w-5 bg-brand/50" aria-hidden="true" />
+              <span className="size-1.5 rounded-full bg-brand" aria-hidden="true" />
               {article.category}
             </span>
           ) : (

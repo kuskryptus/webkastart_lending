@@ -36,7 +36,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:mt-6">
-            Tvorím riešenia, ktoré malým firmám šetria čas a obmedzujú ručnú prácu.
+            Menej starostí s technológiami. Viac času na zákazníkov a rast vašej firmy.
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">
