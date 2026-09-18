@@ -114,6 +114,9 @@ and pnpm.
   available only through the same bearer link, and must preserve that validation.
 - Core and Discovery writes use their monotonic `revision` for optimistic locking.
   A stale writer must receive 409 and must never overwrite a newer record.
+- Core, Discovery, and workspace-section edits auto-save in both the admin workspace
+  and client portal. Debounce rapid input, serialize writes, and keep a visible save
+  state; do not reintroduce a required manual save step.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
   values remain in their original answer fields. Reconcile client metadata
   server-side and never trust client-supplied source labels.

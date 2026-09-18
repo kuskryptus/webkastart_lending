@@ -169,10 +169,9 @@ export function Projects() {
     >
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          <BriefcaseBusiness className="size-6 text-brand" aria-hidden="true" />
-          <span className="sr-only">Moje projekty</span>
-          <h2 className="font-display mt-4 max-w-3xl text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
-            Produkty v praxi
+          <h2 className="font-display flex max-w-3xl items-center gap-3 text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
+            <BriefcaseBusiness className="size-7 shrink-0 text-brand sm:size-8" aria-hidden="true" />
+            Vybrané projekty
           </h2>
         </div>
       </div>

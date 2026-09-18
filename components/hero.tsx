@@ -29,10 +29,10 @@ export function Hero() {
           </span>
 
           <h1 className="font-display mt-5 text-balance text-[2.6rem] font-bold leading-[1.04] tracking-tight text-foreground sm:mt-6 sm:text-6xl">
-            <span className="block">Web stránky,</span>
-            <span className="block">aplikácie a</span>
-            <span className="block text-brand">automatizácie</span>
-            <span className="block">pre firmy.</span>
+            <span className="block">Weby a systémy</span>
+            <span className="block">
+              pre vaše <span className="text-brand">podnikanie.</span>
+            </span>
           </h1>
 
           <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:mt-6">

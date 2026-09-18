@@ -42,11 +42,12 @@ export default function ArticlesPage() {
         <div className="max-w-3xl">
           <SectionLabel>Články</SectionLabel>
           <h1 className="mt-4 text-pretty text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-            Články o automatizácii a digitalizácii firiem
+            Ako si vo firme ušetriť zbytočnú robotu
           </h1>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Konkrétne situácie, v ktorých telefonáty, tabuľky a ručná administratíva
-            zbytočne berú čas — a jednoduchšie spôsoby, ako ich vyriešiť.
+            Píšem o problémoch, ktoré pozná veľa malých firiem: nekonečné telefonáty,
+            rozhádzané tabuľky a údaje, ktoré treba stále prepisovať. A o tom, ako sa to dá
+            spraviť jednoduchšie.
           </p>
         </div>
 

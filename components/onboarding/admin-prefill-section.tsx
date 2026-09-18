@@ -1,6 +1,6 @@
 'use client'
 
-import { Loader2, Plus, Save, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { communicationOptions, projectTypeOptions, socialPlatformOptions, websiteExpectationOptions } from '@/lib/onboarding/options'
 import type { OnboardingAnswers, PrefillFieldKey } from '@/lib/onboarding/types'
 
@@ -24,18 +24,12 @@ function Select({ label, onChange, options, value }: {
 
 export function AdminPrefillSection({
   answers,
-  dirty,
   message,
   onChange,
-  onSave,
-  saving,
 }: {
   answers: OnboardingAnswers
-  dirty: boolean
   message: string
   onChange: (answers: OnboardingAnswers, field: PrefillFieldKey) => void
-  onSave: () => void
-  saving: boolean
 }) {
   const links = answers.socialLinks.length ? answers.socialLinks : ['']
 
@@ -73,9 +67,8 @@ export function AdminPrefillSection({
         <label className="block sm:col-span-2"><span className="text-xs font-semibold text-muted-foreground">Poznámka z prvého kontaktu</span><textarea value={answers.additionalNotes} onChange={(event) => onChange({ ...answers, additionalNotes: event.target.value }, 'additionalNotes')} className="mt-2 min-h-24 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm leading-6 outline-none focus:border-brand" /></label>
       </div>
 
-      <div className="mt-8 flex flex-wrap items-center justify-end gap-4">
-        <span className={`text-xs ${message.includes('medzitým') || message.includes('nepodarilo') ? 'text-destructive' : 'text-muted-foreground'}`}>{message}</span>
-        <button type="button" onClick={onSave} disabled={saving || !dirty} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white disabled:opacity-50">{saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Uložiť predvyplnené údaje</button>
+      <div className="mt-8 flex justify-end">
+        <span aria-live="polite" className={`text-xs ${message && message !== 'Ukladám…' && message !== 'Uložené' ? 'text-destructive' : 'text-muted-foreground'}`}>{message}</span>
       </div>
     </section>
   )

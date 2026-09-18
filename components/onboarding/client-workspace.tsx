@@ -73,6 +73,8 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
   const discoveryRevisionRef = useRef(initialWorkspace.discovery2?.revision ?? 1)
   const coreQueueRef = useRef<Promise<void>>(Promise.resolve())
   const discoveryQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const coreSequenceRef = useRef(0)
+  const discoverySequenceRef = useRef(0)
 
   const coreEditable = workspace.sections.find((section) => section.key === 'core')?.clientEditable === true
   const discoveryEditable = workspace.sections.find((section) => section.key === 'discovery_2')?.clientEditable === true
@@ -99,6 +101,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
     const answers = coreAnswers
     const currentStep = coreCurrentStep
     const timeout = window.setTimeout(() => {
+      const sequence = coreSequenceRef.current
       setCoreSave('saving')
       coreQueueRef.current = coreQueueRef.current.then(async () => {
         const response = await fetch(`/api/portal/${token}`, {
@@ -107,16 +110,16 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
           method: 'PATCH',
         })
         if (!response.ok) {
-          setCoreSave(response.status === 409 ? 'conflict' : 'error')
+          if (sequence === coreSequenceRef.current) setCoreSave(response.status === 409 ? 'conflict' : 'error')
           if (response.status === 409) setCoreConflict(true)
           throw new Error(await responseError(response))
         }
         const saved = await response.json() as { progress: WorkspaceProgress; revision: number; savedAt: string }
         coreRevisionRef.current = saved.revision
         setWorkspace((current) => refreshOverallProgress({ ...current, core: { ...current.core!, progress: saved.progress, revision: saved.revision, updatedAt: saved.savedAt } }))
-        setCoreSave('saved')
+        if (sequence === coreSequenceRef.current) setCoreSave('saved')
       }).catch(() => undefined)
-    }, 900)
+    }, 600)
     return () => window.clearTimeout(timeout)
   }, [coreAnswers, coreChange, coreConflict, coreCurrentStep, coreEditable, token])
 
@@ -125,6 +128,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
     const answers = discoveryAnswers
     const currentStep = discoveryCurrentStep
     const timeout = window.setTimeout(() => {
+      const sequence = discoverySequenceRef.current
       setDiscoverySave('saving')
       discoveryQueueRef.current = discoveryQueueRef.current.then(async () => {
         const response = await fetch(`/api/portal/${token}`, {
@@ -133,18 +137,35 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
           method: 'PATCH',
         })
         if (!response.ok) {
-          setDiscoverySave(response.status === 409 ? 'conflict' : 'error')
+          if (sequence === discoverySequenceRef.current) setDiscoverySave(response.status === 409 ? 'conflict' : 'error')
           if (response.status === 409) setDiscoveryConflict(true)
           throw new Error(await responseError(response))
         }
         const saved = await response.json() as { progress: WorkspaceProgress; revision: number; savedAt: string }
         discoveryRevisionRef.current = saved.revision
         setWorkspace((current) => refreshOverallProgress({ ...current, discovery2: { ...current.discovery2!, progress: saved.progress, revision: saved.revision, updatedAt: saved.savedAt } }))
-        setDiscoverySave('saved')
+        if (sequence === discoverySequenceRef.current) setDiscoverySave('saved')
       }).catch(() => undefined)
-    }, 900)
+    }, 600)
     return () => window.clearTimeout(timeout)
   }, [discoveryAnswers, discoveryChange, discoveryConflict, discoveryCurrentStep, discoveryEditable, token])
+
+  useEffect(() => {
+    const retry = () => {
+      if (coreChange && coreEditable && coreSave === 'error' && !coreConflict) {
+        coreSequenceRef.current += 1
+        setCoreSave('saving')
+        setCoreChange((value) => value + 1)
+      }
+      if (discoveryChange && discoveryEditable && discoverySave === 'error' && !discoveryConflict) {
+        discoverySequenceRef.current += 1
+        setDiscoverySave('saving')
+        setDiscoveryChange((value) => value + 1)
+      }
+    }
+    window.addEventListener('online', retry)
+    return () => window.removeEventListener('online', retry)
+  }, [coreChange, coreConflict, coreEditable, coreSave, discoveryChange, discoveryConflict, discoveryEditable, discoverySave])
 
   return (
     <main className="min-h-dvh bg-background">
@@ -152,7 +173,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
       <div className="mx-auto max-w-4xl px-5 pb-24 pt-8 sm:px-8 sm:pt-12">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Váš projekt</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">Podklady k vášmu webu máte na jednom mieste. Odpovede môžete priebežne upravovať a fotografie dopĺňať kedykoľvek.</p>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">Podklady k vášmu webu máte na jednom mieste. Odpovede sa ukladajú automaticky a fotografie môžete dopĺňať kedykoľvek.</p>
         <nav aria-label="Rýchle odkazy" className="-mx-1 mt-7 flex gap-2 overflow-x-auto px-1 pb-1">
           {visibleSections.has('core') && <a href="#core" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><ListChecks className="size-4" /> Formulár</a>}
           {visibleSections.has('files') && <a href="#files" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><Images className="size-4" /> Nahrať fotky</a>}
@@ -189,8 +210,8 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
                   {!fixedOpen && <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />}
                 </summary>
                 <div className="pb-10 pt-3">
-                  {section.key === 'core' && workspace.core && <><div className="mb-6 flex justify-end"><SaveIndicator state={coreSave} /></div><CoreWorkspaceFields actor="client" answers={workspace.core.answers} assets={sourceAssets} disabled={!section.clientEditable || coreConflict} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} onChange={(answers) => { setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current); setCoreChange((value) => value + 1) }} /></>}
-                  {section.key === 'discovery_2' && workspace.discovery2 && <><div className="mb-6 flex justify-end"><SaveIndicator state={discoverySave} /></div><DiscoveryWorkspaceFields answers={workspace.discovery2.answers} disabled={!section.clientEditable || discoveryConflict} onChange={(answers) => { setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current); setDiscoveryChange((value) => value + 1) }} /></>}
+                  {section.key === 'core' && workspace.core && <><div className="mb-6 flex justify-end"><SaveIndicator state={coreSave} /></div><CoreWorkspaceFields actor="client" answers={workspace.core.answers} assets={sourceAssets} disabled={!section.clientEditable || coreConflict} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} onChange={(answers) => { setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current); coreSequenceRef.current += 1; setCoreSave('saving'); setCoreChange((value) => value + 1) }} /></>}
+                  {section.key === 'discovery_2' && workspace.discovery2 && <><div className="mb-6 flex justify-end"><SaveIndicator state={discoverySave} /></div><DiscoveryWorkspaceFields answers={workspace.discovery2.answers} disabled={!section.clientEditable || discoveryConflict} onChange={(answers) => { setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current); discoverySequenceRef.current += 1; setDiscoverySave('saving'); setDiscoveryChange((value) => value + 1) }} /></>}
                   {section.key === 'files' && (section.clientEditable ? <UploadField apiBasePath={`/api/portal/${token}/uploads`} assets={sourceAssets} canDeleteAsset={(asset) => asset.uploadedBy === 'client'} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: true, uploadedBy: 'client' }} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} totalAssetCount={workspace.assets.length} /> : sourceAssets.length ? <ul className="divide-y divide-border/70">{sourceAssets.map((asset) => <li key={asset.id} className="flex items-center gap-3 py-3 text-sm"><FileText className="size-4 text-muted-foreground" /><a className="min-w-0 flex-1 truncate font-medium hover:text-brand hover:underline" href={sharedAssetPath(asset) || `/api/portal/${token}/uploads/${asset.id}`} target="_blank" rel="noreferrer">{asset.name}</a><ShareLinkButton asset={asset} /></li>)}</ul> : <p className="text-sm text-muted-foreground">Zatiaľ neboli nahrané žiadne podklady.</p>)}
                   {section.key === 'deliverables' && (deliverableAssets.length ? <ul className="divide-y divide-border/70">{deliverableAssets.map((asset) => <li key={asset.id} className="flex items-center gap-3 py-4"><span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand"><Download className="size-4" /></span><span className="min-w-0 flex-1"><a className="block truncate text-sm font-semibold hover:text-brand hover:underline" href={sharedAssetPath(asset) || `/api/portal/${token}/uploads/${asset.id}`} target="_blank" rel="noreferrer">{asset.name}</a><span className="mt-1 block text-xs text-muted-foreground">{formatBytes(Number(asset.size))} · pripravené {new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}</span></span><ShareLinkButton asset={asset} /><a aria-label={`Stiahnuť ${asset.name}`} className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-brand" href={`/api/portal/${token}/uploads/${asset.id}`}><Download className="size-4" /></a></li>)}</ul> : <p className="text-sm leading-6 text-muted-foreground">Keď pre vás pripravíme hotové súbory, nájdete ich na stiahnutie práve tu.</p>)}
                   {(section.key === 'creative_strategy' || section.key === 'creative_directions') && <div className="whitespace-pre-wrap text-sm leading-7">{section.content || 'Obsah zatiaľ nebol pridaný.'}</div>}
