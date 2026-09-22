@@ -29,6 +29,19 @@ export const projects: Project[] = [
     },
   },
   {
+    slug: 'automaticky-strazca-inzeratov',
+    category: 'Automatizácia',
+    title: 'Bot na sledovanie nových inzerátov',
+    summary: 'Priebežne sleduje vybrané inzertné portály a upozorní hneď, keď nájde novú relevantnú ponuku.',
+    result: 'Používateľ nemusí opakovane prehľadávať internet a môže rýchlo reagovať na nový inzerát, súčiastku alebo inú hľadanú vec.',
+    scope: 'Monitoring webu · vlastné hľadanie · okamžité upozornenia',
+    showcase: {
+      device: 'chat',
+      src: '/portfolio/listing-watcher-bot.png',
+      alt: 'Bot s upozorneniami na nové inzeráty a automobilové súčiastky',
+    },
+  },
+  {
     slug: 'socia-sprava-socialnych-sieti',
     category: 'Sociálne siete',
     title: 'Správa sociálnych sietí s AI',
@@ -94,7 +107,7 @@ export const projects: Project[] = [
     result: 'Nové ponuky sa dali rýchlo otvoriť bez manuálneho preklikávania pracovných portálov.',
     scope: 'Automatizácia · monitoring · notifikácie',
     showcase: {
-      device: 'browser',
+      device: 'chat',
       src: '/portfolio/job-offer-monitor.png',
       alt: 'Správy s automaticky nájdenými pracovnými ponukami',
     },

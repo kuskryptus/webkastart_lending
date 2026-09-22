@@ -32,7 +32,7 @@ export function Pricing() {
               <div>
                 <p className="font-display text-sm font-semibold tracking-tight text-foreground">Hodinová sadzba</p>
                 <p className="font-display mt-2 text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  60 € <span className="text-xl font-semibold text-muted-foreground sm:text-2xl">/ hod.</span>
+                  40 € <span className="text-xl font-semibold text-muted-foreground sm:text-2xl">/ hod.</span>
                 </p>
               </div>
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-card text-brand shadow-sm">
@@ -48,7 +48,7 @@ export function Pricing() {
             </p>
 
             <ContactFormLink
-              message="Dobrý deň, mám záujem o spoluprácu za hodinovú sadzbu 60 €. Potrebujem vyriešiť: "
+              message="Dobrý deň, mám záujem o spoluprácu za hodinovú sadzbu 40 €. Potrebujem vyriešiť: "
               className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 sm:w-auto"
             >
               Nezáväzne prebrať zadanie

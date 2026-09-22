@@ -2,7 +2,7 @@ import Image from 'next/image'
 import { ExpenseTrackerDemo } from '@/components/expense-tracker-demo'
 import { LaptopFrame } from '@/components/laptop-frame'
 
-export type ProjectDevice = 'phone' | 'browser' | 'desktop' | 'image'
+export type ProjectDevice = 'phone' | 'browser' | 'chat' | 'desktop' | 'image'
 
 export type ProjectShowcase = {
   alt: string
@@ -101,6 +101,30 @@ export function BrowserMockup({ alt, detail = false, image, imageClassName, prel
   )
 }
 
+export function ChatMockup({ alt, detail = false, image, imageClassName, preload }: MockupProps) {
+  return (
+    <div
+      data-device-mockup="chat"
+      className={`relative z-10 w-full overflow-hidden rounded-[1.6rem] bg-[#101b27] p-1.5 shadow-[0_24px_64px_rgb(24_23_22_/_16%),0_5px_18px_rgb(24_23_22_/_10%)] ring-1 ring-black/15 sm:p-2 ${
+        detail ? 'max-w-[680px]' : 'max-w-[360px] sm:max-w-[460px] lg:max-w-[520px]'
+      }`}
+    >
+      <div className="relative aspect-[5/6] overflow-hidden rounded-[1.25rem] bg-[#172430] ring-1 ring-white/5 sm:rounded-[1.35rem]">
+        <Image
+          src={image}
+          alt={alt}
+          fill
+          preload={preload}
+          sizes={detail
+            ? '(max-width: 767px) 90vw, 680px'
+            : '(max-width: 639px) 90vw, (max-width: 1023px) 460px, 520px'}
+          className={`object-cover object-left-top ${imageClassName ?? ''}`}
+        />
+      </div>
+    </div>
+  )
+}
+
 export function LaptopMockup({ alt, detail = false, image, imageClassName, preload }: MockupProps) {
   return (
     <div
@@ -190,6 +214,14 @@ export function ProjectVisual({
         />
       ) : showcase.device === 'browser' ? (
         <BrowserMockup
+          alt={showcase.alt}
+          detail={detail}
+          image={showcase.src}
+          imageClassName={showcase.imageClassName}
+          preload={preload}
+        />
+      ) : showcase.device === 'chat' ? (
+        <ChatMockup
           alt={showcase.alt}
           detail={detail}
           image={showcase.src}

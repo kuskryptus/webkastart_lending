@@ -142,6 +142,14 @@
 }
 
 @layer components {
+  .technology-dot-grid {
+    background-image: radial-gradient(circle, rgb(95 82 232 / 18%) 1px, transparent 1.35px);
+    background-position: center 0;
+    background-size: 30px 30px;
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, rgb(0 0 0 / 78%) 58%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 0%, rgb(0 0 0 / 78%) 58%, transparent 100%);
+  }
+
   .expense-demo-scroll {
     scrollbar-width: none;
   }

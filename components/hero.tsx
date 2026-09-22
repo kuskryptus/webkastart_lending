@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
 import { SectionLink } from '@/components/section-link'
+import { TechnologyBackdrop } from '@/components/technology-backdrop'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
@@ -9,8 +10,10 @@ const features = [
 
 export function Hero() {
   return (
-    <section className="mx-auto max-w-6xl px-5 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:pb-20 lg:pt-10">
-      <div className="grid items-center gap-x-12 gap-y-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-y-0">
+    <section className="relative mx-auto max-w-7xl overflow-hidden px-5 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:pb-20 lg:pt-10">
+      <TechnologyBackdrop />
+
+      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-x-12 gap-y-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-y-0">
         {/* Left */}
         <div className="max-w-xl lg:col-start-1 lg:row-start-1">
           <span className="font-display inline-flex max-w-full items-center gap-x-4 text-[11px] font-semibold uppercase leading-none tracking-wide text-brand sm:gap-x-5 sm:text-xs">
@@ -36,7 +39,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-4 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:mt-6">
-            Menej starostí s technológiami. Viac času na zákazníkov a rast vašej firmy.
+            Weby a systémy, ktoré pomáhajú získavať zákazníkov a automatizujú opakovanú prácu.
           </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-center">
@@ -85,10 +88,10 @@ export function Hero() {
 
             <div className="w-64 pt-0.5">
               <p className="font-display text-sm font-semibold leading-snug tracking-tight text-foreground">
-                Správa sociálnych sietí s AI.
+                Nestaviame len prezentačné weby.
               </p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                AI pomáha tvoriť obsah, plánovať príspevky a spravovať komunikáciu na jednom mieste.
+                Vyvíjame aj systémy na mieru — napríklad AI platformu na správu sociálnych sietí.
               </p>
             </div>
           </figcaption>

@@ -26,7 +26,7 @@ export function About() {
             Kristián Kampczyk
           </h2>
           <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
-            Som živnostník a vývoju sa venujem približne 5 rokov. Robil som interné
+            Som živnostník a vývoju sa venujem približne 4 roky. Robil som interné
             nástroje, weby aj menšie aplikácie pre bežnú prácu vo firme.
           </p>
           <p className="mt-4 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground">
