@@ -34,6 +34,16 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
       ],
     },
     {
+      title: 'Doména a hosting',
+      rows: [
+        ['Má zaregistrovanú doménu', answers.domain.ownership],
+        ['Doména', answers.domain.name],
+        ['Registrátor domény', answers.domain.registrar],
+        ['Má webhosting', answers.hosting.status],
+        ['Poskytovateľ webhostingu', answers.hosting.provider],
+      ],
+    },
+    {
       title: 'Cieľ webu',
       rows: [
         ['Typy zákazníkov', answers.targetAudienceSelections],

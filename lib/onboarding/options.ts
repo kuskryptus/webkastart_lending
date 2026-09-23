@@ -11,6 +11,7 @@ export const brandAttributeOptions = ['Remeselná', 'Prémiová', 'Moderná', 'P
 export const colorOptions = ['Svetlé / neutrálne', 'Tmavé', 'Teplé', 'Studené', 'Pastelové', 'Prírodné / zemité', 'Výrazné', 'Čiernobiele', 'Chcem vychádzať z existujúcej značky / loga', 'Nechám si poradiť', 'Iné'] as const
 export const dislikeOptions = ['Príliš veľa farieb', 'Ostré / krikľavé farby', 'Príliš tmavý vzhľad', 'Príliš sterilný vzhľad', 'Príliš korporátny vzhľad', 'Príliš hravý vzhľad', 'Príliš luxusný vzhľad', 'Príliš veľa animácií', 'Preplnený dizajn', 'Príliš veľa textu', 'Nemám konkrétne obmedzenia', 'Iné'] as const
 export const communicationOptions = ['Telefón', 'E-mail', 'Kontaktný formulár', 'Messenger', 'WhatsApp', 'Instagram', 'Osobne', 'Rezervačný systém', 'Iné'] as const
+export const infrastructureStatusOptions = ['Áno', 'Nie', 'Neviem / nie som si istý'] as const
 
 export const orderOptions = ['Telefonicky', 'E-mailom', 'Kontaktným formulárom', 'Messengerom', 'WhatsAppom', 'Instagramom', 'Cez e-shop', 'Osobne', 'Objednávkovým / rezervačným systémom', 'Individuálne podľa zákazníka', 'Iné'] as const
 export const personalizationOptions = ['Produkt', 'Rozmery', 'Farbu', 'Materiál', 'Variant', 'Množstvo', 'Dizajn / vzhľad', 'Obsah balenia', 'Doplnky', 'Termín', 'Rozsah služby', 'Produkt / službu pripravujem úplne na mieru', 'Nič – ponuka je pevná', 'Iné'] as const

@@ -111,6 +111,8 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
   const source = object(input)
   const client = object(source.client)
   const business = object(source.business)
+  const domain = object(source.domain)
+  const hosting = object(source.hosting)
   const contact = object(source.contact)
   const billing = object(source.billing)
 
@@ -161,6 +163,15 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     brandStory: text(source.brandStory, 5000),
     existingWebsite: text(source.existingWebsite, 500),
     previousWebsiteExperience: text(source.previousWebsiteExperience, 5000),
+    domain: {
+      ownership: text(domain.ownership, 80),
+      name: text(domain.name, 253),
+      registrar: text(domain.registrar, 200),
+    },
+    hosting: {
+      status: text(hosting.status, 80),
+      provider: text(hosting.provider, 200),
+    },
     socialLinks: list(source.socialLinks, 8, 500),
     projectConstraints: text(source.projectConstraints, 5000),
     collaborationInvolvement: text(source.collaborationInvolvement, 5000),

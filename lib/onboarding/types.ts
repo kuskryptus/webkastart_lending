@@ -113,6 +113,15 @@ export type OnboardingAnswers = {
   brandStory: string
   existingWebsite: string
   previousWebsiteExperience: string
+  domain: {
+    ownership: string
+    name: string
+    registrar: string
+  }
+  hosting: {
+    status: string
+    provider: string
+  }
   socialLinks: string[]
   projectConstraints: string
   collaborationInvolvement: string
@@ -261,6 +270,8 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   brandStory: '',
   existingWebsite: '',
   previousWebsiteExperience: '',
+  domain: { ownership: '', name: '', registrar: '' },
+  hosting: { status: '', provider: '' },
   socialLinks: [''],
   projectConstraints: '',
   collaborationInvolvement: '',

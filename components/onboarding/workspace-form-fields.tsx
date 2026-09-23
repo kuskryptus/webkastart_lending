@@ -6,7 +6,7 @@ import { RepresentativePhotoPicker } from '@/components/onboarding/representativ
 import {
   appreciationOptions, brandAttributeOptions, colorOptions, communicationOptions, desiredActionOptions,
   dislikeOptions, frequentQuestionOptions, futureOptions, mustShowOptions, offeringOptions,
-  includeSavedOptions, orderOptions, personalizationOptions, sectionOptions, targetAudienceOptions,
+  includeSavedOptions, infrastructureStatusOptions, orderOptions, personalizationOptions, sectionOptions, targetAudienceOptions,
   projectTypeOptions, socialPlatformOptions, websiteExpectationOptions, websiteInformationOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
@@ -75,6 +75,14 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <Field hint={hint('existingWebsite')} label="Existujúci web" value={answers.existingWebsite} onChange={(existingWebsite) => emit({ ...answers, existingWebsite }, 'existingWebsite')} />
         <div className="sm:col-span-2"><Field multiline label="Mali ste už web alebo ste skúšali niečo podobné? Čo fungovalo a čo nie?" value={answers.previousWebsiteExperience} onChange={(previousWebsiteExperience) => onChange({ ...answers, previousWebsiteExperience })} /></div>
         <SocialLinksField answers={answers} hint={hint('socialLinks')} onChange={(next) => emit(next, 'socialLinks')} />
+      </Group>
+      <Group title="Doména a hosting">
+        <p className="text-xs leading-5 text-muted-foreground sm:col-span-2">Nevkladajte sem prihlasovacie údaje ani heslá. Prístupy si v prípade potreby odovzdáme bezpečným spôsobom.</p>
+        <SelectField label="Máte už zaregistrovanú doménu?" options={infrastructureStatusOptions} value={answers.domain.ownership} onChange={(ownership) => onChange({ ...answers, domain: { ...answers.domain, ownership, registrar: ownership === 'Áno' ? answers.domain.registrar : '' } })} />
+        <Field label="Doména, ktorú máte alebo by ste chceli" hint="Napr. vasafirma.sk" value={answers.domain.name} onChange={(name) => onChange({ ...answers, domain: { ...answers.domain, name } })} />
+        {answers.domain.ownership === 'Áno' && <Field label="Registrátor domény" hint="Napr. Websupport, Webglobe, Forpsi" value={answers.domain.registrar} onChange={(registrar) => onChange({ ...answers, domain: { ...answers.domain, registrar } })} />}
+        <SelectField label="Máte už webhosting?" options={infrastructureStatusOptions} value={answers.hosting.status} onChange={(status) => onChange({ ...answers, hosting: { status, provider: status === 'Áno' ? answers.hosting.provider : '' } })} />
+        {answers.hosting.status === 'Áno' && <Field label="Poskytovateľ webhostingu" hint="Napr. Websupport, Webglobe, Forpsi" value={answers.hosting.provider} onChange={(provider) => onChange({ ...answers, hosting: { ...answers.hosting, provider } })} />}
       </Group>
       <Group title="Zákazníci a cieľ webu">
         <ChoiceField title="Kto je váš ideálny zákazník?" options={targetAudienceOptions} selected={answers.targetAudienceSelections} onChange={(targetAudienceSelections) => onChange({ ...answers, targetAudienceSelections })}><OtherAnswer show multiline label="Kto nakupuje dnes a koho chcete získavať viac" value={answers.targetAudience} onChange={(targetAudience) => onChange({ ...answers, targetAudience })} /></ChoiceField>

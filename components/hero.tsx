@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
+import { HeroPaperReveal } from '@/components/hero-paper-reveal'
 import { SectionLink } from '@/components/section-link'
-import { TechnologyBackdrop } from '@/components/technology-backdrop'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
@@ -10,8 +10,8 @@ const features = [
 
 export function Hero() {
   return (
-    <section className="relative mx-auto max-w-7xl overflow-hidden px-5 pb-8 pt-4 sm:px-6 sm:pb-10 sm:pt-6 lg:pb-20 lg:pt-10">
-      <TechnologyBackdrop />
+    <section className="relative isolate mx-auto max-w-[100rem] overflow-hidden px-5 pb-40 pt-4 sm:px-6 sm:pb-44 sm:pt-6 lg:pb-36 lg:pt-10">
+      <HeroPaperReveal />
 
       <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-x-12 gap-y-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-y-0">
         {/* Left */}
@@ -64,36 +64,34 @@ export function Hero() {
 
         {/* Right */}
         <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
-          <figcaption className="pointer-events-none absolute top-0 right-[3%] z-10 hidden items-start gap-2 lg:flex xl:right-0">
+          <figcaption className="pointer-events-none absolute right-[2%] top-1 z-10 hidden -rotate-2 items-end gap-2 text-muted-foreground/80 xl:flex">
             <svg
-              className="mt-5 h-24 w-28 shrink-0 overflow-visible text-brand/80"
-              viewBox="0 0 112 96"
+              className="mb-0.5 h-16 w-20 shrink-0 overflow-visible text-brand/65"
+              viewBox="0 0 80 64"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M108 8C80 8 65 23 58 45C52 66 45 81 24 90"
+                d="M76 7C53 10 52 27 45 40C38 52 28 57 10 57"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
               <path
-                d="M32 81L23 90L34 92"
+                d="M19 50L9 57L20 62"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-
-            <div className="w-64 pt-0.5">
-              <p className="font-display text-sm font-semibold leading-snug tracking-tight text-foreground">
-                Nestaviame len prezentačné weby.
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Vyvíjame aj systémy na mieru — napríklad AI platformu na správu sociálnych sietí.
-              </p>
-            </div>
+            <span className="font-display w-44 text-sm italic leading-snug">
+              AI platforma
+              <br />
+              na správu
+              <br />
+              sociálnych sietí.
+            </span>
           </figcaption>
 
           <Image
@@ -107,17 +105,34 @@ export function Hero() {
           />
         </figure>
 
-        <dl className="flex flex-wrap gap-x-10 gap-y-5 sm:gap-y-6 lg:col-start-1 lg:row-start-2 lg:mt-10">
-          {features.map((f) => (
-            <div key={f.title} className="flex items-start gap-2.5">
-              <f.icon className="mt-0.5 size-4 text-brand" aria-hidden="true" />
-              <div>
-                <dt className="font-display text-sm font-semibold tracking-tight">{f.title}</dt>
-                <dd className="text-sm text-muted-foreground">{f.desc}</dd>
+        <div className="lg:col-start-1 lg:row-start-2 lg:mt-10">
+          <dl className="flex flex-wrap gap-x-10 gap-y-5 sm:gap-y-6">
+            {features.map((f) => (
+              <div key={f.title} className="flex items-start gap-2.5">
+                <f.icon className="mt-0.5 size-4 text-brand" aria-hidden="true" />
+                <div>
+                  <dt className="font-display text-sm font-semibold tracking-tight">{f.title}</dt>
+                  <dd className="text-sm text-muted-foreground">{f.desc}</dd>
+                </div>
               </div>
-            </div>
-          ))}
-        </dl>
+            ))}
+          </dl>
+
+          <div
+            aria-hidden="true"
+            className="mt-6 ml-2 hidden -translate-y-6 -rotate-4 items-end gap-3 text-muted-foreground/75 xl:flex"
+          >
+            <span className="font-display text-sm italic leading-snug">
+              Staré spôsoby
+              <br />
+              nechaj za sebou.
+            </span>
+            <svg className="h-10 w-24 text-brand/65" viewBox="0 0 96 40" fill="none">
+              <path d="M2 31C28 31 54 24 86 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M76 7L88 9L81 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        </div>
       </div>
     </section>
   )

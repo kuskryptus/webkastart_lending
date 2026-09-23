@@ -147,6 +147,11 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
             <div className="sm:col-span-2"><Answer label="Osobný príbeh značky">{answers.brandStory}</Answer></div>
             <ExternalAnswer label="Existujúci web" value={answers.existingWebsite} />
             <div className="sm:col-span-2"><Answer label="Predchádzajúce skúsenosti s webom">{answers.previousWebsiteExperience}</Answer></div>
+            <Answer label="Vlastní doménu">{answers.domain.ownership}</Answer>
+            <Answer label="Doména">{answers.domain.name}</Answer>
+            <Answer label="Registrátor domény">{answers.domain.registrar}</Answer>
+            <Answer label="Má webhosting">{answers.hosting.status}</Answer>
+            <Answer label="Poskytovateľ webhostingu">{answers.hosting.provider}</Answer>
             <Answer label="Sociálne siete">{answers.socialLinks.length ? <span className="space-y-1.5">{answers.socialLinks.map((value, index) => { const href = externalUrl(value); const label = [answers.socialPlatforms[index], value].filter(Boolean).join(': '); return href ? <a key={`${value}-${index}`} href={href} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 break-all font-medium text-brand hover:underline">{label}<ExternalLink className="size-3.5" /></a> : <span key={`${value}-${index}`} className="block">{label}</span> })}</span> : ''}</Answer>
           </CoreStep>
           <CoreStep number={2} title="Zákazníci a cieľ">

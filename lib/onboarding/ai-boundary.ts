@@ -76,6 +76,8 @@ export async function getWebsiteGenerationInput(projectId: string) {
     brandStory: answers.brandStory,
     existingWebsite: answers.existingWebsite,
     previousWebsiteExperience: answers.previousWebsiteExperience,
+    domain: answers.domain,
+    hosting: answers.hosting,
     socialLinks: answers.socialLinks,
     socialPlatforms: answers.socialPlatforms,
     projectConstraints: answers.projectConstraints,

@@ -80,6 +80,8 @@ export function coreProgress(answers: OnboardingAnswers): WorkspaceProgress {
     answers.brandStory,
     answers.existingWebsite,
     answers.previousWebsiteExperience,
+    answers.domain.ownership === 'Áno' ? answers.domain.name : answers.domain.ownership,
+    answers.hosting.status,
     answers.socialLinks,
     answers.projectConstraints,
     answers.collaborationInvolvement,

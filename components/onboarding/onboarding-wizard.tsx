@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, Cloud, CloudOff, Copy, Loader2, PartyPopper, Plus, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { OtherAnswer, QuickQuestion, RepeatableTextItems } from '@/components/onboarding/quick-fields'
+import { AutoSaveNotice, SourceMaterialsChecklist } from '@/components/onboarding/onboarding-guidance'
 import { RepresentativePhotoPicker } from '@/components/onboarding/representative-photo-picker'
 import { UploadField } from '@/components/onboarding/upload-field'
 import {
@@ -17,7 +18,7 @@ import { sanitizeAnswers, validateContact } from '@/lib/onboarding/validation'
 import {
   brandAttributeOptions, colorOptions, communicationOptions, desiredActionOptions, dislikeOptions,
   futureOptions, includeSavedOptions, offeringOptions, sectionOptions, socialPlatformOptions,
-  projectTypeOptions, targetAudienceOptions, websiteExpectationOptions, websiteInformationOptions,
+  infrastructureStatusOptions, projectTypeOptions, targetAudienceOptions, websiteExpectationOptions, websiteInformationOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
 import type { PrefillFieldKey } from '@/lib/onboarding/types'
@@ -421,6 +422,9 @@ export function OnboardingWizard({
           <div className="mt-6 h-1 overflow-hidden rounded-full bg-secondary" aria-hidden="true">
             <div className="h-full rounded-full bg-brand transition-[width] duration-300" style={{ width: `${(step / TOTAL_STEPS) * 100}%` }} />
           </div>
+          <div className="mt-6">
+            <AutoSaveNotice />
+          </div>
         </div>
 
         <section className="animate-in fade-in slide-in-from-bottom-2 duration-300" key={step}>
@@ -435,6 +439,29 @@ export function OnboardingWizard({
                 <TextArea label="Je za vašou značkou nejaký osobný príbeh, ktorý by mal zákazník poznať?" hint="Nepovinné" value={answers.brandStory} maxLength={5000} onChange={(e) => setAnswers({ ...answers, brandStory: e.target.value })} />
                 <Field label="Máte už existujúci web?" hint={prefilledHint('existingWebsite')} type="url" inputMode="url" value={answers.existingWebsite} maxLength={500} onChange={(e) => updateClientField({ ...answers, existingWebsite: e.target.value }, 'existingWebsite')} placeholder="https://" />
                 <TextArea label="Mali ste už web alebo ste skúšali niečo podobné? Čo fungovalo a čo nie?" hint="Nepovinné" value={answers.previousWebsiteExperience} maxLength={5000} onChange={(event) => setAnswers({ ...answers, previousWebsiteExperience: event.target.value })} />
+                <div className="border-t border-border/70 pt-9">
+                  <h3 className="text-lg font-semibold tracking-[-0.025em]">Doména a hosting</h3>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">Stačí, čo viete. Prihlasovacie údaje ani heslá sem neposielajte — ak ich budeme potrebovať, dohodneme si bezpečný spôsob.</p>
+                  <div className="mt-7 grid gap-7 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-base font-semibold tracking-[-0.01em]">Máte už zaregistrovanú doménu?</span>
+                      <select value={answers.domain.ownership} onChange={(event) => setAnswers({ ...answers, domain: { ...answers.domain, ownership: event.target.value, registrar: event.target.value === 'Áno' ? answers.domain.registrar : '' } })} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand">
+                        <option value="">Vyberte možnosť</option>
+                        {infrastructureStatusOptions.map((option) => <option key={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    <Field label="Akú doménu máte alebo by ste chceli?" hint="Nepovinné" value={answers.domain.name} maxLength={253} onChange={(event) => setAnswers({ ...answers, domain: { ...answers.domain, name: event.target.value } })} placeholder="napr. vasafirma.sk" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+                    {answers.domain.ownership === 'Áno' && <Field label="U koho je doména registrovaná?" hint="Ak neviete, nechajte prázdne" value={answers.domain.registrar} maxLength={200} onChange={(event) => setAnswers({ ...answers, domain: { ...answers.domain, registrar: event.target.value } })} placeholder="napr. Websupport, Webglobe, Forpsi" />}
+                    <label className="block">
+                      <span className="text-base font-semibold tracking-[-0.01em]">Máte už webhosting?</span>
+                      <select value={answers.hosting.status} onChange={(event) => setAnswers({ ...answers, hosting: { status: event.target.value, provider: event.target.value === 'Áno' ? answers.hosting.provider : '' } })} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none focus:border-brand">
+                        <option value="">Vyberte možnosť</option>
+                        {infrastructureStatusOptions.map((option) => <option key={option}>{option}</option>)}
+                      </select>
+                    </label>
+                    {answers.hosting.status === 'Áno' && <Field label="U koho máte webhosting?" hint="Ak neviete, nechajte prázdne" value={answers.hosting.provider} maxLength={200} onChange={(event) => setAnswers({ ...answers, hosting: { ...answers.hosting, provider: event.target.value } })} placeholder="napr. Websupport, Webglobe, Forpsi" />}
+                  </div>
+                </div>
                 <div>
                   <p className="text-base font-semibold tracking-[-0.01em]">Sociálne siete <span className="ml-2 text-xs font-normal text-muted-foreground">{prefilledHint('socialLinks')}</span></p>
                   <div className="mt-3 space-y-3">
@@ -558,7 +585,10 @@ export function OnboardingWizard({
           {step === 5 && (
             <>
               <StepHeader eyebrow="Krok 5" title="Fotografie a materiály" text="Nahrajte všetko, čo by mohlo byť pri tvorbe webu užitočné. Nemusíte vyberať iba najlepšie fotografie. Vhodné podklady vyberieme pri príprave webu." />
-              <UploadField assets={assets} getAssetUrl={(asset) => `/api/onboarding/${token}/uploads/${asset.id}`} onAssetsChange={setAssets} token={token} />
+              <SourceMaterialsChecklist />
+              <div className="mt-8">
+                <UploadField assets={assets} getAssetUrl={(asset) => `/api/onboarding/${token}/uploads/${asset.id}`} onAssetsChange={setAssets} token={token} />
+              </div>
               <div className="mt-10 border-t border-border/70 pt-8">
                 <RepresentativePhotoPicker assets={assets} getAssetUrl={(asset) => `/api/onboarding/${token}/uploads/${asset.id}`} selected={answers.representativePhotoIds} onChange={(representativePhotoIds) => setAnswers({ ...answers, representativePhotoIds })} />
               </div>
