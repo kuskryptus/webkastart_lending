@@ -2,7 +2,7 @@ import 'server-only'
 
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import postgres, { type Sql } from 'postgres'
-import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus } from './types'
+import type { OnboardingAnswers, OnboardingAsset, OnboardingStatus, OnboardingType } from './types'
 import { emptyOnboardingAnswers } from './types'
 import { markPrefilledFields } from './prefill'
 import { createPermanentPortalToken } from './portal-token'
@@ -27,7 +27,7 @@ export function hashOnboardingToken(token: string) {
   return createHash('sha256').update(token).digest('hex')
 }
 
-export async function createOnboardingProject(clientLabel: string) {
+export async function createOnboardingProject(clientLabel: string, onboardingType: OnboardingType = 'landing_page') {
   const sql = getDatabase()
   const clientId = randomUUID()
   const token = createPermanentPortalToken(clientId)
@@ -39,8 +39,8 @@ export async function createOnboardingProject(clientLabel: string) {
   }, ['client.displayName'])
   const rows = await sql.begin(async (transaction) => {
     await transaction`
-      insert into clients (id, display_name, portal_token_hash)
-      values (${clientId}, ${clientLabel}, ${tokenHash})
+      insert into clients (id, display_name, portal_token_hash, onboarding_type)
+      values (${clientId}, ${clientLabel}, ${tokenHash}, ${onboardingType})
     `
     const projects = await transaction<{ createdAt: Date; id: string }[]>`
       insert into onboarding_projects (id, client_id, client_label, token_hash, answers)
@@ -55,7 +55,7 @@ export async function createOnboardingProject(clientLabel: string) {
       insert into client_workspace_sections (client_id, section_key, client_visible, client_editable)
       values
         (${clientId}, 'core', true, true),
-        (${clientId}, 'discovery_2', true, true),
+        (${clientId}, 'discovery_2', ${onboardingType === 'landing_page'}, ${onboardingType === 'landing_page'}),
         (${clientId}, 'files', true, true),
         (${clientId}, 'deliverables', true, false),
         (${clientId}, 'creative_strategy', false, false),
@@ -77,12 +77,14 @@ export async function listOnboardingProjects() {
     currentStep: number
     id: string
     lastActivityAt: Date
+    onboardingType: OnboardingType
     status: OnboardingStatus
     submittedAt: Date | null
   }[]>`
     select
       client.id,
       client.display_name as "clientLabel",
+      client.onboarding_type as "onboardingType",
       project.status,
       project.current_step as "currentStep",
       client.created_at as "createdAt",
@@ -107,6 +109,7 @@ export type OnboardingProjectRecord = {
   createdAt: Date
   updatedAt: Date
   lastActivityAt: Date
+  onboardingType: OnboardingType
   submittedAt: Date | null
 }
 
@@ -115,20 +118,22 @@ export async function findOnboardingByToken(token: string): Promise<OnboardingPr
   const tokenHash = hashOnboardingToken(token)
   const rows = await sql<OnboardingProjectRecord[]>`
     select
-      id,
-      client_id as "clientId",
-      client_label as "clientLabel",
-      token_hash as "tokenHash",
-      status,
-      current_step as "currentStep",
-      revision::int as revision,
-      answers,
-      created_at as "createdAt",
-      updated_at as "updatedAt",
-      last_activity_at as "lastActivityAt",
-      submitted_at as "submittedAt"
-    from onboarding_projects
-    where token_hash = ${tokenHash}
+      project.id,
+      project.client_id as "clientId",
+      project.client_label as "clientLabel",
+      project.token_hash as "tokenHash",
+      project.status,
+      project.current_step as "currentStep",
+      project.revision::int as revision,
+      project.answers,
+      project.created_at as "createdAt",
+      project.updated_at as "updatedAt",
+      project.last_activity_at as "lastActivityAt",
+      client.onboarding_type as "onboardingType",
+      project.submitted_at as "submittedAt"
+    from onboarding_projects as project
+    join clients as client on client.id = project.client_id
+    where project.token_hash = ${tokenHash}
     limit 1
   `
   return rows[0] ?? null
@@ -138,20 +143,22 @@ export async function findCoreOnboardingByClientId(clientId: string): Promise<On
   const sql = getDatabase()
   const rows = await sql<OnboardingProjectRecord[]>`
     select
-      id,
-      client_id as "clientId",
-      client_label as "clientLabel",
-      token_hash as "tokenHash",
-      status,
-      current_step as "currentStep",
-      revision::int as revision,
-      answers,
-      created_at as "createdAt",
-      updated_at as "updatedAt",
-      last_activity_at as "lastActivityAt",
-      submitted_at as "submittedAt"
-    from onboarding_projects
-    where client_id = ${clientId}
+      project.id,
+      project.client_id as "clientId",
+      project.client_label as "clientLabel",
+      project.token_hash as "tokenHash",
+      project.status,
+      project.current_step as "currentStep",
+      project.revision::int as revision,
+      project.answers,
+      project.created_at as "createdAt",
+      project.updated_at as "updatedAt",
+      project.last_activity_at as "lastActivityAt",
+      client.onboarding_type as "onboardingType",
+      project.submitted_at as "submittedAt"
+    from onboarding_projects as project
+    join clients as client on client.id = project.client_id
+    where project.client_id = ${clientId}
     limit 1
   `
   return rows[0] ?? null
@@ -171,7 +178,7 @@ export async function listAssets(clientId: string): Promise<OnboardingAsset[]> {
       uploaded_by as "uploadedBy",
       client_visible as "clientVisible"
     from onboarding_assets
-    where client_id = ${clientId}
+    where client_id = ${clientId} and status = 'uploaded'
     order by created_at asc
   `
 }

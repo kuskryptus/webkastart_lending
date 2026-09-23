@@ -217,23 +217,46 @@ function matchesFileSignature(bytes: Uint8Array, mimeType: string) {
   switch (mimeType) {
     case 'image/jpeg': return startsWith(0xff, 0xd8, 0xff)
     case 'image/png': return startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+    case 'image/gif': return headerAscii.startsWith('GIF87a') || headerAscii.startsWith('GIF89a')
+    case 'image/bmp': return headerAscii.startsWith('BM')
     case 'image/webp': return startsWith(0x52, 0x49, 0x46, 0x46) && String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP'
     case 'image/avif': return hasIsoBmffBrand('avif', 'avis')
     case 'image/heic': return hasIsoBmffBrand('heic', 'heix', 'hevc', 'hevx', 'mif1')
     case 'image/heif': return hasIsoBmffBrand('heif', 'heim', 'heis', 'mif1', 'msf1')
     case 'image/tiff': return startsWith(0x49, 0x49, 0x2a, 0x00) || startsWith(0x4d, 0x4d, 0x00, 0x2a)
     case 'image/svg+xml': return /^(?:<\?xml[^>]*>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg[\s>]/i.test(headerText)
+    case 'image/vnd.adobe.photoshop': return headerAscii.startsWith('8BPS')
     case 'video/mp4':
     case 'video/quicktime':
     case 'video/x-m4v': return headerAscii.slice(4, 8) === 'ftyp'
     case 'video/webm':
     case 'video/x-matroska': return startsWith(0x1a, 0x45, 0xdf, 0xa3)
     case 'video/x-msvideo': return startsWith(0x52, 0x49, 0x46, 0x46) && String.fromCharCode(...bytes.slice(8, 12)) === 'AVI '
+    case 'video/mpeg': return startsWith(0x00, 0x00, 0x01, 0xba) || startsWith(0x00, 0x00, 0x01, 0xb3)
+    case 'video/3gpp': return headerAscii.slice(4, 8) === 'ftyp'
+    case 'audio/mpeg': return headerAscii.startsWith('ID3') || (bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0)
+    case 'audio/mp4': return headerAscii.slice(4, 8) === 'ftyp'
+    case 'audio/wav': return headerAscii.startsWith('RIFF') && headerAscii.slice(8, 12) === 'WAVE'
+    case 'audio/ogg': return headerAscii.startsWith('OggS')
+    case 'audio/flac': return headerAscii.startsWith('fLaC')
     case 'application/pdf': return headerText.startsWith('%PDF-')
-    case 'application/msword': return startsWith(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1)
-    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document': return startsWith(0x50, 0x4b, 0x03, 0x04)
+    case 'application/msword':
+    case 'application/vnd.ms-excel':
+    case 'application/vnd.ms-powerpoint': return startsWith(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1)
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+    case 'application/vnd.oasis.opendocument.text':
+    case 'application/vnd.oasis.opendocument.spreadsheet':
+    case 'application/vnd.oasis.opendocument.presentation':
+    case 'application/zip': return startsWith(0x50, 0x4b, 0x03, 0x04)
+    case 'application/rtf': return headerText.startsWith('{\\rtf')
+    case 'text/csv':
     case 'text/plain': return !bytes.includes(0)
-    default: return false
+    case 'application/x-7z-compressed': return startsWith(0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c)
+    case 'application/vnd.rar': return startsWith(0x52, 0x61, 0x72, 0x21, 0x1a, 0x07)
+    case 'application/gzip': return startsWith(0x1f, 0x8b)
+    default: return bytes.length > 0
   }
 }
 

@@ -6,7 +6,7 @@ import { ArrowLeft, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, Loader
 import { LogoMark } from '@/components/logo'
 import { AdminPrefillSection } from './admin-prefill-section'
 import { UploadField } from './upload-field'
-import { CoreWorkspaceFields, DiscoveryWorkspaceFields } from './workspace-form-fields'
+import { CoreWorkspaceFields, DiscoveryWorkspaceFields, MetaAdsWorkspaceFields } from './workspace-form-fields'
 import { stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
 import type { ClientWorkspaceResponse, OnboardingAnswers, OnboardingAsset, PrefillFieldKey, WorkspaceProgress, WorkspaceSection, WorkspaceSectionKey } from '@/lib/onboarding/types'
 
@@ -100,6 +100,9 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const coreCurrentStep = workspace.core?.currentStep
   const discoveryAnswers = workspace.discovery2?.answers
   const discoveryCurrentStep = workspace.discovery2?.currentStep
+  const isMetaAds = workspace.onboardingType === 'meta_ads'
+  const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : 'Landing page'
+  const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[key]
 
   useEffect(() => {
     if (!aiExportPreview) return
@@ -328,7 +331,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
       <div className="mx-auto max-w-6xl px-5 pb-24 pt-8 sm:px-8 sm:pt-12">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Klientsky priestor</p>
         <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div><h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1><p className="mt-3 text-sm text-muted-foreground">Pohľad správcu na rovnaké údaje, ktoré klient upravuje vo svojom portáli. Všetky zmeny sa ukladajú automaticky.</p></div>
+          <div><div className="flex flex-wrap items-center gap-3"><h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1><span className="text-xs font-semibold uppercase tracking-[0.1em] text-brand">{typeLabel}</span></div><p className="mt-3 text-sm text-muted-foreground">Pohľad správcu na rovnaké údaje, ktoré klient upravuje vo svojom portáli. Všetky zmeny sa ukladajú automaticky.</p></div>
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => void copyForAi()} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white hover:bg-brand/90">
               {aiExportState === 'copied' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -345,19 +348,19 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
           </div>
         )}
 
-        <nav aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8"><div className="flex min-w-max gap-6">{workspace.sections.map((section) => <a key={section.key} href={`#${section.key}`} className="py-4 text-sm font-medium text-muted-foreground hover:text-brand">{sectionTitle[section.key]}</a>)}</div></nav>
+        <nav aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8"><div className="flex min-w-max gap-6">{workspace.sections.map((section) => <a key={section.key} href={`#${section.key}`} className="py-4 text-sm font-medium text-muted-foreground hover:text-brand">{titleForSection(section.key)}</a>)}</div></nav>
 
         <section id="overview" className="scroll-mt-24 py-12 sm:py-16">
           <h2 className="text-2xl font-semibold tracking-[-0.035em]">Prehľad</h2>
-          <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4"><div><dt className="text-xs font-medium text-muted-foreground">Základný formulár</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
+          <dl className={`mt-8 grid gap-8 sm:grid-cols-2 ${isMetaAds ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}><div><dt className="text-xs font-medium text-muted-foreground">{isMetaAds ? 'Kampaňový formulár' : 'Základný formulár'}</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div>{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div>}<div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
         </section>
 
         {workspace.sections.map((section) => (
           <section key={section.key} id={section.key} className="scroll-mt-24 border-t border-border py-12 sm:py-16">
-            <div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-semibold tracking-[-0.035em]">{sectionTitle[section.key]}</h2>{section.key === 'core' && workspace.core && <Completion {...workspace.core.progress} />}{section.key === 'discovery_2' && workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</div>
+            <div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-semibold tracking-[-0.035em]">{titleForSection(section.key)}</h2>{section.key === 'core' && workspace.core && <Completion {...workspace.core.progress} />}{section.key === 'discovery_2' && workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</div>
             <div className="mt-6"><SectionSettings message={sectionStates[section.key] || ''} section={section} onChange={updateSection} /></div>
             {section.key === 'core' && workspace.core && <div className="mt-10">
-              <AdminPrefillSection
+              {!isMetaAds && <AdminPrefillSection
                 answers={workspace.core.answers}
                 message={coreState}
                 onChange={(answers, field) => {
@@ -367,10 +370,19 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                   setCoreState('Ukladám…')
                   setCoreChange((value) => value + 1)
                 }}
-              />
+              />}
               <div className="pt-12 sm:pt-16">
-                <h3 className="mb-8 text-xl font-semibold tracking-[-0.03em]">Normálny onboarding formulár</h3>
-                <CoreWorkspaceFields
+                <h3 className="mb-8 text-xl font-semibold tracking-[-0.03em]">{isMetaAds ? 'Otázky pre Facebook a Instagram kampane' : 'Normálny onboarding formulár'}</h3>
+                {isMetaAds ? <MetaAdsWorkspaceFields
+                  answers={workspace.core.answers}
+                  disabled={coreConflict}
+                  onChange={(answers) => {
+                    setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)
+                    coreSequenceRef.current += 1
+                    setCoreState('Ukladám…')
+                    setCoreChange((value) => value + 1)
+                  }}
+                /> : <CoreWorkspaceFields
                   answers={workspace.core.answers}
                   assets={sourceAssets}
                   disabled={coreConflict}
@@ -381,7 +393,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                     setCoreState('Ukladám…')
                     setCoreChange((value) => value + 1)
                   }}
-                />
+                />}
                 <div className="mt-8 flex flex-wrap items-center justify-end gap-4">
                   <AutosaveIndicator message={coreState} />
                   {coreConflict && <button type="button" onClick={() => window.location.reload()} className="text-xs font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
@@ -406,7 +418,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
             </div>}
             {section.key === 'files' && <div className="mt-10">
               <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">Fotografie, logá a ostatné vstupy od klienta. Ako správca sem môžete doplniť chýbajúce podklady.</p>
+                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{isMetaAds ? 'Fotografie, videá, logo, texty a výsledky starších kampaní. Ako správca sem môžete doplniť chýbajúce podklady.' : 'Fotografie, logá a ostatné vstupy od klienta. Ako správca sem môžete doplniť chýbajúce podklady.'}</p>
                 {sourceAssets.length > 0 && (
                   <a download href={`/api/onboarding/admin/clients/${clientId}/workspace/uploads/archive`} className="inline-flex min-h-9 shrink-0 items-center gap-2 self-start rounded-lg bg-secondary px-3 text-xs font-semibold text-foreground hover:bg-secondary/70">
                     <Download className="size-3.5" /> Stiahnuť všetky

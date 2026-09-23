@@ -5,6 +5,7 @@ import { isPrefillFieldKey, markPrefilledFields } from '@/lib/onboarding/prefill
 import {
   coreProgress,
   discoveryProgress,
+  getClientOnboardingType,
   getClientWorkspace,
   isWorkspaceSectionKey,
   progressForStatus,
@@ -64,6 +65,8 @@ export async function PATCH(request: Request, { params }: Context) {
       return privateJson({ error: 'Chýba verzia údajov. Obnovte stránku.' }, { status: 422 })
     }
     if (sectionKey === 'core') {
+      const onboardingType = await getClientOnboardingType(clientId)
+      if (!onboardingType) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
       let answers = sanitizeAnswers(body.answers)
       if (body.operation === 'prefill') {
         const fields = Array.isArray(body.prefillFields)
@@ -77,7 +80,7 @@ export async function PATCH(request: Request, { params }: Context) {
         currentStep: Math.min(6, Math.max(1, Math.round(Number(body.currentStep) || 1))),
         revision,
       })
-      return privateJson({ answers, progress: progressForStatus(coreProgress(answers), saved.status), revision: saved.revision, savedAt: saved.updatedAt.toISOString() })
+      return privateJson({ answers, progress: progressForStatus(coreProgress(answers, onboardingType), saved.status), revision: saved.revision, savedAt: saved.updatedAt.toISOString() })
     }
     if (sectionKey === 'discovery_2') {
       const answers = sanitizeDiscovery2Answers(body.answers)

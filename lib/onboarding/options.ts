@@ -13,6 +13,17 @@ export const dislikeOptions = ['Príliš veľa farieb', 'Ostré / krikľavé far
 export const communicationOptions = ['Telefón', 'E-mail', 'Kontaktný formulár', 'Messenger', 'WhatsApp', 'Instagram', 'Osobne', 'Rezervačný systém', 'Iné'] as const
 export const infrastructureStatusOptions = ['Áno', 'Nie', 'Neviem / nie som si istý'] as const
 
+export const campaignPlatformOptions = ['Facebook', 'Instagram', 'Facebook aj Instagram', 'Nechám si poradiť'] as const
+export const campaignGoalOptions = ['Získať dopyty / kontakty', 'Získať správy', 'Zvýšiť predaj', 'Priviesť ľudí na web', 'Zvýšiť návštevnosť prevádzky', 'Zvýšiť povedomie o značke', 'Propagovať konkrétnu akciu', 'Iné / ešte neviem'] as const
+export const campaignDestinationOptions = ['Web alebo landing page', 'E-shop', 'Kontaktný formulár', 'Meta formulár priamo v reklame', 'Messenger / Instagram správy', 'Telefonát', 'Kamenná prevádzka', 'Ešte neviem'] as const
+export const campaignBudgetOptions = ['Do 300 € mesačne', '300 – 600 € mesačne', '600 – 1 200 € mesačne', '1 200 – 3 000 € mesačne', 'Viac ako 3 000 € mesačne', 'Ešte neviem'] as const
+export const campaignDurationOptions = ['Jednorazová kampaň', '1 mesiac', '2 – 3 mesiace', 'Dlhodobá priebežná spolupráca', 'Ešte neviem'] as const
+export const campaignServiceOptions = ['Návrh stratégie kampane', 'Nastavenie reklamných účtov', 'Nastavenie merania', 'Texty do reklám', 'Grafické vizuály', 'Strih / úprava videí', 'Landing page alebo formulár', 'Spustenie kampane', 'Priebežná správa a optimalizácia', 'Pravidelné reporty', 'Neviem – potrebujem odporúčanie'] as const
+export const campaignAssetOptions = ['Logo a vizuálna identita', 'Produktové / firemné fotografie', 'Videá', 'Texty a popisy ponuky', 'Referencie zákazníkov', 'Landing page alebo web', 'Nemám pripravené podklady', 'Iné'] as const
+export const campaignMetaSetupOptions = ['Mám Meta Business Manager aj reklamný účet', 'Mám Facebook / Instagram, ale neviem stav účtov', 'Účty treba skontrolovať alebo nastaviť', 'Zatiaľ nemám nič pripravené'] as const
+export const campaignTrackingOptions = ['Meranie a Meta Pixel sú nastavené', 'Niečo je nastavené, ale treba to skontrolovať', 'Meranie nie je nastavené', 'Neviem'] as const
+export const previousCampaignOptions = ['Áno, kampane bežali alebo bežia', 'Nie, bude to prvá kampaň', 'Neviem / nemám k tomu prístup'] as const
+
 export const orderOptions = ['Telefonicky', 'E-mailom', 'Kontaktným formulárom', 'Messengerom', 'WhatsAppom', 'Instagramom', 'Cez e-shop', 'Osobne', 'Objednávkovým / rezervačným systémom', 'Individuálne podľa zákazníka', 'Iné'] as const
 export const personalizationOptions = ['Produkt', 'Rozmery', 'Farbu', 'Materiál', 'Variant', 'Množstvo', 'Dizajn / vzhľad', 'Obsah balenia', 'Doplnky', 'Termín', 'Rozsah služby', 'Produkt / službu pripravujem úplne na mieru', 'Nič – ponuka je pevná', 'Iné'] as const
 export const appreciationOptions = ['Kvalitu', 'Cenu', 'Rýchlosť', 'Osobný prístup', 'Komunikáciu', 'Spoľahlivosť', 'Odbornosť', 'Skúsenosti', 'Originalitu', 'Ručnú prácu', 'Možnosť personalizácie', 'Riešenie na mieru', 'Servis / podporu', 'Lokálnosť', 'Neviem', 'Iné'] as const

@@ -1,5 +1,8 @@
 export type OnboardingStatus = 'not_started' | 'in_progress' | 'submitted'
 
+export const onboardingTypes = ['landing_page', 'meta_ads'] as const
+export type OnboardingType = typeof onboardingTypes[number]
+
 export const prefillFieldKeys = [
   'client.displayName',
   'contact.name',
@@ -141,6 +144,34 @@ export type OnboardingAnswers = {
     address: string
   }
   additionalNotes: string
+  metaCampaign: {
+    platforms: string[]
+    goals: string[]
+    goalsOther: string
+    offer: string
+    offerPrice: string
+    destinationTypes: string[]
+    destinationUrl: string
+    audience: string
+    locations: string
+    existingAudience: string
+    customerValue: string
+    monthlyAdBudget: string
+    numberOfOffers: string
+    duration: string
+    desiredStart: string
+    servicesNeeded: string[]
+    availableAssets: string[]
+    availableAssetsOther: string
+    metaSetupStatus: string
+    trackingStatus: string
+    previousCampaignStatus: string
+    previousCampaignDetails: string
+    successDefinition: string
+    targetCostPerResult: string
+    leadCapacity: string
+    restrictions: string
+  }
 }
 
 export type AssetCategory = 'source' | 'deliverable'
@@ -187,6 +218,7 @@ export type WorkspaceProgress = {
 
 export type ClientWorkspaceResponse = {
   clientLabel: string
+  onboardingType: OnboardingType
   overallProgress: number
   sections: WorkspaceSection[]
   core: {
@@ -279,4 +311,32 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   contact: { name: '', email: '', phone: '', preferredMethods: [], preferredMethod: '' },
   billing: { companyName: '', companyId: '', taxId: '', vatId: '', address: '' },
   additionalNotes: '',
+  metaCampaign: {
+    platforms: [],
+    goals: [],
+    goalsOther: '',
+    offer: '',
+    offerPrice: '',
+    destinationTypes: [],
+    destinationUrl: '',
+    audience: '',
+    locations: '',
+    existingAudience: '',
+    customerValue: '',
+    monthlyAdBudget: '',
+    numberOfOffers: '',
+    duration: '',
+    desiredStart: '',
+    servicesNeeded: [],
+    availableAssets: [],
+    availableAssetsOther: '',
+    metaSetupStatus: '',
+    trackingStatus: '',
+    previousCampaignStatus: '',
+    previousCampaignDetails: '',
+    successDefinition: '',
+    targetCostPerResult: '',
+    leadCapacity: '',
+    restrictions: '',
+  },
 }

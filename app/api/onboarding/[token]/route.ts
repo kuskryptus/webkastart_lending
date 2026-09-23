@@ -34,6 +34,9 @@ export async function GET(request: Request, { params }: Context) {
     const { token } = await params
     const result = await getProject(request, token, 'read', 120)
     if ('response' in result) return result.response
+    if (result.project.onboardingType !== 'landing_page') {
+      return privateJson({ error: 'Použite klientsky portál z pôvodného odkazu.' }, { status: 404 })
+    }
     const permission = await getWorkspaceSection(result.project.clientId, 'core')
     if (!permission?.clientVisible) return privateJson({ error: 'Tento formulár nie je dostupný.' }, { status: 404 })
 
@@ -62,6 +65,9 @@ export async function PATCH(request: Request, { params }: Context) {
     const { token } = await params
     const result = await getProject(request, token, 'save', 60)
     if ('response' in result) return result.response
+    if (result.project.onboardingType !== 'landing_page') {
+      return privateJson({ error: 'Použite klientsky portál z pôvodného odkazu.' }, { status: 404 })
+    }
     const permission = await getWorkspaceSection(result.project.clientId, 'core')
     if (!permission?.clientVisible || !permission.clientEditable) {
       return privateJson({ error: 'Tento formulár nie je možné upravovať.' }, { status: 403 })

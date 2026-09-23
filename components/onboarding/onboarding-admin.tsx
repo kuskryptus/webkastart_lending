@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronRight, Copy, Loader2, LockKeyhole, LogOut, Plus, Search, X } from 'lucide-react'
+import { Check, ChevronRight, Copy, Globe2, Loader2, LockKeyhole, LogOut, Megaphone, Plus, Search, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
-import type { OnboardingStatus } from '@/lib/onboarding/types'
+import type { OnboardingStatus, OnboardingType } from '@/lib/onboarding/types'
 
 type Project = {
   clientLabel: string
@@ -12,6 +12,7 @@ type Project = {
   currentStep: number
   id: string
   lastActivityAt: string
+  onboardingType: OnboardingType
   status: OnboardingStatus
   submittedAt: string | null
 }
@@ -32,6 +33,11 @@ const statusLabel: Record<OnboardingStatus, string> = {
   not_started: 'Nezačaté',
   in_progress: 'Rozpracované',
   submitted: 'Odoslané',
+}
+
+const onboardingTypeLabel: Record<OnboardingType, string> = {
+  landing_page: 'Landing page',
+  meta_ads: 'FB/IG kampane',
 }
 
 async function getError(response: Response) {
@@ -81,6 +87,7 @@ export function OnboardingAdmin({
   const [authenticated, setAuthenticated] = useState(initialAuthenticated)
   const [secret, setSecret] = useState('')
   const [clientLabel, setClientLabel] = useState('')
+  const [onboardingType, setOnboardingType] = useState<OnboardingType>('landing_page')
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [createdUrl, setCreatedUrl] = useState('')
   const [copied, setCopied] = useState(false)
@@ -150,7 +157,7 @@ export function OnboardingAdmin({
     setCreatedUrl('')
     try {
       const response = await fetch('/api/onboarding/admin/projects', {
-        body: JSON.stringify({ clientLabel }),
+        body: JSON.stringify({ clientLabel, onboardingType }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
       })
@@ -296,16 +303,31 @@ export function OnboardingAdmin({
       <div className="mx-auto max-w-4xl px-5 pb-20 pt-8 sm:px-8 sm:pt-14">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Klientsky onboarding</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Vytvoriť osobný link</h1>
-        <p className="mt-3 max-w-xl leading-7 text-muted-foreground">Napíšte názov klienta alebo projektu. Bez účtu a bez ďalších nastavení vytvoríte link pripravený na odoslanie.</p>
+        <p className="mt-3 max-w-xl leading-7 text-muted-foreground">Napíšte názov klienta, vyberte typ projektu a vytvorte link s otázkami pripravenými pre konkrétnu spoluprácu.</p>
 
-        <form onSubmit={createProject} className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <label className="min-w-0 flex-1">
-            <span className="text-sm font-semibold">Klient alebo projekt</span>
-            <input value={clientLabel} onChange={(event) => setClientLabel(event.target.value)} placeholder="Napr. Jana Nováková – nový web" maxLength={200} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
-          </label>
-          <button disabled={submitting || !clientLabel.trim()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white disabled:opacity-50">
-            {submitting ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Vytvoriť link
-          </button>
+        <form onSubmit={createProject} className="mt-10">
+          <fieldset>
+            <legend className="text-sm font-semibold">Typ projektu</legend>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => setOnboardingType('landing_page')} aria-pressed={onboardingType === 'landing_page'} className={`flex min-h-20 items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${onboardingType === 'landing_page' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40'}`}>
+                <Globe2 className={`mt-0.5 size-5 shrink-0 ${onboardingType === 'landing_page' ? 'text-brand' : 'text-muted-foreground'}`} />
+                <span><span className="block text-sm font-semibold">Landing page</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Existujúci formulár pre web a podklady k stránke.</span></span>
+              </button>
+              <button type="button" onClick={() => setOnboardingType('meta_ads')} aria-pressed={onboardingType === 'meta_ads'} className={`flex min-h-20 items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${onboardingType === 'meta_ads' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40'}`}>
+                <Megaphone className={`mt-0.5 size-5 shrink-0 ${onboardingType === 'meta_ads' ? 'text-brand' : 'text-muted-foreground'}`} />
+                <span><span className="block text-sm font-semibold">Reklamné kampane</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Facebook a Instagram kampane, rozsah a rozpočet.</span></span>
+              </button>
+            </div>
+          </fieldset>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label className="min-w-0 flex-1">
+              <span className="text-sm font-semibold">Klient alebo projekt</span>
+              <input value={clientLabel} onChange={(event) => setClientLabel(event.target.value)} placeholder={onboardingType === 'meta_ads' ? 'Napr. Jana Nováková – reklamná kampaň' : 'Napr. Jana Nováková – nová landing page'} maxLength={200} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
+            </label>
+            <button disabled={submitting || !clientLabel.trim()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white disabled:opacity-50">
+              {submitting ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Vytvoriť link
+            </button>
+          </div>
         </form>
         {error && <p role="alert" className="mt-4 whitespace-pre-wrap break-words text-sm text-destructive">{error}</p>}
         {manualCopy && (
@@ -367,8 +389,8 @@ export function OnboardingAdmin({
                     className="absolute inset-0 z-0 outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-inset"
                   />
                   <div className="pointer-events-none grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto_1.5rem] sm:items-center sm:gap-6">
-                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-brand">{project.clientLabel}</p><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
-                    <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? `${project.currentStep}. krok zo 6` : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
+                    <div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-brand">{project.clientLabel}</p><span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{onboardingTypeLabel[project.onboardingType]}</span></div><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
+                    <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? (project.onboardingType === 'landing_page' ? `${project.currentStep}. krok zo 6` : 'Formulár rozpracovaný') : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
                     <span className={`text-xs font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}>{statusLabel[project.status]}</span>
                     <button
                       type="button"

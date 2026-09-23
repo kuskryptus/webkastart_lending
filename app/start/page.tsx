@@ -3,7 +3,7 @@ import { OnboardingAdmin } from '@/components/onboarding/onboarding-admin'
 import { ADMIN_COOKIE_NAME, isAdminConfigured, isAdminCookie } from '@/lib/onboarding/admin-auth'
 import { listOnboardingProjects } from '@/lib/onboarding/db'
 import { getErrorDetails } from '@/lib/onboarding/http'
-import type { OnboardingStatus } from '@/lib/onboarding/types'
+import type { OnboardingStatus, OnboardingType } from '@/lib/onboarding/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +18,7 @@ export default async function StartAdminPage() {
     currentStep: number
     id: string
     lastActivityAt: Date
+    onboardingType: OnboardingType
     status: OnboardingStatus
     submittedAt: Date | null
   }> = []

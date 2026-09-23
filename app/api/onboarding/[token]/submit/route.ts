@@ -17,6 +17,9 @@ export async function POST(request: Request, { params }: Context) {
 
     const project = await findOnboardingByToken(token)
     if (!project) return privateJson({ error: 'Tento odkaz nie je platný.' }, { status: 404 })
+    if (project.onboardingType !== 'landing_page') {
+      return privateJson({ error: 'Použite klientsky portál z pôvodného odkazu.' }, { status: 404 })
+    }
     const permission = await getWorkspaceSection(project.clientId, 'core')
     if (!permission?.clientVisible || !permission.clientEditable) {
       return privateJson({ error: 'Tento formulár nie je možné odoslať.' }, { status: 403 })

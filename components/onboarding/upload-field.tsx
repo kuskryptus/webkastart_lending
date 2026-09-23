@@ -333,28 +333,47 @@ export function UploadField({
       return
     }
 
-    const selected = Array.from(fileList).slice(0, remaining)
+    const files = Array.from(fileList)
+    const selected = files.slice(0, remaining)
     const accepted: LocalUpload[] = []
     const batchId = crypto.randomUUID()
+    const selectedKeys = new Set<string>()
+    const existingAssetKeys = new Set(
+      assetsRef.current.map((asset) => `${asset.name.normalize('NFC').toLocaleLowerCase('sk')}\u0000${asset.size}`),
+    )
+    const activeFileKeys = new Set(
+      items.map((item) => `${item.file.name.normalize('NFC').toLocaleLowerCase('sk')}\u0000${item.file.size}\u0000${item.file.lastModified}`),
+    )
+    const rejected: string[] = []
+    let duplicateCount = 0
 
     for (const file of selected) {
       const mimeType = resolveUploadMimeType(file.name, file.type)
-      if (!allowedUploadTypes[mimeType]) {
-        setNotice(`Súbor „${file.name}“ má nepodporovaný typ.`)
+      const assetKey = `${file.name.normalize('NFC').toLocaleLowerCase('sk')}\u0000${file.size}`
+      const fileKey = `${assetKey}\u0000${file.lastModified}`
+      if (existingAssetKeys.has(assetKey) || activeFileKeys.has(fileKey) || selectedKeys.has(fileKey)) {
+        duplicateCount += 1
+        continue
+      }
+      if (file.size <= 0) {
+        rejected.push(`„${file.name}“ je prázdny`)
         continue
       }
       if (file.size > MAX_UPLOAD_BYTES) {
-        setNotice(`Súbor „${file.name}“ je väčší ako 5 GB.`)
+        rejected.push(`„${file.name}“ je väčší ako 5 GB`)
         continue
       }
+      selectedKeys.add(fileKey)
       const id = crypto.randomUUID()
       accepted.push({ batchId, file, id, mimeType, progress: 0, status: 'queued' })
       queueRef.current.push({ batchId, file, id, mimeType })
     }
 
-    if (Array.from(fileList).length > remaining) {
-      setNotice(`Naraz môžete mať najviac ${MAX_UPLOAD_FILES} súborov.`)
-    }
+    const notices = []
+    if (duplicateCount) notices.push(`${duplicateCount === 1 ? 'Duplicitný súbor nebol nahraný znova.' : `${duplicateCount} duplicitné súbory neboli nahrané znova.`}`)
+    if (rejected.length) notices.push(`${rejected.join(', ')}.`)
+    if (files.length > remaining) notices.push(`Naraz môžete mať najviac ${MAX_UPLOAD_FILES} súborov.`)
+    setNotice(notices.join(' '))
     if (accepted.length) batchesRef.current.set(batchId, { pending: accepted.length, uploadedIds: [] })
     setItems((current) => [...current, ...accepted])
     pumpQueue()
@@ -415,17 +434,12 @@ export function UploadField({
     }
   }
 
-  const accept = Object.entries(allowedUploadTypes)
-    .flatMap(([mime, extensions]) => [mime, ...extensions.map((extension) => `.${extension}`)])
-    .join(',')
-
   return (
     <div className="space-y-5">
       <input
         ref={inputRef}
         className="sr-only"
         type="file"
-        accept={accept}
         multiple
         onChange={(event) => {
           if (event.target.files) addFiles(event.target.files)
@@ -467,7 +481,7 @@ export function UploadField({
           <span>
             <span className="block text-base font-semibold text-foreground">Vyberte alebo sem presuňte súbory</span>
             <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-              Originálne fotografie, videá a dokumenty · max. 5 GB na súbor
+              Fotografie, videá, zvuk, dokumenty aj archívy · max. 5 GB na súbor
             </span>
             <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Veľké súbory sa nahrávajú po častiach a po výpadku ich môžete obnoviť.</span>
           </span>

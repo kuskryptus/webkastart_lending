@@ -18,30 +18,57 @@ export const MULTIPART_UPLOAD_PART_BYTES = 16 * 1024 * 1024
 export const allowedUploadTypes: Record<string, string[]> = {
   'image/jpeg': ['jpg', 'jpeg'],
   'image/png': ['png'],
+  'image/gif': ['gif'],
+  'image/bmp': ['bmp'],
   'image/webp': ['webp'],
   'image/avif': ['avif'],
   'image/heic': ['heic'],
   'image/heif': ['heif'],
   'image/tiff': ['tif', 'tiff'],
   'image/svg+xml': ['svg'],
+  'image/vnd.adobe.photoshop': ['psd'],
   'video/mp4': ['mp4'],
   'video/quicktime': ['mov'],
   'video/webm': ['webm'],
   'video/x-m4v': ['m4v'],
   'video/x-matroska': ['mkv'],
   'video/x-msvideo': ['avi'],
+  'video/mpeg': ['mpeg', 'mpg'],
+  'video/3gpp': ['3gp'],
+  'audio/mpeg': ['mp3'],
+  'audio/mp4': ['m4a'],
+  'audio/wav': ['wav'],
+  'audio/ogg': ['ogg', 'oga'],
+  'audio/flac': ['flac'],
   'application/pdf': ['pdf'],
   'application/msword': ['doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['docx'],
+  'application/vnd.ms-excel': ['xls'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['xlsx'],
+  'application/vnd.ms-powerpoint': ['ppt'],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['pptx'],
+  'application/vnd.oasis.opendocument.text': ['odt'],
+  'application/vnd.oasis.opendocument.spreadsheet': ['ods'],
+  'application/vnd.oasis.opendocument.presentation': ['odp'],
+  'application/rtf': ['rtf'],
+  'text/csv': ['csv'],
   'text/plain': ['txt'],
+  'application/zip': ['zip'],
+  'application/x-7z-compressed': ['7z'],
+  'application/vnd.rar': ['rar'],
+  'application/gzip': ['gz'],
 }
 
 export function resolveUploadMimeType(name: string, reportedMimeType: string) {
   const extension = name.split('.').pop()?.toLowerCase() ?? ''
   const normalized = reportedMimeType.toLowerCase().trim()
   if (allowedUploadTypes[normalized]?.includes(extension)) return normalized
-  return Object.entries(allowedUploadTypes)
-    .find(([, extensions]) => extensions.includes(extension))?.[0] ?? normalized
+  const typeFromExtension = Object.entries(allowedUploadTypes)
+    .find(([, extensions]) => extensions.includes(extension))?.[0]
+  if (typeFromExtension) return typeFromExtension
+  return /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/i.test(normalized)
+    ? normalized
+    : 'application/octet-stream'
 }
 
 function text(value: unknown, maxLength: number) {
@@ -115,6 +142,7 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
   const hosting = object(source.hosting)
   const contact = object(source.contact)
   const billing = object(source.billing)
+  const metaCampaign = object(source.metaCampaign)
 
   return {
     ...emptyOnboardingAnswers,
@@ -191,6 +219,34 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
       address: text(billing.address, 500),
     },
     additionalNotes: text(source.additionalNotes, 5000),
+    metaCampaign: {
+      platforms: list(metaCampaign.platforms, 4, 80),
+      goals: list(metaCampaign.goals, 12, 120),
+      goalsOther: text(metaCampaign.goalsOther, 1000),
+      offer: text(metaCampaign.offer, 5000),
+      offerPrice: text(metaCampaign.offerPrice, 1000),
+      destinationTypes: list(metaCampaign.destinationTypes, 10, 120),
+      destinationUrl: text(metaCampaign.destinationUrl, 500),
+      audience: text(metaCampaign.audience, 4000),
+      locations: text(metaCampaign.locations, 1000),
+      existingAudience: text(metaCampaign.existingAudience, 2000),
+      customerValue: text(metaCampaign.customerValue, 2000),
+      monthlyAdBudget: text(metaCampaign.monthlyAdBudget, 100),
+      numberOfOffers: text(metaCampaign.numberOfOffers, 500),
+      duration: text(metaCampaign.duration, 100),
+      desiredStart: text(metaCampaign.desiredStart, 100),
+      servicesNeeded: list(metaCampaign.servicesNeeded, 16, 120),
+      availableAssets: list(metaCampaign.availableAssets, 16, 120),
+      availableAssetsOther: text(metaCampaign.availableAssetsOther, 1000),
+      metaSetupStatus: text(metaCampaign.metaSetupStatus, 200),
+      trackingStatus: text(metaCampaign.trackingStatus, 200),
+      previousCampaignStatus: text(metaCampaign.previousCampaignStatus, 200),
+      previousCampaignDetails: text(metaCampaign.previousCampaignDetails, 4000),
+      successDefinition: text(metaCampaign.successDefinition, 3000),
+      targetCostPerResult: text(metaCampaign.targetCostPerResult, 500),
+      leadCapacity: text(metaCampaign.leadCapacity, 1000),
+      restrictions: text(metaCampaign.restrictions, 3000),
+    },
   }
 }
 
@@ -247,7 +303,6 @@ export function validateUpload(name: unknown, mimeType: unknown, size: unknown) 
     return { error: 'Tento typ súboru nepodporujeme.' }
   }
   const resolvedMimeType = resolveUploadMimeType(name, mimeType)
-  if (!allowedUploadTypes[resolvedMimeType]) return { error: 'Tento typ súboru nepodporujeme.' }
   if (typeof size !== 'number' || !Number.isSafeInteger(size) || size <= 0) {
     return { error: 'Súbor je prázdny alebo má neplatnú veľkosť.' }
   }
@@ -255,10 +310,8 @@ export function validateUpload(name: unknown, mimeType: unknown, size: unknown) 
     return { error: 'Jeden súbor môže mať najviac 5 GB.' }
   }
 
-  const extension = name.split('.').pop()?.toLowerCase() ?? ''
-  if (!allowedUploadTypes[resolvedMimeType].includes(extension)) {
-    return { error: 'Prípona súboru nezodpovedá jeho typu.' }
-  }
+  const reportedExtension = name.split('.').pop()?.toLowerCase() ?? ''
+  const extension = /^[a-z0-9]{1,16}$/.test(reportedExtension) ? reportedExtension : 'bin'
 
   return { extension, mimeType: resolvedMimeType }
 }

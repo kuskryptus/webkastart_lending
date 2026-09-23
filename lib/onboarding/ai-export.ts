@@ -144,6 +144,94 @@ function coreSections(answers: OnboardingAnswers) {
   ]
 }
 
+function campaignSections(answers: OnboardingAnswers) {
+  const campaign = answers.metaCampaign
+  return [
+    {
+      id: 'business',
+      title: 'Klient a podnikanie',
+      responses: [
+        response('display_name', 'Meno alebo názov podnikania', answers.client.displayName),
+        response('business_area', 'Čomu sa klient venuje', answers.business.area),
+        response('business_description', 'Opis podnikania a ponuky', answers.business.description),
+        response('social_platforms', 'Sociálne siete – platformy', answers.socialPlatforms),
+        response('social_links', 'Sociálne siete – odkazy', answers.socialLinks),
+      ],
+    },
+    {
+      id: 'campaign_goal',
+      title: 'Cieľ kampane a ponuka',
+      responses: [
+        response('platforms', 'Kde chce klient inzerovať?', campaign.platforms),
+        response('goals', 'Čo má kampaň priniesť?', campaign.goals),
+        response('goals_other', 'Iný cieľ alebo neistota', campaign.goalsOther),
+        response('offer', 'Čo chce klient propagovať?', campaign.offer),
+        response('offer_price', 'Cena propagovanej ponuky', campaign.offerPrice),
+        response('customer_value', 'Akú hodnotu alebo výhodu dostane zákazník?', campaign.customerValue),
+        response('destination_types', 'Kam má reklama viesť alebo čo má človek urobiť?', campaign.destinationTypes),
+        response('destination_url', 'Cieľová URL', campaign.destinationUrl),
+      ],
+    },
+    {
+      id: 'audience',
+      title: 'Ideálny zákazník',
+      responses: [
+        response('audience', 'Koho chce klient osloviť?', campaign.audience),
+        response('locations', 'Kde sa zákazníci nachádzajú?', campaign.locations),
+        response('existing_audience', 'Existujúce publikum alebo databáza', campaign.existingAudience),
+      ],
+    },
+    {
+      id: 'scope_and_budget',
+      title: 'Rozsah, rozpočet a termín',
+      responses: [
+        response('monthly_ad_budget', 'Mesačný rozpočet len na reklamu', campaign.monthlyAdBudget),
+        response('number_of_offers', 'Koľko ponúk chce klient naraz propagovať?', campaign.numberOfOffers),
+        response('duration', 'Ako dlho má kampaň bežať?', campaign.duration),
+        response('desired_start', 'Požadovaný termín spustenia', campaign.desiredStart),
+        response('services_needed', 'S čím klient potrebuje pomôcť?', campaign.servicesNeeded),
+      ],
+    },
+    {
+      id: 'readiness',
+      title: 'Podklady a technické nastavenie',
+      responses: [
+        response('available_assets', 'Pripravené podklady', campaign.availableAssets),
+        response('available_assets_other', 'Ďalšie podklady', campaign.availableAssetsOther),
+        response('meta_setup_status', 'Stav Meta účtov', campaign.metaSetupStatus),
+        response('tracking_status', 'Stav merania výsledkov', campaign.trackingStatus),
+        response('previous_campaign_status', 'Predchádzajúce platené kampane', campaign.previousCampaignStatus),
+        response('previous_campaign_details', 'Výsledky a skúsenosti z minulých kampaní', campaign.previousCampaignDetails),
+      ],
+    },
+    {
+      id: 'results_and_constraints',
+      title: 'Výsledok a obmedzenia',
+      responses: [
+        response('success_definition', 'Podľa čoho klient spozná úspešnú kampaň?', campaign.successDefinition),
+        response('target_cost_per_result', 'Hodnota alebo cieľová cena jedného výsledku', campaign.targetCostPerResult),
+        response('lead_capacity', 'Koľko nových dopytov alebo objednávok klient zvládne?', campaign.leadCapacity),
+        response('restrictions', 'Čo treba pri reklame rešpektovať?', campaign.restrictions),
+      ],
+    },
+    {
+      id: 'contact_and_billing',
+      title: 'Kontakt a fakturácia',
+      responses: [
+        response('contact_name', 'Kontaktná osoba', answers.contact.name),
+        response('contact_email', 'E-mail', answers.contact.email),
+        response('contact_phone', 'Telefón', answers.contact.phone),
+        response('company_name', 'Fakturačný názov', answers.billing.companyName),
+        response('company_id', 'IČO', answers.billing.companyId),
+        response('tax_id', 'DIČ', answers.billing.taxId),
+        response('vat_id', 'IČ DPH', answers.billing.vatId),
+        response('billing_address', 'Fakturačná adresa', answers.billing.address),
+        response('additional_notes', 'Ďalšie dôležité informácie ku kampani', answers.additionalNotes),
+      ],
+    },
+  ]
+}
+
 const discoveryQuestions: Array<[string, string, (answers: Discovery2Answers) => AiAnswer]> = [
   ['order_methods', 'Ako dnes zákazník objednáva?', (answers) => [...answers.order_methods, answers.order_methods_other, answers.order_process]],
   ['products_and_prices', 'Aké produkty alebo služby klient ponúka a v akých cenách?', (answers) => [
@@ -172,15 +260,17 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
   const forms = [
     {
       id: 'basic_form',
-      title: 'Základný formulár',
+      title: workspace.onboardingType === 'meta_ads' ? 'Kampaňový formulár' : 'Základný formulár',
       completion: core?.progress || { completed: false, completedItems: 0, percentage: 0, totalItems: 0 },
       current_step: core?.currentStep || 1,
       revision: core?.revision || null,
       status: core?.status || 'not_started',
       updated_at: core?.updatedAt || null,
-      sections: coreSections(core?.answers || emptyOnboardingAnswers),
+      sections: workspace.onboardingType === 'meta_ads'
+        ? campaignSections(core?.answers || emptyOnboardingAnswers)
+        : coreSections(core?.answers || emptyOnboardingAnswers),
     },
-    {
+    ...(workspace.onboardingType === 'landing_page' ? [{
       id: 'additional_questions',
       title: 'Doplňujúce otázky',
       completion: discovery?.progress || { completed: false, completedItems: 0, percentage: 0, totalItems: discoveryQuestions.length },
@@ -189,7 +279,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
       status: discovery?.status || 'not_started',
       updated_at: discovery?.updatedAt || null,
       responses: discoveryQuestions.map(([key, question, answer]) => response(key, question, answer(discovery?.answers || emptyDiscovery2Answers))),
-    },
+    }] : []),
   ]
 
   return {
@@ -198,6 +288,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
     language: 'sk',
     project: {
       name: workspace.clientLabel,
+      onboarding_type: workspace.onboardingType,
       overall_completion_percent: workspace.overallProgress,
     },
     forms,

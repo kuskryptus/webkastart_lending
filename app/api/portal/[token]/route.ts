@@ -72,7 +72,7 @@ export async function PATCH(request: Request, { params }: Context) {
         revision,
       })
       return privateJson({
-        progress: progressForStatus(coreProgress(answers), saved.status),
+        progress: progressForStatus(coreProgress(answers, result.client.onboardingType), saved.status),
         revision: saved.revision,
         savedAt: saved.updatedAt.toISOString(),
       })

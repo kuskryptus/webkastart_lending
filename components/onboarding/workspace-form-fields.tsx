@@ -8,6 +8,9 @@ import {
   dislikeOptions, frequentQuestionOptions, futureOptions, mustShowOptions, offeringOptions,
   includeSavedOptions, infrastructureStatusOptions, orderOptions, personalizationOptions, sectionOptions, targetAudienceOptions,
   projectTypeOptions, socialPlatformOptions, websiteExpectationOptions, websiteInformationOptions,
+  campaignAssetOptions, campaignBudgetOptions, campaignDestinationOptions, campaignDurationOptions,
+  campaignGoalOptions, campaignMetaSetupOptions, campaignPlatformOptions, campaignServiceOptions,
+  campaignTrackingOptions, previousCampaignOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
 import type { Discovery2Answers, OnboardingAnswers, OnboardingAsset, PrefillFieldKey } from '@/lib/onboarding/types'
@@ -147,6 +150,91 @@ export function DiscoveryWorkspaceFields({ answers, disabled, onChange }: {
       <ChoiceField title="Čo zákazníci najviac oceňujú?" options={appreciationOptions} selected={answers.customer_appreciation_choices} onChange={(customer_appreciation_choices) => onChange({ ...answers, customer_appreciation_choices })}><OtherAnswer show={answers.customer_appreciation_choices.includes('Iné')} label="Čo ešte oceňujú" value={answers.customer_appreciation} onChange={(customer_appreciation) => onChange({ ...answers, customer_appreciation })} /><div className="mt-5"><Field multiline label="Konkrétna reakcia zákazníka" value={answers.customer_quote} onChange={(customer_quote) => onChange({ ...answers, customer_quote })} /></div></ChoiceField>
       <ChoiceField title="Čo sa zákazníci najčastejšie pýtajú?" options={frequentQuestionOptions} selected={answers.frequent_questions} onChange={(frequent_questions) => onChange({ ...answers, frequent_questions })}><OtherAnswer show={answers.frequent_questions.includes('Iné')} multiline label="Iná otázka" value={answers.frequent_questions_other} onChange={(frequent_questions_other) => onChange({ ...answers, frequent_questions_other })} /></ChoiceField>
       <ChoiceField title="Čo musí byť na novom webe určite?" options={mustShowOptions} selected={answers.must_show_choices} onChange={(must_show_choices) => onChange({ ...answers, must_show_choices })}><OtherAnswer show={answers.must_show_choices.includes('Iné')} multiline label="Čo ešte musí byť na webe" value={answers.must_show_on_website} onChange={(must_show_on_website) => onChange({ ...answers, must_show_on_website })} /></ChoiceField>
+    </fieldset>
+  )
+}
+
+export function MetaAdsWorkspaceFields({ actor, answers, disabled, onChange }: {
+  actor?: 'client'
+  answers: OnboardingAnswers
+  disabled?: boolean
+  onChange: (answers: OnboardingAnswers) => void
+}) {
+  function emit(next: OnboardingAnswers, key?: PrefillFieldKey) {
+    onChange(actor === 'client' && key ? markClientFieldChange(next, key) : next)
+  }
+  const hint = (key: PrefillFieldKey) => actor === 'client' && isUnconfirmedPrefill(answers, key)
+    ? 'Predvyplnené z predchádzajúcej komunikácie'
+    : undefined
+  const campaign = answers.metaCampaign
+  const updateCampaign = (updates: Partial<OnboardingAnswers['metaCampaign']>) => {
+    onChange({ ...answers, metaCampaign: { ...campaign, ...updates } })
+  }
+
+  return (
+    <fieldset disabled={disabled} className="space-y-10 disabled:opacity-70">
+      <Group title="O vás a vašom podnikaní">
+        <Field hint={hint('client.displayName')} label="Meno / názov podnikania" value={answers.client.displayName} onChange={(displayName) => emit({ ...answers, client: { displayName } }, 'client.displayName')} />
+        <Field hint={hint('business.area')} label="Čomu sa venujete" value={answers.business.area} onChange={(area) => emit({ ...answers, business: { ...answers.business, area } }, 'business.area')} />
+        <div className="sm:col-span-2"><Field multiline label="Stručne opíšte svoje podnikanie a čo ponúkate." hint="Stačí pár viet, aby som pochopil váš biznis a zákazníkov." value={answers.business.description} onChange={(description) => onChange({ ...answers, business: { ...answers.business, description } })} /></div>
+        <SocialLinksField answers={answers} hint={hint('socialLinks')} onChange={(next) => emit(next, 'socialLinks')} />
+      </Group>
+
+      <Group title="Cieľ kampane a ponuka">
+        <SelectField label="Kde chcete inzerovať?" options={campaignPlatformOptions} value={campaign.platforms[0] || ''} onChange={(value) => updateCampaign({ platforms: value ? [value] : [] })} />
+        <ChoiceField title="Čo má kampaň priniesť?" options={campaignGoalOptions} selected={campaign.goals} onChange={(goals) => updateCampaign({ goals })}>
+          <OtherAnswer show={campaign.goals.includes('Iné / ešte neviem')} label="Čo chcete dosiahnuť alebo s čím si nie ste istý" value={campaign.goalsOther} onChange={(goalsOther) => updateCampaign({ goalsOther })} />
+        </ChoiceField>
+        <div className="sm:col-span-2"><Field multiline label="Čo konkrétne chcete propagovať?" hint="Produkt, služba, balík, akcia alebo ponuka. Uveďte aj to, čo má byť hlavnou výhodou." value={campaign.offer} onChange={(offer) => updateCampaign({ offer })} /></div>
+        <Field label="Cena propagovanej ponuky" hint="Napr. 49 €, od 300 € alebo individuálna cena." value={campaign.offerPrice} onChange={(offerPrice) => updateCampaign({ offerPrice })} />
+        <Field multiline label="Akú hodnotu alebo výhodu dostane zákazník?" hint="Prečo by mal reagovať práve na túto ponuku?" value={campaign.customerValue} onChange={(customerValue) => updateCampaign({ customerValue })} />
+        <ChoiceField title="Kam má reklama človeka priviesť alebo čo má urobiť?" options={campaignDestinationOptions} selected={campaign.destinationTypes} onChange={(destinationTypes) => updateCampaign({ destinationTypes })}>
+          <div className="mt-5"><Field label="Odkaz na cieľovú stránku, web alebo e-shop" hint="Ak ešte neexistuje, nechajte pole prázdne." value={campaign.destinationUrl} onChange={(destinationUrl) => updateCampaign({ destinationUrl })} /></div>
+        </ChoiceField>
+      </Group>
+
+      <Group title="Ideálny zákazník">
+        <div className="sm:col-span-2"><Field multiline label="Koho chcete reklamou osloviť?" hint="Kto je ideálny zákazník, čo rieši a prečo by ho ponuka mala zaujímať?" value={campaign.audience} onChange={(audience) => updateCampaign({ audience })} /></div>
+        <Field label="Kde sa zákazníci nachádzajú?" hint="Mesto, región, celé Slovensko alebo konkrétne krajiny." value={campaign.locations} onChange={(locations) => updateCampaign({ locations })} />
+        <Field multiline label="Máte existujúce publikum alebo databázu?" hint="Napr. návštevníci webu, zákaznícky zoznam, sledovatelia alebo podobné publikum." value={campaign.existingAudience} onChange={(existingAudience) => updateCampaign({ existingAudience })} />
+      </Group>
+
+      <Group title="Rozsah, rozpočet a termín">
+        <SelectField label="Mesačný rozpočet len na reklamu" hint="Bez ceny za prípravu a správu kampane." options={campaignBudgetOptions} value={campaign.monthlyAdBudget} onChange={(monthlyAdBudget) => updateCampaign({ monthlyAdBudget })} />
+        <Field label="Koľko ponúk chcete naraz propagovať?" hint="Napr. jeden produkt, tri služby alebo viac samostatných kampaní." value={campaign.numberOfOffers} onChange={(numberOfOffers) => updateCampaign({ numberOfOffers })} />
+        <SelectField label="Ako dlho má kampaň bežať?" options={campaignDurationOptions} value={campaign.duration} onChange={(duration) => updateCampaign({ duration })} />
+        <Field label="Kedy chcete kampaň spustiť?" hint="Uveďte dátum alebo približný termín." value={campaign.desiredStart} onChange={(desiredStart) => updateCampaign({ desiredStart })} />
+        <ChoiceField title="S čím všetkým potrebujete pomôcť?" options={campaignServiceOptions} selected={campaign.servicesNeeded} onChange={(servicesNeeded) => updateCampaign({ servicesNeeded })} />
+      </Group>
+
+      <Group title="Podklady a technické nastavenie">
+        <ChoiceField title="Čo už máte pripravené?" options={campaignAssetOptions} selected={campaign.availableAssets} onChange={(availableAssets) => updateCampaign({ availableAssets })}>
+          <OtherAnswer show={campaign.availableAssets.includes('Iné')} label="Ďalšie pripravené podklady" value={campaign.availableAssetsOther} onChange={(availableAssetsOther) => updateCampaign({ availableAssetsOther })} />
+        </ChoiceField>
+        <SelectField label="Stav Meta účtov" options={campaignMetaSetupOptions} value={campaign.metaSetupStatus} onChange={(metaSetupStatus) => updateCampaign({ metaSetupStatus })} />
+        <SelectField label="Meranie výsledkov na webe" options={campaignTrackingOptions} value={campaign.trackingStatus} onChange={(trackingStatus) => updateCampaign({ trackingStatus })} />
+        <SelectField label="Mali ste už platené kampane?" options={previousCampaignOptions} value={campaign.previousCampaignStatus} onChange={(previousCampaignStatus) => updateCampaign({ previousCampaignStatus })} />
+        {campaign.previousCampaignStatus === 'Áno, kampane bežali alebo bežia' && <div className="sm:col-span-2"><Field multiline label="Čo sa v minulých kampaniach dialo?" hint="Čo fungovalo, čo nie a aké boli približné výsledky alebo náklady." value={campaign.previousCampaignDetails} onChange={(previousCampaignDetails) => updateCampaign({ previousCampaignDetails })} /></div>}
+      </Group>
+
+      <Group title="Výsledok a dôležité obmedzenia">
+        <div className="sm:col-span-2"><Field multiline label="Podľa čoho spoznáte, že je kampaň úspešná?" hint="Napr. počet dopytov, predajov, rezervácií alebo návštev prevádzky." value={campaign.successDefinition} onChange={(successDefinition) => updateCampaign({ successDefinition })} /></div>
+        <Field label="Akú hodnotu má pre vás jeden výsledok?" hint="Ak viete: cieľová cena za dopyt, objednávku alebo návratnosť." value={campaign.targetCostPerResult} onChange={(targetCostPerResult) => updateCampaign({ targetCostPerResult })} />
+        <Field label="Koľko nových dopytov alebo objednávok viete spracovať?" hint="Pomôže nastaviť realistický rozsah kampane." value={campaign.leadCapacity} onChange={(leadCapacity) => updateCampaign({ leadCapacity })} />
+        <div className="sm:col-span-2"><Field multiline label="Čo musím pri reklame rešpektovať?" hint="Povinné informácie, zakázané tvrdenia, citlivé témy, schvaľovanie alebo sezónne obmedzenia." value={campaign.restrictions} onChange={(restrictions) => updateCampaign({ restrictions })} /></div>
+      </Group>
+
+      <Group title="Kontakt a fakturácia">
+        <Field hint={hint('contact.name')} label="Kontaktná osoba" value={answers.contact.name} onChange={(name) => emit({ ...answers, contact: { ...answers.contact, name } }, 'contact.name')} />
+        <Field hint={hint('contact.email')} label="E-mail" value={answers.contact.email} onChange={(email) => emit({ ...answers, contact: { ...answers.contact, email } }, 'contact.email')} />
+        <Field hint={hint('contact.phone')} label="Telefón" value={answers.contact.phone} onChange={(phone) => emit({ ...answers, contact: { ...answers.contact, phone } }, 'contact.phone')} />
+        <Field label="Fakturačný názov" value={answers.billing.companyName} onChange={(companyName) => onChange({ ...answers, billing: { ...answers.billing, companyName } })} />
+        <Field label="IČO" value={answers.billing.companyId} onChange={(companyId) => onChange({ ...answers, billing: { ...answers.billing, companyId } })} />
+        <Field label="DIČ" value={answers.billing.taxId} onChange={(taxId) => onChange({ ...answers, billing: { ...answers.billing, taxId } })} />
+        <Field label="IČ DPH" value={answers.billing.vatId} onChange={(vatId) => onChange({ ...answers, billing: { ...answers.billing, vatId } })} />
+        <div className="sm:col-span-2"><Field multiline label="Fakturačná adresa" value={answers.billing.address} onChange={(address) => onChange({ ...answers, billing: { ...answers.billing, address } })} /></div>
+        <div className="sm:col-span-2"><Field hint={hint('additionalNotes')} multiline label="Je ešte niečo dôležité, čo by som mal o kampani vedieť?" value={answers.additionalNotes} onChange={(additionalNotes) => emit({ ...answers, additionalNotes }, 'additionalNotes')} /></div>
+      </Group>
     </fieldset>
   )
 }

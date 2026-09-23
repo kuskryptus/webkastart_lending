@@ -80,7 +80,8 @@ and pnpm.
   and structured product fields while retaining the original Discovery text columns.
   Migration 007 separates client source materials from admin deliverables,
   migration 008 adds comments anchored to shared images, and migration 010 adds
-  a reversible resolved state to those comments.
+  a reversible resolved state to those comments. Migration 011 categorizes each
+  client onboarding as a landing page or Meta advertising campaign.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -94,6 +95,9 @@ and pnpm.
 - Uploads stay private, keep original bytes, use UUID object keys, and use
   short-lived signed URLs. Files above 64 MB use resumable S3 multipart upload;
   the server validates type, size, part completeness, count, and signature.
+  The upload picker accepts arbitrary file formats; known common extensions are
+  normalized to a canonical MIME type and unknown formats use their valid browser
+  MIME type or `application/octet-stream`. Never expose pending assets as uploaded.
   Browser upload URLs must not sign `Content-Length`; browsers control that
   header and the server verifies the uploaded object size before accepting it.
   Keep the S3 client's `requestChecksumCalculation` at `WHEN_REQUIRED`: newer
@@ -101,6 +105,9 @@ and pnpm.
 - A client may own multiple forms. Core and Discovery 2 keep separate persistence
   (and legacy form-specific tokens) behind the shared portal token; never merge or
   overwrite one form's answers with another.
+- `clients.onboarding_type` selects the questionnaire presentation. Existing and
+  legacy clients default to `landing_page`; `meta_ads` reuses the Core record with
+  campaign-specific answers and does not expose the web-only Discovery 2 section.
 - Admin and portal are presentations over the same Core, Discovery, and asset
   rows. Respect `client_workspace_sections`; internal notes are never client-visible.
   Assets with category `source` are client inputs; `deliverable` assets are admin

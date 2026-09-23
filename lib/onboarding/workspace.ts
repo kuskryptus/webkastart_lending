@@ -9,6 +9,7 @@ import type {
   Discovery2Answers,
   OnboardingAnswers,
   OnboardingStatus,
+  OnboardingType,
   WorkspaceProgress,
   WorkspaceSection,
   WorkspaceSectionKey,
@@ -21,6 +22,7 @@ import { createAssetShareToken } from './asset-share'
 type ClientRecord = {
   id: string
   displayName: string
+  onboardingType: OnboardingType
   portalTokenHash: string
 }
 
@@ -42,7 +44,45 @@ function hasValue(value: string | string[]) {
   return Array.isArray(value) ? value.some(Boolean) : Boolean(value.trim())
 }
 
-export function coreProgress(answers: OnboardingAnswers): WorkspaceProgress {
+export function coreProgress(answers: OnboardingAnswers, onboardingType: OnboardingType = 'landing_page'): WorkspaceProgress {
+  if (onboardingType === 'meta_ads') {
+    const campaign = answers.metaCampaign
+    const values: Array<string | string[]> = [
+      answers.client.displayName,
+      answers.business.area,
+      answers.business.description,
+      campaign.platforms,
+      [...campaign.goals, campaign.goalsOther],
+      campaign.offer,
+      campaign.offerPrice,
+      campaign.destinationTypes,
+      campaign.audience,
+      campaign.locations,
+      campaign.customerValue,
+      campaign.monthlyAdBudget,
+      campaign.numberOfOffers,
+      campaign.duration,
+      campaign.desiredStart,
+      campaign.servicesNeeded,
+      campaign.availableAssets,
+      campaign.metaSetupStatus,
+      campaign.trackingStatus,
+      campaign.previousCampaignStatus,
+      campaign.successDefinition,
+      campaign.leadCapacity,
+      answers.contact.name,
+      answers.contact.email,
+      answers.contact.phone,
+    ]
+    const completedItems = values.filter(hasValue).length
+    return {
+      completed: completedItems === values.length,
+      completedItems,
+      percentage: Math.round((completedItems / values.length) * 100),
+      totalItems: values.length,
+    }
+  }
+
   const values: Array<string | string[]> = [
     answers.client.displayName,
     answers.business.area,
@@ -137,13 +177,13 @@ export async function findClientByPortalToken(token: string): Promise<ClientReco
   const permanentClientId = clientIdFromPermanentPortalToken(token)
   if (permanentClientId) {
     const rows = await sql<ClientRecord[]>`
-      select id, display_name as "displayName", ${tokenHash}::text as "portalTokenHash"
+      select id, display_name as "displayName", onboarding_type as "onboardingType", ${tokenHash}::text as "portalTokenHash"
       from clients where id = ${permanentClientId} limit 1
     `
     if (rows[0]) return rows[0]
   }
   const savedLinks = await sql<ClientRecord[]>`
-    select client.id, client.display_name as "displayName", ${tokenHash}::text as "portalTokenHash"
+    select client.id, client.display_name as "displayName", client.onboarding_type as "onboardingType", ${tokenHash}::text as "portalTokenHash"
     from client_portal_links as link
     join clients as client on client.id = link.client_id
     where link.token_hash = ${tokenHash}
@@ -151,7 +191,7 @@ export async function findClientByPortalToken(token: string): Promise<ClientReco
   `
   if (savedLinks[0]) return savedLinks[0]
   const legacy = await sql<ClientRecord[]>`
-    select id, display_name as "displayName", portal_token_hash as "portalTokenHash"
+    select id, display_name as "displayName", onboarding_type as "onboardingType", portal_token_hash as "portalTokenHash"
     from clients where portal_token_hash = ${tokenHash} limit 1
   `
   return legacy[0] ?? null
@@ -175,6 +215,14 @@ export async function listWorkspaceSections(clientId: string): Promise<SectionRe
   `
 }
 
+export async function getClientOnboardingType(clientId: string): Promise<OnboardingType | null> {
+  const sql = getDatabase()
+  const rows = await sql<{ onboardingType: OnboardingType }[]>`
+    select onboarding_type as "onboardingType" from clients where id = ${clientId} limit 1
+  `
+  return rows[0]?.onboardingType ?? null
+}
+
 export async function getWorkspaceSection(clientId: string, key: WorkspaceSectionKey) {
   const sections = await listWorkspaceSections(clientId)
   return sections.find((section) => section.key === key) ?? null
@@ -185,8 +233,8 @@ export async function getClientWorkspace(
   options: { visibleOnly?: boolean } = {},
 ): Promise<ClientWorkspaceResponse | null> {
   const sql = getDatabase()
-  const clients = await sql<{ displayName: string }[]>`
-    select display_name as "displayName" from clients where id = ${clientId} limit 1
+  const clients = await sql<{ displayName: string; onboardingType: OnboardingType }[]>`
+    select display_name as "displayName", onboarding_type as "onboardingType" from clients where id = ${clientId} limit 1
   `
   const client = clients[0]
   if (!client) return null
@@ -197,7 +245,10 @@ export async function getClientWorkspace(
     listAssets(clientId),
     listWorkspaceSections(clientId),
   ])
-  const sections = sectionRecords
+  const relevantSectionRecords = client.onboardingType === 'meta_ads'
+    ? sectionRecords.filter((section) => section.key !== 'discovery_2')
+    : sectionRecords
+  const sections = relevantSectionRecords
     .filter((section) => !options.visibleOnly || section.clientVisible)
     .map<WorkspaceSection>((section) => ({
       ...section,
@@ -221,7 +272,7 @@ export async function getClientWorkspace(
   const coreValue = core && safeCoreAnswers && (!options.visibleOnly || visibleKeys.has('core')) ? {
     answers: safeCoreAnswers,
     currentStep: core.currentStep,
-    progress: progressForStatus(coreProgress(safeCoreAnswers), core.status),
+    progress: progressForStatus(coreProgress(safeCoreAnswers, client.onboardingType), core.status),
     revision: core.revision,
     status: core.status,
     updatedAt: core.updatedAt.toISOString(),
@@ -264,6 +315,7 @@ export async function getClientWorkspace(
   return {
     assets,
     clientLabel: client.displayName,
+    onboardingType: client.onboardingType,
     core: coreValue,
     discovery2: discoveryValue,
     overallProgress: progressValues.length

@@ -1,6 +1,7 @@
 import { checkRateLimit, createOnboardingProject, listOnboardingProjects } from '@/lib/onboarding/db'
 import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { apiError, getClientIp, privateJson, readSmallJson } from '@/lib/onboarding/http'
+import { onboardingTypes, type OnboardingType } from '@/lib/onboarding/types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -45,11 +46,19 @@ export async function POST(request: Request) {
     }
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const clientLabel = typeof body.clientLabel === 'string' ? body.clientLabel.trim().slice(0, 200) : ''
+    const onboardingType = body.onboardingType === undefined
+      ? 'landing_page'
+      : typeof body.onboardingType === 'string' && onboardingTypes.includes(body.onboardingType as OnboardingType)
+        ? body.onboardingType as OnboardingType
+        : null
     if (!clientLabel) {
       return privateJson({ error: 'Napíšte názov klienta alebo projektu.' }, { status: 422 })
     }
+    if (!onboardingType) {
+      return privateJson({ error: 'Vyberte typ projektu.' }, { status: 422 })
+    }
 
-    const project = await createOnboardingProject(clientLabel)
+    const project = await createOnboardingProject(clientLabel, onboardingType)
     const requestOrigin = new URL(request.url).origin
     const siteUrl = (process.env.SITE_URL || requestOrigin).replace(/\/$/, '')
     return privateJson({
@@ -59,6 +68,7 @@ export async function POST(request: Request) {
         currentStep: 1,
         id: project.id,
         lastActivityAt: project.createdAt.toISOString(),
+        onboardingType,
         status: 'not_started',
         submittedAt: null,
       },
