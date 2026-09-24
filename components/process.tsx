@@ -17,7 +17,6 @@ const steps = [
       'Pripravím ukážku kľúčovej časti riešenia — napríklad úvodnú sekciu webu, časť e-shopu alebo hlavnú obrazovku aplikácie.',
     emphasis:
       'Nejde o celý projekt zadarmo, ale o ukážku, na ktorej uvidíte môj prístup, vizuálny smer a potenciál výsledku.',
-    quote: '„Áno, presne takto som si to predstavoval.“',
   },
   {
     number: '03',
@@ -78,11 +77,6 @@ export function Process() {
                   <p className="mt-2 text-sm font-semibold leading-relaxed text-foreground">
                     {step.emphasis}
                   </p>
-                  {step.quote ? (
-                    <p className="mt-3 border-l-2 border-brand/35 pl-3 text-sm italic leading-relaxed text-brand">
-                      {step.quote}
-                    </p>
-                  ) : null}
                 </div>
               </li>
             ))}

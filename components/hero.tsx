@@ -64,34 +64,32 @@ export function Hero() {
 
         {/* Right */}
         <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
-          <figcaption className="pointer-events-none absolute right-[2%] top-1 z-10 hidden -rotate-2 items-end gap-2 text-muted-foreground/80 xl:flex">
+          <figcaption className="pointer-events-none absolute left-[18%] top-1 z-10 hidden -rotate-2 items-center gap-3 text-muted-foreground/80 xl:flex">
+            <span className="font-display w-40 text-sm italic leading-snug">
+              AI platforma
+              <br />
+              na správu sociálnych sietí.
+            </span>
             <svg
-              className="mb-0.5 h-16 w-20 shrink-0 overflow-visible text-brand/65"
+              className="mt-2 h-16 w-20 shrink-0 overflow-visible text-brand/65"
               viewBox="0 0 80 64"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M76 7C53 10 52 27 45 40C38 52 28 57 10 57"
+                d="M4 7C28 9 29 27 37 40C45 52 57 57 76 57"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
               <path
-                d="M19 50L9 57L20 62"
+                d="M67 50L77 57L66 62"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="font-display w-44 text-sm italic leading-snug">
-              AI platforma
-              <br />
-              na správu
-              <br />
-              sociálnych sietí.
-            </span>
           </figcaption>
 
           <Image
@@ -120,7 +118,7 @@ export function Hero() {
 
           <div
             aria-hidden="true"
-            className="mt-6 ml-2 hidden -translate-y-6 -rotate-4 items-end gap-3 text-muted-foreground/75 xl:flex"
+            className="mt-5 ml-16 hidden -translate-y-2 -rotate-2 items-center gap-3 text-muted-foreground/75 xl:flex"
           >
             <span className="font-display text-sm italic leading-snug">
               Staré spôsoby
@@ -128,8 +126,8 @@ export function Hero() {
               nechaj za sebou.
             </span>
             <svg className="h-10 w-24 text-brand/65" viewBox="0 0 96 40" fill="none">
-              <path d="M2 31C28 31 54 24 86 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M76 7L88 9L81 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M2 7C29 7 58 14 87 30" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M79 21L89 31L76 34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
