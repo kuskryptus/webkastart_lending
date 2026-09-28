@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { BriefcaseBusiness } from 'lucide-react'
 import { ProjectCarousel } from '@/components/project-carousel'
 import { ProjectVisual, type ProjectShowcase } from '@/components/project-visual'
@@ -178,9 +179,19 @@ export function Projects() {
   return (
     <section
       id="projekty"
-      className="mx-auto max-w-6xl px-5 pb-16 pt-14 sm:px-6 lg:pb-20 lg:pt-20"
+      className="projects-paper-surface relative isolate mx-auto max-w-6xl px-5 pb-16 pt-14 sm:px-6 lg:pb-20 lg:pt-20"
     >
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <Image
+        src="/torn-paper-edge.png"
+        alt=""
+        width={2172}
+        height={724}
+        loading="eager"
+        sizes="(max-width: 1023px) 210vw, 100vw"
+        className="projects-paper-edge pointer-events-none absolute z-0 h-auto max-w-none select-none"
+      />
+
+      <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
           <h2 className="font-display flex max-w-3xl items-center gap-3 text-pretty text-[clamp(2.25rem,6vw,3rem)] font-bold leading-[1.05] tracking-[-0.04em]">
             <BriefcaseBusiness className="size-7 shrink-0 text-brand sm:size-8" aria-hidden="true" />
@@ -189,7 +200,9 @@ export function Projects() {
         </div>
       </div>
 
-      <ProjectCarousel projects={projects} />
+      <div className="relative z-10">
+        <ProjectCarousel projects={projects} />
+      </div>
     </section>
   )
 }

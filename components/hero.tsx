@@ -63,33 +63,17 @@ export function Hero() {
         </div>
 
         {/* Right */}
-        <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:translate-y-6 xl:w-[112%] xl:-translate-x-4">
-          <figcaption className="pointer-events-none absolute left-[18%] top-1 z-10 hidden -rotate-2 items-center gap-3 text-muted-foreground/80 xl:flex">
-            <span className="font-display w-40 text-sm italic leading-snug">
-              AI platforma
-              <br />
-              na správu sociálnych sietí.
+        <figure className="relative mx-auto flex w-[90vw] max-w-[840px] flex-col lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block lg:w-full lg:-translate-y-20 xl:w-[112%] 2xl:-translate-x-16">
+          <figcaption className="pointer-events-none absolute left-full top-[6.7rem] z-10 ml-3 hidden w-[10.5rem] 2xl:block">
+            <span className="block border-l border-brand/60 pl-3">
+              <span className="block font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-brand">
+                [ 01 · AI PLATFORM ]
+              </span>
+              <span className="mt-1.5 flex items-center gap-2 text-[13px] font-medium tracking-[-0.01em] text-foreground/80">
+                <span className="size-1 bg-brand" aria-hidden="true" />
+                Správa sociálnych sietí
+              </span>
             </span>
-            <svg
-              className="mt-2 h-16 w-20 shrink-0 overflow-visible text-brand/65"
-              viewBox="0 0 80 64"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 7C28 9 29 27 37 40C45 52 57 57 76 57"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-              <path
-                d="M67 50L77 57L66 62"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
           </figcaption>
 
           <Image
@@ -99,7 +83,7 @@ export function Hero() {
             height={960}
             priority
             sizes="(max-width: 1023px) 90vw, (min-width: 1280px) 700px, 52vw"
-            className="order-1 h-auto w-full object-contain drop-shadow-[0_20px_24px_rgb(24_23_22_/_13%)] lg:mt-20"
+            className="order-1 h-auto w-full object-contain lg:mx-auto lg:mt-20 lg:w-[96%] lg:-translate-y-3"
           />
         </figure>
 
@@ -116,20 +100,6 @@ export function Hero() {
             ))}
           </dl>
 
-          <div
-            aria-hidden="true"
-            className="mt-5 ml-16 hidden -translate-y-2 -rotate-2 items-center gap-3 text-muted-foreground/75 xl:flex"
-          >
-            <span className="font-display text-sm italic leading-snug">
-              Staré spôsoby
-              <br />
-              nechaj za sebou.
-            </span>
-            <svg className="h-10 w-24 text-brand/65" viewBox="0 0 96 40" fill="none">
-              <path d="M2 7C29 7 58 14 87 30" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <path d="M79 21L89 31L76 34" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
         </div>
       </div>
     </section>

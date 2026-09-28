@@ -98,8 +98,8 @@ export function SiteHeader() {
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-6 lg:py-6">
-          <Logo className="-ml-1 xl:ml-15" />
+        <div className="mx-auto flex max-w-[75rem] items-center justify-between px-5 py-5 sm:px-6 lg:py-6">
+          <Logo className="-ml-1" />
 
           <nav
             aria-label="Hlavná navigácia"
