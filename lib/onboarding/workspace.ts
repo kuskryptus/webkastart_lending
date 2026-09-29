@@ -10,12 +10,13 @@ import type {
   OnboardingAnswers,
   OnboardingStatus,
   OnboardingType,
+  PageStructure,
   WorkspaceProgress,
   WorkspaceSection,
   WorkspaceSectionKey,
 } from './types'
 import { workspaceSectionKeys } from './types'
-import { sanitizeAnswers } from './validation'
+import { sanitizeAnswers, sanitizePageStructure } from './validation'
 import { clientIdFromPermanentPortalToken } from './portal-token'
 import { createAssetShareToken } from './asset-share'
 
@@ -31,6 +32,7 @@ type SectionRecord = {
   clientVisible: boolean
   clientEditable: boolean
   content: string
+  revision: number
   updatedAt: Date
 }
 
@@ -205,11 +207,12 @@ export async function listWorkspaceSections(clientId: string): Promise<SectionRe
       client_visible as "clientVisible",
       client_editable as "clientEditable",
       content,
+      revision::int as revision,
       updated_at as "updatedAt"
     from client_workspace_sections
     where client_id = ${clientId}
     order by array_position(
-      array['core', 'discovery_2', 'files', 'deliverables', 'creative_strategy', 'creative_directions', 'internal_notes'],
+      array['core', 'discovery_2', 'files', 'page_structure', 'deliverables', 'creative_strategy', 'creative_directions', 'internal_notes'],
       section_key
     )
   `
@@ -246,13 +249,15 @@ export async function getClientWorkspace(
     listWorkspaceSections(clientId),
   ])
   const relevantSectionRecords = client.onboardingType === 'meta_ads'
-    ? sectionRecords.filter((section) => section.key !== 'discovery_2')
+    ? sectionRecords.filter((section) => section.key !== 'discovery_2' && section.key !== 'page_structure')
     : sectionRecords
   const sections = relevantSectionRecords
     .filter((section) => !options.visibleOnly || section.clientVisible)
     .map<WorkspaceSection>((section) => ({
-      ...section,
-      content: options.visibleOnly && section.key === 'internal_notes' ? '' : section.content,
+      key: section.key,
+      clientVisible: section.clientVisible,
+      clientEditable: section.clientEditable,
+      content: section.key === 'page_structure' || (options.visibleOnly && section.key === 'internal_notes') ? '' : section.content,
       updatedAt: section.updatedAt.toISOString(),
     }))
   const visibleKeys = new Set(sections.map((section) => section.key))
@@ -261,13 +266,33 @@ export async function getClientWorkspace(
     .filter((asset) => !options.visibleOnly || asset.clientVisible)
     .filter((asset) => !options.visibleOnly || (
       (asset.category === 'deliverable' && visibleKeys.has('deliverables'))
-      || ((asset.category || 'source') === 'source' && visibleKeys.has('files'))
+      || ((asset.category || 'source') === 'source' && (visibleKeys.has('files') || visibleKeys.has('page_structure')))
     ))
     .map((asset) => ({
       ...asset,
       createdAt: new Date(asset.createdAt).toISOString(),
       shareToken: asset.mimeType.startsWith('image/') ? createAssetShareToken(asset.id) || undefined : undefined,
     }))
+  const pageStructureRecord = relevantSectionRecords.find((section) => section.key === 'page_structure')
+  let parsedPageStructure: PageStructure = { sections: [] }
+  if (pageStructureRecord) {
+    try {
+      parsedPageStructure = sanitizePageStructure(JSON.parse(pageStructureRecord.content || '{}'))
+    } catch {
+      parsedPageStructure = { sections: [] }
+    }
+  }
+  const availableAssetIds = new Set(assets.map((asset) => asset.id))
+  const pageStructure = pageStructureRecord && visibleKeys.has('page_structure') ? {
+    data: {
+      sections: parsedPageStructure.sections.map((section) => ({
+        ...section,
+        photos: section.photos.filter((photo) => availableAssetIds.has(photo.assetId)),
+      })),
+    },
+    revision: pageStructureRecord.revision,
+    updatedAt: pageStructureRecord.updatedAt.toISOString(),
+  } : null
   const safeCoreAnswers = core ? sanitizeAnswers(core.answers) : null
   const coreValue = core && safeCoreAnswers && (!options.visibleOnly || visibleKeys.has('core')) ? {
     answers: safeCoreAnswers,
@@ -306,6 +331,7 @@ export async function getClientWorkspace(
     if (section.key === 'core' && coreValue) return [coreValue.progress.percentage]
     if (section.key === 'discovery_2' && discoveryValue) return [discoveryValue.progress.percentage]
     if (section.key === 'files') return [assets.some((asset) => (asset.category || 'source') === 'source') ? 100 : 0]
+    if (section.key === 'page_structure') return [pageStructure?.data.sections.length ? 100 : 0]
     if (section.key === 'creative_strategy' || section.key === 'creative_directions') {
       return [section.content.trim() ? 100 : 0]
     }
@@ -318,6 +344,7 @@ export async function getClientWorkspace(
     onboardingType: client.onboardingType,
     core: coreValue,
     discovery2: discoveryValue,
+    pageStructure,
     overallProgress: progressValues.length
       ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)
       : 0,
@@ -392,6 +419,46 @@ export async function saveDiscoveryVersioned(options: {
   return rows[0]
 }
 
+export async function savePageStructureVersioned(options: {
+  clientId: string
+  revision: number
+  structure: unknown
+}) {
+  const sanitized = sanitizePageStructure(options.structure)
+  const availableAssets = await listAssets(options.clientId)
+  const allowedAssetIds = new Set(
+    availableAssets
+      .filter((asset) => (asset.category || 'source') === 'source')
+      .filter((asset) => asset.mimeType.startsWith('image/'))
+      .filter((asset) => asset.clientVisible === true)
+      .map((asset) => asset.id),
+  )
+  const structure: PageStructure = {
+    sections: sanitized.sections.map((section) => ({
+      ...section,
+      photos: section.photos.filter((photo) => allowedAssetIds.has(photo.assetId)),
+    })),
+  }
+  const sql = getDatabase()
+  const rows = await sql.begin(async (transaction) => {
+    const updated = await transaction<{ revision: number; updatedAt: Date }[]>`
+      update client_workspace_sections
+      set
+        content = ${JSON.stringify(structure)},
+        revision = revision + 1,
+        updated_at = now()
+      where client_id = ${options.clientId}
+        and section_key = 'page_structure'
+        and revision = ${options.revision}
+      returning revision::int as revision, updated_at as "updatedAt"
+    `
+    if (updated[0]) await transaction`update clients set updated_at = now() where id = ${options.clientId}`
+    return updated
+  }) as { revision: number; updatedAt: Date }[]
+  if (!rows[0]) throw new WorkspaceConflictError()
+  return { ...rows[0], structure }
+}
+
 export async function updateWorkspaceSection(options: {
   clientEditable: boolean
   clientId: string
@@ -408,7 +475,10 @@ export async function updateWorkspaceSection(options: {
       set
         client_visible = ${clientVisible},
         client_editable = ${clientEditable},
-        content = ${options.content.slice(0, 50_000)},
+        content = case
+          when section_key = 'page_structure' then content
+          else ${options.content.slice(0, 50_000)}
+        end,
         updated_at = now()
       where client_id = ${options.clientId} and section_key = ${options.key}
     `

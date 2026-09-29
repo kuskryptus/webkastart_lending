@@ -11,6 +11,7 @@ import {
   progressForStatus,
   saveCoreVersioned,
   saveDiscoveryVersioned,
+  savePageStructureVersioned,
   updateWorkspaceSection,
   WorkspaceConflictError,
 } from '@/lib/onboarding/workspace'
@@ -63,6 +64,18 @@ export async function PATCH(request: Request, { params }: Context) {
     const revision = Number(body.revision)
     if (!Number.isSafeInteger(revision) || revision < 1) {
       return privateJson({ error: 'Chýba verzia údajov. Obnovte stránku.' }, { status: 422 })
+    }
+    if (sectionKey === 'page_structure') {
+      const saved = await savePageStructureVersioned({
+        clientId,
+        revision,
+        structure: body.structure,
+      })
+      return privateJson({
+        revision: saved.revision,
+        savedAt: saved.updatedAt.toISOString(),
+        structure: saved.structure,
+      })
     }
     if (sectionKey === 'core') {
       const onboardingType = await getClientOnboardingType(clientId)

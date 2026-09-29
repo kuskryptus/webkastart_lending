@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CheckCircle2, ChevronDown, Cloud, CloudOff, Download, FileText, Images, ListChecks, Loader2, LockKeyhole } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Cloud, CloudOff, Download, FileText, Images, LayoutTemplate, ListChecks, Loader2, LockKeyhole } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { AutoSaveNotice, CampaignMaterialsChecklist, SourceMaterialsChecklist } from './onboarding-guidance'
 import { UploadField } from './upload-field'
+import { PageStructureEditor } from './page-structure-editor'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields, MetaAdsWorkspaceFields } from './workspace-form-fields'
 import { ShareLinkButton, sharedAssetPath } from './share-link-button'
 import type { AssetCategory, ClientWorkspaceResponse, OnboardingAsset, WorkspaceProgress, WorkspaceSectionKey } from '@/lib/onboarding/types'
@@ -13,6 +14,7 @@ const sectionCopy: Record<WorkspaceSectionKey, { title: string; description: str
   core: { title: 'O vás a vašom podnikaní', description: 'Základné informácie pre váš web a spoluprácu.' },
   discovery_2: { title: 'Doplňujúce otázky', description: 'Podrobnosti o ponuke, zákazníkoch a objednávkach.' },
   files: { title: 'Nahrať fotografie a podklady', description: 'Logá, fotografie, dokumenty a ďalšie materiály pre váš web.' },
+  page_structure: { title: 'Štruktúra stránky', description: 'Poradie sekcií, ich obsah a fotografie, ktoré do nich patria.' },
   deliverables: { title: 'Súbory na stiahnutie', description: 'Hotové prezentácie, fotografie a dokumenty, ktoré sme pre vás pripravili.' },
   creative_strategy: { title: 'Kreatívna stratégia', description: 'Strategické smerovanie pripravené pre váš projekt.' },
   creative_directions: { title: 'Kreatívne smery a schválenia', description: 'Kreatívne smery a návrhy zdieľané na kontrolu.' },
@@ -31,6 +33,7 @@ function refreshOverallProgress(workspace: ClientWorkspaceResponse) {
     if (section.key === 'core' && workspace.core) return [workspace.core.progress.percentage]
     if (section.key === 'discovery_2' && workspace.discovery2) return [workspace.discovery2.progress.percentage]
     if (section.key === 'files') return [workspace.assets.some((asset) => (asset.category || 'source') === 'source') ? 100 : 0]
+    if (section.key === 'page_structure') return [workspace.pageStructure?.data.sections.length ? 100 : 0]
     if (section.key === 'creative_strategy' || section.key === 'creative_directions') return [section.content.trim() ? 100 : 0]
     return []
   })
@@ -66,23 +69,31 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
   const [workspace, setWorkspace] = useState(initialWorkspace)
   const [coreSave, setCoreSave] = useState<SaveState>('idle')
   const [discoverySave, setDiscoverySave] = useState<SaveState>('idle')
+  const [pageStructureSave, setPageStructureSave] = useState<SaveState>('idle')
   const [coreConflict, setCoreConflict] = useState(false)
   const [discoveryConflict, setDiscoveryConflict] = useState(false)
+  const [pageStructureConflict, setPageStructureConflict] = useState(false)
   const [coreChange, setCoreChange] = useState(0)
   const [discoveryChange, setDiscoveryChange] = useState(0)
+  const [pageStructureChange, setPageStructureChange] = useState(0)
   const coreRevisionRef = useRef(initialWorkspace.core?.revision ?? 1)
   const discoveryRevisionRef = useRef(initialWorkspace.discovery2?.revision ?? 1)
+  const pageStructureRevisionRef = useRef(initialWorkspace.pageStructure?.revision ?? 1)
   const coreQueueRef = useRef<Promise<void>>(Promise.resolve())
   const discoveryQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const pageStructureQueueRef = useRef<Promise<void>>(Promise.resolve())
   const coreSequenceRef = useRef(0)
   const discoverySequenceRef = useRef(0)
+  const pageStructureSequenceRef = useRef(0)
 
   const coreEditable = workspace.sections.find((section) => section.key === 'core')?.clientEditable === true
   const discoveryEditable = workspace.sections.find((section) => section.key === 'discovery_2')?.clientEditable === true
+  const pageStructureEditable = workspace.sections.find((section) => section.key === 'page_structure')?.clientEditable === true
   const coreAnswers = workspace.core?.answers
   const coreCurrentStep = workspace.core?.currentStep
   const discoveryAnswers = workspace.discovery2?.answers
   const discoveryCurrentStep = workspace.discovery2?.currentStep
+  const pageStructureData = workspace.pageStructure?.data
   const sourceAssets = workspace.assets.filter((asset) => (asset.category || 'source') === 'source')
   const deliverableAssets = workspace.assets.filter((asset) => asset.category === 'deliverable')
   const visibleSections = new Set(workspace.sections.map((section) => section.key))
@@ -153,6 +164,37 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
   }, [discoveryAnswers, discoveryChange, discoveryConflict, discoveryCurrentStep, discoveryEditable, token])
 
   useEffect(() => {
+    if (!pageStructureChange || !pageStructureData || !pageStructureEditable || pageStructureConflict) return
+    const structure = pageStructureData
+    const timeout = window.setTimeout(() => {
+      const sequence = pageStructureSequenceRef.current
+      setPageStructureSave('saving')
+      pageStructureQueueRef.current = pageStructureQueueRef.current.then(async () => {
+        const response = await fetch(`/api/portal/${token}`, {
+          body: JSON.stringify({ revision: pageStructureRevisionRef.current, sectionKey: 'page_structure', structure }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH',
+        })
+        if (!response.ok) {
+          if (sequence === pageStructureSequenceRef.current) setPageStructureSave(response.status === 409 ? 'conflict' : 'error')
+          if (response.status === 409) setPageStructureConflict(true)
+          throw new Error(await responseError(response))
+        }
+        const saved = await response.json() as { revision: number; savedAt: string }
+        pageStructureRevisionRef.current = saved.revision
+        setWorkspace((current) => refreshOverallProgress({
+          ...current,
+          pageStructure: current.pageStructure
+            ? { ...current.pageStructure, revision: saved.revision, updatedAt: saved.savedAt }
+            : null,
+        }))
+        if (sequence === pageStructureSequenceRef.current) setPageStructureSave('saved')
+      }).catch(() => undefined)
+    }, 600)
+    return () => window.clearTimeout(timeout)
+  }, [pageStructureChange, pageStructureConflict, pageStructureData, pageStructureEditable, token])
+
+  useEffect(() => {
     const retry = () => {
       if (coreChange && coreEditable && coreSave === 'error' && !coreConflict) {
         coreSequenceRef.current += 1
@@ -164,10 +206,15 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
         setDiscoverySave('saving')
         setDiscoveryChange((value) => value + 1)
       }
+      if (pageStructureChange && pageStructureEditable && pageStructureSave === 'error' && !pageStructureConflict) {
+        pageStructureSequenceRef.current += 1
+        setPageStructureSave('saving')
+        setPageStructureChange((value) => value + 1)
+      }
     }
     window.addEventListener('online', retry)
     return () => window.removeEventListener('online', retry)
-  }, [coreChange, coreConflict, coreEditable, coreSave, discoveryChange, discoveryConflict, discoveryEditable, discoverySave])
+  }, [coreChange, coreConflict, coreEditable, coreSave, discoveryChange, discoveryConflict, discoveryEditable, discoverySave, pageStructureChange, pageStructureConflict, pageStructureEditable, pageStructureSave])
 
   return (
     <main className="min-h-dvh bg-background">
@@ -182,6 +229,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
         <nav aria-label="Rýchle odkazy" className="-mx-1 mt-7 flex gap-2 overflow-x-auto px-1 pb-1">
           {visibleSections.has('core') && <a href="#core" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><ListChecks className="size-4" /> Formulár</a>}
           {visibleSections.has('files') && <a href="#files" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><Images className="size-4" /> {isMetaAds ? 'Nahrať podklady' : 'Nahrať fotky'}</a>}
+          {visibleSections.has('page_structure') && <a href="#page_structure" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><LayoutTemplate className="size-4" /> Štruktúra stránky</a>}
           {visibleSections.has('deliverables') && <a href="#deliverables" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><Download className="size-4" /> Súbory na stiahnutie</a>}
         </nav>
         <div className="mt-9 flex items-center gap-5 border-y border-border/70 py-5">
@@ -202,7 +250,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
               <details
                 key={section.key}
                 id={section.key}
-                open={index === 0 || fixedOpen}
+                open={index === 0 || fixedOpen || section.key === 'page_structure'}
                 onToggle={(event) => {
                   if (fixedOpen && !event.currentTarget.open) event.currentTarget.open = true
                 }}
@@ -215,16 +263,17 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
                   className={`flex list-none items-center gap-4 py-6 marker:hidden ${fixedOpen ? 'cursor-default' : 'cursor-pointer'}`}
                 >
                   <span className="min-w-0 flex-1"><span className="block text-lg font-semibold tracking-[-0.025em]">{copy.title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{copy.description}</span></span>
-                  {section.key === 'deliverables' ? <span className="shrink-0 text-xs font-semibold text-muted-foreground">{deliverableAssets.length || '—'}</span> : <ProgressLabel progress={progress} />}
+                  {section.key === 'deliverables' ? <span className="shrink-0 text-xs font-semibold text-muted-foreground">{deliverableAssets.length || '—'}</span> : section.key === 'page_structure' ? <span className="shrink-0 text-xs font-semibold text-muted-foreground">{workspace.pageStructure?.data.sections.length ? `${workspace.pageStructure.data.sections.length} sekcií` : 'Začať'}</span> : <ProgressLabel progress={progress} />}
                   {!fixedOpen && <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />}
                 </summary>
                 <div className="pb-10 pt-3">
                   {section.key === 'core' && workspace.core && <><div className="mb-6 flex justify-end"><SaveIndicator state={coreSave} /></div>{isMetaAds ? <MetaAdsWorkspaceFields actor="client" answers={workspace.core.answers} disabled={!section.clientEditable || coreConflict} onChange={(answers) => { setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current); coreSequenceRef.current += 1; setCoreSave('saving'); setCoreChange((value) => value + 1) }} /> : <CoreWorkspaceFields actor="client" answers={workspace.core.answers} assets={sourceAssets} disabled={!section.clientEditable || coreConflict} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} onChange={(answers) => { setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current); coreSequenceRef.current += 1; setCoreSave('saving'); setCoreChange((value) => value + 1) }} />}</>}
                   {section.key === 'discovery_2' && workspace.discovery2 && <><div className="mb-6 flex justify-end"><SaveIndicator state={discoverySave} /></div><DiscoveryWorkspaceFields answers={workspace.discovery2.answers} disabled={!section.clientEditable || discoveryConflict} onChange={(answers) => { setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current); discoverySequenceRef.current += 1; setDiscoverySave('saving'); setDiscoveryChange((value) => value + 1) }} /></>}
                   {section.key === 'files' && (section.clientEditable ? <>{isMetaAds ? <CampaignMaterialsChecklist /> : <SourceMaterialsChecklist />}<div className="mt-8"><UploadField apiBasePath={`/api/portal/${token}/uploads`} assets={sourceAssets} canDeleteAsset={(asset) => asset.uploadedBy === 'client'} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: true, uploadedBy: 'client' }} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} totalAssetCount={workspace.assets.length} /></div></> : sourceAssets.length ? <ul className="divide-y divide-border/70">{sourceAssets.map((asset) => <li key={asset.id} className="flex items-center gap-3 py-3 text-sm"><FileText className="size-4 text-muted-foreground" /><a className="min-w-0 flex-1 truncate font-medium hover:text-brand hover:underline" href={sharedAssetPath(asset) || `/api/portal/${token}/uploads/${asset.id}`} target="_blank" rel="noreferrer">{asset.name}</a><ShareLinkButton asset={asset} /></li>)}</ul> : <p className="text-sm text-muted-foreground">Zatiaľ neboli nahrané žiadne podklady.</p>)}
+                  {section.key === 'page_structure' && workspace.pageStructure && <><div className="mb-6 flex justify-end"><SaveIndicator state={pageStructureSave} /></div><PageStructureEditor assets={sourceAssets} disabled={!section.clientEditable || pageStructureConflict} getAssetUrl={(asset) => `/api/portal/${token}/uploads/${asset.id}`} structure={workspace.pageStructure.data} onChange={(structure) => { setWorkspace((current) => current.pageStructure ? refreshOverallProgress({ ...current, pageStructure: { ...current.pageStructure, data: structure } }) : current); pageStructureSequenceRef.current += 1; setPageStructureSave('saving'); setPageStructureChange((value) => value + 1) }} /></>}
                   {section.key === 'deliverables' && (deliverableAssets.length ? <ul className="divide-y divide-border/70">{deliverableAssets.map((asset) => <li key={asset.id} className="flex items-center gap-3 py-4"><span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand"><Download className="size-4" /></span><span className="min-w-0 flex-1"><a className="block truncate text-sm font-semibold hover:text-brand hover:underline" href={sharedAssetPath(asset) || `/api/portal/${token}/uploads/${asset.id}`} target="_blank" rel="noreferrer">{asset.name}</a><span className="mt-1 block text-xs text-muted-foreground">{formatBytes(Number(asset.size))} · pripravené {new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}</span></span><ShareLinkButton asset={asset} /><a aria-label={`Stiahnuť ${asset.name}`} className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary hover:text-brand" href={`/api/portal/${token}/uploads/${asset.id}`}><Download className="size-4" /></a></li>)}</ul> : <p className="text-sm leading-6 text-muted-foreground">Keď pre vás pripravíme hotové súbory, nájdete ich na stiahnutie práve tu.</p>)}
                   {(section.key === 'creative_strategy' || section.key === 'creative_directions') && <div className="whitespace-pre-wrap text-sm leading-7">{section.content || 'Obsah zatiaľ nebol pridaný.'}</div>}
-                  {(coreConflict || discoveryConflict) && <button type="button" onClick={() => window.location.reload()} className="mt-6 text-sm font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
+                  {(coreConflict || discoveryConflict || pageStructureConflict) && <button type="button" onClick={() => window.location.reload()} className="mt-6 text-sm font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
                 </div>
               </details>
             )

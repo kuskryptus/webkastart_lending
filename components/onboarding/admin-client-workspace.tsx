@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, Loader2, RefreshCw } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { AdminPrefillSection } from './admin-prefill-section'
+import { PageStructureEditor } from './page-structure-editor'
 import { UploadField } from './upload-field'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields, MetaAdsWorkspaceFields } from './workspace-form-fields'
 import { stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
@@ -14,6 +15,7 @@ const sectionTitle: Record<WorkspaceSectionKey, string> = {
   core: 'Základný formulár',
   discovery_2: 'Doplňujúce otázky',
   files: 'Podklady od klienta',
+  page_structure: 'Štruktúra stránky',
   deliverables: 'Súbory pre klienta',
   creative_strategy: 'Kreatívna stratégia',
   creative_directions: 'Kreatívne smery',
@@ -74,24 +76,31 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const [workspace, setWorkspace] = useState(initialWorkspace)
   const [coreState, setCoreState] = useState('')
   const [discoveryState, setDiscoveryState] = useState('')
+  const [pageStructureState, setPageStructureState] = useState('')
   const [coreConflict, setCoreConflict] = useState(false)
   const [discoveryConflict, setDiscoveryConflict] = useState(false)
+  const [pageStructureConflict, setPageStructureConflict] = useState(false)
   const [coreChange, setCoreChange] = useState(0)
   const [discoveryChange, setDiscoveryChange] = useState(0)
+  const [pageStructureChange, setPageStructureChange] = useState(0)
   const [sectionStates, setSectionStates] = useState<Partial<Record<WorkspaceSectionKey, string>>>({})
   const [aiExportState, setAiExportState] = useState<'idle' | 'copied' | 'error'>('idle')
   const [aiExportPreview, setAiExportPreview] = useState('')
   const aiExportRef = useRef<HTMLTextAreaElement>(null)
   const coreRevisionRef = useRef(initialWorkspace.core?.revision ?? 1)
   const discoveryRevisionRef = useRef(initialWorkspace.discovery2?.revision ?? 1)
+  const pageStructureRevisionRef = useRef(initialWorkspace.pageStructure?.revision ?? 1)
   const coreMetadataRef = useRef(initialWorkspace.core?.answers.fieldMetadata ?? {})
   const pendingPrefillFieldsRef = useRef<Map<PrefillFieldKey, number>>(new Map())
   const coreQueueRef = useRef<Promise<void>>(Promise.resolve())
   const discoveryQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const pageStructureQueueRef = useRef<Promise<void>>(Promise.resolve())
   const coreSequenceRef = useRef(0)
   const discoverySequenceRef = useRef(0)
+  const pageStructureSequenceRef = useRef(0)
   const coreConflictRef = useRef(false)
   const discoveryConflictRef = useRef(false)
+  const pageStructureConflictRef = useRef(false)
   const sectionQueueRef = useRef<Promise<void>>(Promise.resolve())
   const sectionTimeoutsRef = useRef<Partial<Record<WorkspaceSectionKey, number>>>({})
   const sectionSequencesRef = useRef<Partial<Record<WorkspaceSectionKey, number>>>({})
@@ -100,6 +109,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const coreCurrentStep = workspace.core?.currentStep
   const discoveryAnswers = workspace.discovery2?.answers
   const discoveryCurrentStep = workspace.discovery2?.currentStep
+  const pageStructureData = workspace.pageStructure?.data
   const isMetaAds = workspace.onboardingType === 'meta_ads'
   const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : 'Landing page'
   const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[key]
@@ -194,6 +204,40 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     return () => window.clearTimeout(timeout)
   }, [clientId, discoveryAnswers, discoveryChange, discoveryConflict, discoveryCurrentStep])
 
+  useEffect(() => {
+    if (!pageStructureChange || !pageStructureData || pageStructureConflict) return
+    const structure = pageStructureData
+    const timeout = window.setTimeout(() => {
+      const sequence = pageStructureSequenceRef.current
+      setPageStructureState('Ukladám…')
+      pageStructureQueueRef.current = pageStructureQueueRef.current.then(async () => {
+        if (pageStructureConflictRef.current) return
+        const response = await fetch(`/api/onboarding/admin/clients/${clientId}/workspace`, {
+          body: JSON.stringify({ revision: pageStructureRevisionRef.current, sectionKey: 'page_structure', structure }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH',
+        })
+        if (!response.ok) {
+          const message = await errorMessage(response)
+          if (response.status === 409) {
+            pageStructureConflictRef.current = true
+            setPageStructureConflict(true)
+          }
+          if (sequence === pageStructureSequenceRef.current) setPageStructureState(message)
+          throw new Error(message)
+        }
+        const saved = await response.json() as { revision: number; savedAt: string }
+        pageStructureRevisionRef.current = saved.revision
+        setWorkspace((current) => current.pageStructure ? {
+          ...current,
+          pageStructure: { ...current.pageStructure, revision: saved.revision, updatedAt: saved.savedAt },
+        } : current)
+        if (sequence === pageStructureSequenceRef.current) setPageStructureState('Uložené')
+      }).catch(() => undefined)
+    }, 600)
+    return () => window.clearTimeout(timeout)
+  }, [clientId, pageStructureChange, pageStructureConflict, pageStructureData])
+
   useEffect(() => () => {
     for (const timeout of Object.values(sectionTimeoutsRef.current)) {
       if (timeout !== undefined) window.clearTimeout(timeout)
@@ -212,10 +256,15 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
         setDiscoveryState('Ukladám…')
         setDiscoveryChange((value) => value + 1)
       }
+      if (pageStructureChange && pageStructureState && pageStructureState !== 'Ukladám…' && pageStructureState !== 'Uložené' && !pageStructureConflict) {
+        pageStructureSequenceRef.current += 1
+        setPageStructureState('Ukladám…')
+        setPageStructureChange((value) => value + 1)
+      }
     }
     window.addEventListener('online', retry)
     return () => window.removeEventListener('online', retry)
-  }, [coreChange, coreConflict, coreState, discoveryChange, discoveryConflict, discoveryState])
+  }, [coreChange, coreConflict, coreState, discoveryChange, discoveryConflict, discoveryState, pageStructureChange, pageStructureConflict, pageStructureState])
 
   function aiJson() {
     return stringifyAiClientBrief(workspace)
@@ -352,7 +401,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
 
         <section id="overview" className="scroll-mt-24 py-12 sm:py-16">
           <h2 className="text-2xl font-semibold tracking-[-0.035em]">Prehľad</h2>
-          <dl className={`mt-8 grid gap-8 sm:grid-cols-2 ${isMetaAds ? 'lg:grid-cols-3' : 'lg:grid-cols-4'}`}><div><dt className="text-xs font-medium text-muted-foreground">{isMetaAds ? 'Kampaňový formulár' : 'Základný formulár'}</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div>{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div>}<div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
+          <dl className={`mt-8 grid gap-8 sm:grid-cols-2 ${isMetaAds ? 'lg:grid-cols-3' : 'lg:grid-cols-5'}`}><div><dt className="text-xs font-medium text-muted-foreground">{isMetaAds ? 'Kampaňový formulár' : 'Základný formulár'}</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div>{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div>}{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Štruktúra stránky</dt><dd className="mt-2 text-sm font-semibold">{workspace.pageStructure?.data.sections.length || 0} sekcií</dd></div>}<div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
         </section>
 
         {workspace.sections.map((section) => (
@@ -426,6 +475,22 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                 )}
               </div>
               <UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={sourceAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} />
+            </div>}
+            {section.key === 'page_structure' && workspace.pageStructure && <div className="mt-10">
+              <div className="mb-6 flex justify-end"><AutosaveIndicator message={pageStructureState} /></div>
+              <PageStructureEditor
+                assets={sourceAssets}
+                disabled={pageStructureConflict}
+                getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`}
+                structure={workspace.pageStructure.data}
+                onChange={(structure) => {
+                  setWorkspace((current) => current.pageStructure ? { ...current, pageStructure: { ...current.pageStructure, data: structure } } : current)
+                  pageStructureSequenceRef.current += 1
+                  setPageStructureState('Ukladám…')
+                  setPageStructureChange((value) => value + 1)
+                }}
+              />
+              {pageStructureConflict && <button type="button" onClick={() => window.location.reload()} className="mt-6 text-sm font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
             </div>}
             {section.key === 'deliverables' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Nahrajte sem hotové prezentácie, fotografie alebo dokumenty. Nové súbory klient ihneď uvidí vo svojej sekcii na stiahnutie.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={deliverableAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'deliverable', clientVisible: true, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('deliverable', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}
             {(section.key === 'creative_strategy' || section.key === 'creative_directions' || section.key === 'internal_notes') && <label className="mt-9 block"><span className="text-sm font-semibold">Obsah sekcie</span><textarea value={section.content} onChange={(event) => updateSection({ ...section, content: event.target.value })} className="mt-3 min-h-52 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-4 text-sm leading-7 outline-none focus:border-brand" placeholder={section.key === 'internal_notes' ? 'Interné poznámky — klient ich nikdy neuvidí.' : 'Pridajte obsah, ktorý bude možné podľa nastavenia viditeľnosti zdieľať s klientom.'} /></label>}

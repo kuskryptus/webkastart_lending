@@ -102,6 +102,7 @@ try {
           (${clientId}, 'core', true, true),
           (${clientId}, 'discovery_2', true, true),
           (${clientId}, 'files', true, true),
+          (${clientId}, 'page_structure', true, true),
           (${clientId}, 'deliverables', true, false),
           (${clientId}, 'creative_strategy', false, false),
           (${clientId}, 'creative_directions', false, false),

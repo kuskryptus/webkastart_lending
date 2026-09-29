@@ -11,6 +11,7 @@ import {
   progressForStatus,
   saveCoreVersioned,
   saveDiscoveryVersioned,
+  savePageStructureVersioned,
   WorkspaceConflictError,
 } from '@/lib/onboarding/workspace'
 
@@ -46,7 +47,7 @@ export async function PATCH(request: Request, { params }: Context) {
     }
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const sectionKey = body.sectionKey
-    if (sectionKey !== 'core' && sectionKey !== 'discovery_2') {
+    if (sectionKey !== 'core' && sectionKey !== 'discovery_2' && sectionKey !== 'page_structure') {
       return privateJson({ error: 'Túto sekciu nie je možné upraviť.' }, { status: 422 })
     }
     const permission = await getWorkspaceSection(result.client.id, sectionKey)
@@ -56,6 +57,19 @@ export async function PATCH(request: Request, { params }: Context) {
     const revision = Number(body.revision)
     if (!Number.isSafeInteger(revision) || revision < 1) {
       return privateJson({ error: 'Chýba verzia uložených údajov. Obnovte stránku.' }, { status: 422 })
+    }
+
+    if (sectionKey === 'page_structure') {
+      const saved = await savePageStructureVersioned({
+        clientId: result.client.id,
+        revision,
+        structure: body.structure,
+      })
+      return privateJson({
+        revision: saved.revision,
+        savedAt: saved.updatedAt.toISOString(),
+        structure: saved.structure,
+      })
     }
 
     if (sectionKey === 'core') {

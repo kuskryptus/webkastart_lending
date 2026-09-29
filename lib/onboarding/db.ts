@@ -57,6 +57,7 @@ export async function createOnboardingProject(clientLabel: string, onboardingTyp
         (${clientId}, 'core', true, true),
         (${clientId}, 'discovery_2', ${onboardingType === 'landing_page'}, ${onboardingType === 'landing_page'}),
         (${clientId}, 'files', true, true),
+        (${clientId}, 'page_structure', ${onboardingType === 'landing_page'}, ${onboardingType === 'landing_page'}),
         (${clientId}, 'deliverables', true, false),
         (${clientId}, 'creative_strategy', false, false),
         (${clientId}, 'creative_directions', false, false),

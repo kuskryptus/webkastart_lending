@@ -81,7 +81,9 @@ and pnpm.
   Migration 007 separates client source materials from admin deliverables,
   migration 008 adds comments anchored to shared images, and migration 010 adds
   a reversible resolved state to those comments. Migration 011 categorizes each
-  client onboarding as a landing page or Meta advertising campaign.
+  client onboarding as a landing page or Meta advertising campaign. Migration 012
+  adds the shared, versioned page-structure editor stored in the corresponding
+  workspace section; photo references always point to existing source assets.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -124,6 +126,10 @@ and pnpm.
 - Core, Discovery, and workspace-section edits auto-save in both the admin workspace
   and client portal. Debounce rapid input, serialize writes, and keep a visible save
   state; do not reintroduce a required manual save step.
+- The landing-page workspace structure is shared by admin and client. Preserve its
+  order, section descriptions, item lists, per-section photo assignments and photo
+  descriptions. Only uploaded, client-visible source images owned by that client may
+  be referenced.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
   values remain in their original answer fields. Reconcile client metadata
   server-side and never trust client-supplied source labels.

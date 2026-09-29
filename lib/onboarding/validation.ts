@@ -5,6 +5,7 @@ import {
   type Discovery2Answers,
   type AnswerFieldMetadata,
   type OnboardingAnswers,
+  type PageStructure,
   type ProductPriceItem,
 } from './types'
 
@@ -12,6 +13,9 @@ export const ONBOARDING_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[A-Za-z0-9_-]{48}
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024
 export const MAX_UPLOAD_FILES = 100
 export const MAX_REPRESENTATIVE_PHOTOS = 5
+export const MAX_PAGE_STRUCTURE_SECTIONS = 30
+export const MAX_PAGE_STRUCTURE_ITEMS = 20
+export const MAX_PAGE_STRUCTURE_PHOTOS = 20
 export const MULTIPART_UPLOAD_THRESHOLD_BYTES = 64 * 1024 * 1024
 export const MULTIPART_UPLOAD_PART_BYTES = 16 * 1024 * 1024
 
@@ -92,6 +96,39 @@ function object(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
+}
+
+export function sanitizePageStructure(input: unknown): PageStructure {
+  const source = object(input)
+  const rawSections = Array.isArray(source.sections) ? source.sections : []
+  const sectionIds = new Set<string>()
+
+  return {
+    sections: rawSections.slice(0, MAX_PAGE_STRUCTURE_SECTIONS).flatMap((item) => {
+      const section = object(item)
+      const id = text(section.id, 64)
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(id) || sectionIds.has(id)) return []
+      sectionIds.add(id)
+
+      const rawPhotos = Array.isArray(section.photos) ? section.photos : []
+      const assetIds = new Set<string>()
+      const photos = rawPhotos.slice(0, MAX_PAGE_STRUCTURE_PHOTOS).flatMap((photoValue) => {
+        const photo = object(photoValue)
+        const assetId = text(photo.assetId, 64)
+        if (!/^[0-9a-f-]{36}$/i.test(assetId) || assetIds.has(assetId)) return []
+        assetIds.add(assetId)
+        return [{ assetId, description: text(photo.description, 1000) }]
+      })
+
+      return [{
+        id,
+        title: text(section.title, 160),
+        description: text(section.description, 4000),
+        items: list(section.items, MAX_PAGE_STRUCTURE_ITEMS, 300),
+        photos,
+      }]
+    }),
+  }
 }
 
 function fieldMetadata(value: unknown): OnboardingAnswers['fieldMetadata'] {

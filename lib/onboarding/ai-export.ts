@@ -248,6 +248,7 @@ const workspaceSectionTitles: Record<WorkspaceSectionKey, string> = {
   core: 'Základný formulár',
   discovery_2: 'Doplňujúce otázky',
   files: 'Súbory a fotografie',
+  page_structure: 'Štruktúra stránky',
   deliverables: 'Súbory pre klienta',
   creative_strategy: 'Kreatívna stratégia',
   creative_directions: 'Kreatívne smery',
@@ -284,7 +285,7 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
 
   return {
     format: 'webkastart_ai_client_brief',
-    version: 1,
+    version: 2,
     language: 'sk',
     project: {
       name: workspace.clientLabel,
@@ -293,6 +294,22 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
     },
     forms,
     answer_metadata: core?.answers.fieldMetadata || {},
+    page_structure: workspace.pageStructure ? {
+      revision: workspace.pageStructure.revision,
+      updated_at: workspace.pageStructure.updatedAt,
+      sections: workspace.pageStructure.data.sections.map((section, index) => ({
+        order: index + 1,
+        id: section.id,
+        title: section.title,
+        description: section.description,
+        items: section.items,
+        photos: section.photos.map((photo) => ({
+          asset_id: photo.assetId,
+          filename: workspace.assets.find((asset) => asset.id === photo.assetId)?.name || null,
+          description: photo.description,
+        })),
+      })),
+    } : null,
     workspace_sections: workspace.sections.map((section) => ({
       id: section.key,
       title: workspaceSectionTitles[section.key],

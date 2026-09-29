@@ -25,8 +25,18 @@ export async function GET(request: Request, { params }: Context) {
     `
     const asset = rows[0]
     if (!asset) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
-    const permission = await getWorkspaceSection(auth.client.id, asset.category === 'deliverable' ? 'deliverables' : 'files')
-    if (!permission?.clientVisible) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
+    if (asset.category === 'deliverable') {
+      const permission = await getWorkspaceSection(auth.client.id, 'deliverables')
+      if (!permission?.clientVisible) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
+    } else {
+      const [filesPermission, structurePermission] = await Promise.all([
+        getWorkspaceSection(auth.client.id, 'files'),
+        getWorkspaceSection(auth.client.id, 'page_structure'),
+      ])
+      if (!filesPermission?.clientVisible && !structurePermission?.clientVisible) {
+        return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
+      }
+    }
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
     const url = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
     return privateRedirect(url)

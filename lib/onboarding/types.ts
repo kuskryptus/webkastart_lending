@@ -189,10 +189,30 @@ export type OnboardingAsset = {
   clientVisible?: boolean
 }
 
+export type PageStructurePhoto = {
+  assetId: string
+  description: string
+}
+
+export type PageStructureSection = {
+  id: string
+  title: string
+  description: string
+  items: string[]
+  photos: PageStructurePhoto[]
+}
+
+export type PageStructure = {
+  sections: PageStructureSection[]
+}
+
+export const emptyPageStructure: PageStructure = { sections: [] }
+
 export const workspaceSectionKeys = [
   'core',
   'discovery_2',
   'files',
+  'page_structure',
   'deliverables',
   'creative_strategy',
   'creative_directions',
@@ -235,6 +255,11 @@ export type ClientWorkspaceResponse = {
     progress: WorkspaceProgress
     revision: number
     status: OnboardingStatus
+    updatedAt: string
+  } | null
+  pageStructure: {
+    data: PageStructure
+    revision: number
     updatedAt: string
   } | null
   assets: OnboardingAsset[]
