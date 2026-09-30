@@ -632,6 +632,8 @@ export function OnboardingWizard({
                   <ChoiceGrid options={communicationOptions} selected={answers.contact.preferredMethods} onChange={(preferredMethods) => updateClientField({ ...answers, contact: { ...answers.contact, preferredMethods } }, 'contact.preferredMethods')} />
                   <OtherAnswer show={answers.contact.preferredMethods.includes('Iné')} label="Iný spôsob kontaktu" value={answers.contact.preferredMethod} onChange={(preferredMethod) => setAnswers({ ...answers, contact: { ...answers.contact, preferredMethod } })} />
                 </QuickQuestion>
+                <TextArea label="Adresa podnikania / prevádzky" hint="Nepovinné" value={answers.business.address} maxLength={1000} onChange={(event) => setAnswers({ ...answers, business: { ...answers.business, address: event.target.value } })} placeholder="Ulica, číslo, PSČ a mesto" />
+                <TextArea label="Otváracie hodiny" hint="Nepovinné" value={answers.business.openingHours} maxLength={2000} onChange={(event) => setAnswers({ ...answers, business: { ...answers.business, openingHours: event.target.value } })} placeholder="Napr. Po–Pi 8:00–17:00, So 9:00–12:00" />
                 <details className="group py-1">
                   <summary className="cursor-pointer list-none text-sm font-semibold text-foreground marker:hidden"><span className="inline-flex items-center gap-2"><Plus className="size-4 transition-transform group-open:rotate-45" /> Pridať fakturačné údaje <span className="font-normal text-muted-foreground">(nepovinné)</span></span></summary>
                   <div className="mt-7 space-y-8 pl-6">

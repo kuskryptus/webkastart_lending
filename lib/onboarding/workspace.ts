@@ -134,6 +134,8 @@ export function coreProgress(answers: OnboardingAnswers, onboardingType: Onboard
     answers.contact.phone,
     answers.contact.preferredMethods,
     answers.contact.preferredMethod,
+    answers.business.address,
+    answers.business.openingHours,
     answers.billing.companyName,
     answers.billing.companyId,
     answers.billing.taxId,

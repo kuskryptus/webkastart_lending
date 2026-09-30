@@ -74,8 +74,10 @@ export type OnboardingAnswers = {
     displayName: string
   }
   business: {
+    address: string
     area: string
     description: string
+    openingHours: string
   }
   projectType: string
   socialPlatforms: string[]
@@ -290,7 +292,7 @@ export type Discovery2Response = {
 export const emptyOnboardingAnswers: OnboardingAnswers = {
   fieldMetadata: {},
   client: { displayName: '' },
-  business: { area: '', description: '' },
+  business: { address: '', area: '', description: '', openingHours: '' },
   projectType: '',
   socialPlatforms: [''],
   targetAudienceSelections: [],

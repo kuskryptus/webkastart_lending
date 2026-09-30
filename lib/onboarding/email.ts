@@ -112,6 +112,8 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Telefón', answers.contact.phone],
         ['Ideálny kontakt zákazníka', answers.contact.preferredMethods],
         ['Preferovaný kontakt', answers.contact.preferredMethod],
+        ['Adresa podnikania / prevádzky', answers.business.address],
+        ['Otváracie hodiny', answers.business.openingHours],
       ],
     },
     {

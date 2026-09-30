@@ -52,6 +52,8 @@ export const implementationFieldGroups = [
   { key: 'core.contact_email', sectionId: 'contact', title: 'Kontaktný e-mail', responseKeys: ['contact_email'] },
   { key: 'core.contact_phone', sectionId: 'contact', title: 'Kontaktný telefón', responseKeys: ['contact_phone'] },
   { key: 'core.preferred_contacts', sectionId: 'contact', title: 'Preferované kontaktné možnosti', responseKeys: ['preferred_contacts', 'preferred_contact'] },
+  { key: 'core.business_address', sectionId: 'contact', title: 'Adresa podnikania / prevádzky', responseKeys: ['business_address'] },
+  { key: 'core.opening_hours', sectionId: 'contact', title: 'Otváracie hodiny', responseKeys: ['opening_hours'] },
   { key: 'core.billing_company_name', sectionId: 'billing', title: 'Fakturačný názov', responseKeys: ['company_name'] },
   { key: 'core.billing_company_id', sectionId: 'billing', title: 'IČO', responseKeys: ['company_id'] },
   { key: 'core.billing_tax_id', sectionId: 'billing', title: 'DIČ', responseKeys: ['tax_id'] },

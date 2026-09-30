@@ -186,6 +186,7 @@ export function OnboardingProjectDetail({ answers, assets, discovery, project }:
             <Answer label="Kontaktná osoba">{answers.contact.name}</Answer><Answer label="Ideálny kontakt zákazníka"><SelectionList values={[...answers.contact.preferredMethods, ...(answers.contact.preferredMethod ? [answers.contact.preferredMethod] : [])]} /></Answer>
             <Answer label="E-mail">{answers.contact.email ? <a href={`mailto:${answers.contact.email}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Mail className="size-3.5" />{answers.contact.email}</a> : ''}</Answer>
             <Answer label="Telefón">{answers.contact.phone ? <a href={`tel:${answers.contact.phone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center gap-1.5 font-medium text-brand hover:underline"><Phone className="size-3.5" />{answers.contact.phone}</a> : ''}</Answer>
+            <Answer label="Adresa podnikania / prevádzky">{answers.business.address}</Answer><Answer label="Otváracie hodiny">{answers.business.openingHours}</Answer>
             <Answer label="Fakturačný názov">{answers.billing.companyName}</Answer><Answer label="IČO / DIČ / IČ DPH">{[answers.billing.companyId, answers.billing.taxId, answers.billing.vatId].filter(Boolean).join(' · ')}</Answer>
             <div className="sm:col-span-2"><Answer label="Fakturačná adresa">{answers.billing.address}</Answer></div><div className="sm:col-span-2"><Answer label="Dôležité informácie navyše">{answers.additionalNotes}</Answer></div>
           </CoreStep>

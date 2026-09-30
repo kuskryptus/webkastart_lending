@@ -232,6 +232,8 @@ function coreSections(answers: OnboardingAnswers) {
         response('contact_phone', 'Telefón', answers.contact.phone),
         response('preferred_contacts', 'Preferované spôsoby kontaktu zákazníkov', answers.contact.preferredMethods),
         response('preferred_contact', 'Preferovaný spôsob kontaktu', answers.contact.preferredMethod),
+        response('business_address', 'Adresa podnikania / prevádzky', answers.business.address),
+        response('opening_hours', 'Otváracie hodiny', answers.business.openingHours),
       ],
     },
     {

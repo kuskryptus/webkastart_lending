@@ -186,8 +186,10 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     fieldMetadata: fieldMetadata(source.fieldMetadata),
     client: { displayName: text(client.displayName, 160) },
     business: {
+      address: text(business.address, 1000),
       area: text(business.area, 500),
       description: text(business.description, 3000),
+      openingHours: text(business.openingHours, 2000),
     },
     projectType: text(source.projectType, 100),
     socialPlatforms: list(source.socialPlatforms, 8, 40),
