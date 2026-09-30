@@ -1,7 +1,7 @@
 import { findSharedAsset } from '@/lib/onboarding/asset-share'
 import { checkRateLimit } from '@/lib/onboarding/db'
 import { apiError, getClientIp, privateJson, privateRedirect } from '@/lib/onboarding/http'
-import { createDownloadUrl } from '@/lib/onboarding/storage'
+import { createAssetReadUrl } from '@/lib/onboarding/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -21,8 +21,16 @@ export async function GET(request: Request, { params }: Context) {
     })
     if (!allowed) return privateJson({ error: 'Príliš veľa požiadaviek.' }, { status: 429 })
 
-    const download = new URL(request.url).searchParams.get('download') === '1'
-    const url = await createDownloadUrl(asset.objectKey, asset.name, download ? 'attachment' : 'inline')
+    const searchParams = new URL(request.url).searchParams
+    const download = searchParams.get('download') === '1'
+    const preview = !download && searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
+    const url = await createAssetReadUrl({
+      disposition: download ? 'attachment' : 'inline',
+      key: asset.objectKey,
+      mimeType: asset.mimeType,
+      originalName: asset.name,
+      preview,
+    })
     return privateRedirect(url)
   } catch (error) {
     return apiError(error)

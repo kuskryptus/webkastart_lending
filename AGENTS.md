@@ -97,6 +97,8 @@ and pnpm.
 - Uploads stay private, keep original bytes, use UUID object keys, and use
   short-lived signed URLs. Files above 64 MB use resumable S3 multipart upload;
   the server validates type, size, part completeness, count, and signature.
+  Common browser image previews use lazily generated private 1280 px WebP
+  derivatives at `<storage_key>.preview.webp`; downloads always use the original.
   The upload picker accepts arbitrary file formats; known common extensions are
   normalized to a canonical MIME type and unknown formats use their valid browser
   MIME type or `application/octet-stream`. Never expose pending assets as uploaded.

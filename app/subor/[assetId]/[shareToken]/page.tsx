@@ -63,7 +63,7 @@ export default async function SharedFilePage({
           <SharedImageReview
             alt={asset.name}
             commentsUrl={commentsUrl}
-            imageUrl={contentUrl}
+            imageUrl={`${contentUrl}?preview=1`}
             initialComments={comments}
           />
         ) : (

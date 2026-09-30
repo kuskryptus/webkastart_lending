@@ -5,32 +5,31 @@ import { SectionLabel } from '@/components/section-label'
 const steps = [
   {
     number: '01',
-    title: 'Pochopíme, čo potrebujete',
+    title: 'Vyplníte formulár podľa projektu',
     description:
-      'Krátko si prejdeme váš cieľ, zákazníkov a to, čo má nový web, e-shop alebo rozhranie priniesť.',
-    emphasis: 'Bez zdĺhavých workshopov. Len to podstatné.',
+      'Zobrazia sa vám len otázky, ktoré potrebujem na pochopenie vášho podnikania, zákazníkov, cieľa a podkladov.',
+    emphasis: 'Vyplníte ho vlastným tempom a odpovede sa priebežne ukladajú.',
   },
   {
     number: '02',
-    title: 'Ukážem vám smer',
+    title: 'Dostanete zhrnutie a návrh riešenia',
     description:
-      'Pripravím ukážku kľúčovej časti riešenia — napríklad úvodnú sekciu webu, časť e-shopu alebo hlavnú obrazovku aplikácie.',
-    emphasis:
-      'Nejde o celý projekt zadarmo, ale o ukážku, na ktorej uvidíte môj prístup, vizuálny smer a potenciál výsledku.',
+      'Vaše odpovede premením na prehľadnú rekapituláciu cieľa, potrieb a odporúčaného riešenia. Spoločne ju prejdeme a doplníme, čo chýba.',
+    emphasis: 'Najprv si potvrdíme, že riešime správny problém.',
   },
   {
     number: '03',
-    title: 'Až potom sa rozhodnete',
+    title: 'Dohodneme rozsah a cenu',
     description:
-      'Ak vám navrhnutý smer dáva zmysel, odsúhlasíme rozsah, cenu a pustíme sa do kompletnej realizácie.',
-    emphasis: 'Viete, do čoho idete ešte predtým, než sa zaviažete k celému projektu.',
+      'Keď je cieľ aj riešenie jasné, stanovím potrebné kroky a odhad práce. Odsúhlasíme rozsah, cenu a ďalší postup.',
+    emphasis: 'Vopred viete, čo sa bude robiť a s akým rozpočtom počítať.',
   },
   {
     number: '04',
-    title: 'Dotiahneme to do výsledku',
+    title: 'Pustím sa do realizácie',
     description:
-      'Schválený smer rozpracujem do kompletného riešenia, doladím detaily a pripravím všetko na spustenie.',
-    emphasis: 'Menej neistoty. Menej zbytočných revízií. Jasný smer od začiatku.',
+      'Schválené riešenie navrhnem, vytvorím a otestujem. Výsledok spolu skontrolujeme, doladíme a pripravíme na spustenie.',
+    emphasis: 'Jasné zadanie od začiatku znamená menej nejasností a zbytočných úprav.',
   },
 ]
 
@@ -42,18 +41,18 @@ export function Process() {
           <div className="lg:pt-1">
             <SectionLabel>Ako prebieha spolupráca</SectionLabel>
             <h2 className="font-display mt-4 max-w-xl text-pretty text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-              Najprv uvidíte smer. Potom sa rozhodnete.
+              Najprv si ujasníme cieľ. Potom sa pustím do práce.
             </h2>
             <p className="mt-5 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground">
-              Nemusíte schváliť projekt len na základe predstavy. Najskôr vám ukážem, ako by
-              mohlo vaše riešenie vyzerať a fungovať.
+              Jednoduchý formulár, jasná rekapitulácia a dohodnutý postup. Od začiatku viete,
+              čo odo mňa dostanete a čo bude nasledovať.
             </p>
 
             <ContactFormLink
-              message="Dobrý deň, mám záujem vidieť prvý návrh pre môj projekt. Potrebujem vyriešiť: "
+              message="Dobrý deň, mám záujem prebrať svoj projekt a ďalší postup. Potrebujem vyriešiť: "
               className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 sm:w-auto"
             >
-              Chcem vidieť prvý návrh
+              Chcem prebrať svoj projekt
               <ArrowRight className="size-4" aria-hidden="true" />
             </ContactFormLink>
           </div>

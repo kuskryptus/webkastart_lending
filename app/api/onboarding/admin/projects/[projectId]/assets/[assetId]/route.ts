@@ -1,4 +1,4 @@
-import { createDownloadUrl } from '@/lib/onboarding/storage'
+import { createAssetReadUrl } from '@/lib/onboarding/storage'
 import { getDatabase } from '@/lib/onboarding/db'
 import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { apiError, privateJson, privateRedirect } from '@/lib/onboarding/http'
@@ -31,7 +31,13 @@ export async function GET(request: Request, { params }: Context) {
     if (!asset) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
 
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
-    const downloadUrl = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
+    const downloadUrl = await createAssetReadUrl({
+      disposition: preview ? 'inline' : 'attachment',
+      key: asset.objectKey,
+      mimeType: asset.mimeType,
+      originalName: asset.name,
+      preview,
+    })
     return privateRedirect(downloadUrl)
   } catch (error) {
     return apiError(error)

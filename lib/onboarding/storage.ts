@@ -10,12 +10,27 @@ import {
   ListPartsCommand,
   PutObjectCommand,
   S3Client,
+  S3ServiceException,
   UploadPartCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { PassThrough, Readable } from 'node:stream'
+import sharp from 'sharp'
 
 let storage: S3Client | undefined
+
+const IMAGE_PREVIEW_MAX_DIMENSION = 1280
+const IMAGE_PREVIEW_QUALITY = 72
+const MAX_CONCURRENT_PREVIEW_GENERATIONS = 2
+const previewableMimeTypes = new Set([
+  'image/avif',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+])
+const previewGenerationTasks = new Map<string, Promise<string>>()
+const previewGenerationQueue: Array<() => void> = []
+let activePreviewGenerations = 0
 
 export class StorageConfigurationError extends Error {
   readonly missingVariables: string[]
@@ -65,6 +80,92 @@ function getStorage() {
     },
   })
   return { bucket: config.bucket, client: storage }
+}
+
+function previewObjectKey(key: string) {
+  return `${key}.preview.webp`
+}
+
+function isMissingObject(error: unknown) {
+  if (error instanceof S3ServiceException && error.$metadata.httpStatusCode === 404) return true
+  if (!error || typeof error !== 'object') return false
+  const value = error as { $metadata?: { httpStatusCode?: number }; name?: string }
+  return value.$metadata?.httpStatusCode === 404 || value.name === 'NotFound' || value.name === 'NoSuchKey'
+}
+
+async function withPreviewGenerationSlot<T>(generate: () => Promise<T>) {
+  if (activePreviewGenerations >= MAX_CONCURRENT_PREVIEW_GENERATIONS) {
+    await new Promise<void>((resolve) => previewGenerationQueue.push(resolve))
+  } else {
+    activePreviewGenerations += 1
+  }
+  try {
+    return await generate()
+  } finally {
+    const next = previewGenerationQueue.shift()
+    if (next) next()
+    else activePreviewGenerations -= 1
+  }
+}
+
+export function canCreateImagePreview(mimeType: string) {
+  return previewableMimeTypes.has(mimeType)
+}
+
+async function generateImagePreview(key: string, previewKey: string) {
+  const { bucket, client } = getStorage()
+  const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+  if (!(result.Body instanceof Readable)) throw new Error('Storage did not return a readable image body')
+
+  const transformer = sharp({
+    failOn: 'error',
+    limitInputPixels: 80_000_000,
+    sequentialRead: true,
+  })
+    .rotate()
+    .resize({
+      fit: 'inside',
+      height: IMAGE_PREVIEW_MAX_DIMENSION,
+      width: IMAGE_PREVIEW_MAX_DIMENSION,
+      withoutEnlargement: true,
+    })
+    .webp({ effort: 4, quality: IMAGE_PREVIEW_QUALITY, smartSubsample: true })
+
+  result.Body.on('error', (error) => transformer.destroy(error))
+  result.Body.pipe(transformer)
+  const body = await transformer.toBuffer()
+
+  await client.send(new PutObjectCommand({
+    Body: body,
+    Bucket: bucket,
+    CacheControl: 'private, max-age=31536000, immutable',
+    ContentType: 'image/webp',
+    Key: previewKey,
+  }))
+}
+
+export async function ensureImagePreview(key: string) {
+  const existingTask = previewGenerationTasks.get(key)
+  if (existingTask) return existingTask
+
+  const task = withPreviewGenerationSlot(async () => {
+    const { bucket, client } = getStorage()
+    const previewKey = previewObjectKey(key)
+    try {
+      await client.send(new HeadObjectCommand({ Bucket: bucket, Key: previewKey }))
+    } catch (error) {
+      if (!isMissingObject(error)) throw error
+      await generateImagePreview(key, previewKey)
+    }
+    return previewKey
+  })
+
+  previewGenerationTasks.set(key, task)
+  try {
+    return await task
+  } finally {
+    if (previewGenerationTasks.get(key) === task) previewGenerationTasks.delete(key)
+  }
 }
 
 class LazyObjectReadStream extends PassThrough {
@@ -207,6 +308,29 @@ export async function createDownloadUrl(
   return getSignedUrl(client, command, { expiresIn: 5 * 60 })
 }
 
+export async function createAssetReadUrl(options: {
+  disposition: 'attachment' | 'inline'
+  key: string
+  mimeType: string
+  originalName: string
+  preview: boolean
+}) {
+  if (options.preview && canCreateImagePreview(options.mimeType)) {
+    try {
+      const previewKey = await ensureImagePreview(options.key)
+      return createDownloadUrl(previewKey, `${options.originalName}.webp`, 'inline')
+    } catch (error) {
+      console.error(`[onboarding:image-preview] Náhľad pre ${options.key} sa nepodarilo vytvoriť.`, error)
+    }
+  }
+
+  return createDownloadUrl(
+    options.key,
+    options.originalName,
+    options.disposition,
+  )
+}
+
 function matchesFileSignature(bytes: Uint8Array, mimeType: string) {
   const startsWith = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte)
   const headerText = new TextDecoder('utf-8', { fatal: false }).decode(bytes).replace(/^\uFEFF/, '').trimStart()
@@ -276,5 +400,8 @@ export async function verifyUploadedObject(key: string, expectedMimeType: string
 
 export async function deleteUploadedObject(key: string) {
   const { bucket, client } = getStorage()
-  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+  await Promise.all([
+    client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key })),
+    client.send(new DeleteObjectCommand({ Bucket: bucket, Key: previewObjectKey(key) })),
+  ])
 }

@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { ArrowDown, ArrowUp, ImageIcon, Plus, Trash2, X } from 'lucide-react'
-import { useState } from 'react'
+import { ArrowDown, ArrowUp, GripVertical, ImageIcon, Plus, Trash2, X } from 'lucide-react'
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { OnboardingAsset, PageStructure, PageStructureSection } from '@/lib/onboarding/types'
 import {
   MAX_PAGE_STRUCTURE_ITEMS,
@@ -11,6 +11,12 @@ import {
 } from '@/lib/onboarding/validation'
 
 const previewableImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif'])
+
+type ItemDragState = {
+  sectionId: string
+  sourceIndex: number
+  targetIndex: number
+}
 
 function PhotoPreview({ asset, getAssetUrl }: {
   asset: OnboardingAsset
@@ -46,6 +52,9 @@ export function PageStructureEditor({
   structure: PageStructure
 }) {
   const [photoPickerSectionId, setPhotoPickerSectionId] = useState<string | null>(null)
+  const [itemDrag, setItemDrag] = useState<ItemDragState | null>(null)
+  const [itemMoveMessage, setItemMoveMessage] = useState('')
+  const itemDragRef = useRef<ItemDragState | null>(null)
   const imageAssets = assets.filter((asset) => asset.status === 'uploaded' && asset.mimeType.startsWith('image/'))
   const assetById = new Map(imageAssets.map((asset) => [asset.id, asset]))
 
@@ -89,8 +98,65 @@ export function PageStructureEditor({
     if (photoPickerSectionId === section.id) setPhotoPickerSectionId(null)
   }
 
+  function reorderItem(section: PageStructureSection, sourceIndex: number, targetIndex: number) {
+    if (disabled || sourceIndex === targetIndex || targetIndex < 0 || targetIndex >= section.items.length) return
+    const items = [...section.items]
+    const [moved] = items.splice(sourceIndex, 1)
+    if (moved === undefined) return
+    items.splice(targetIndex, 0, moved)
+    replaceSection(section.id, { ...section, items })
+    setItemMoveMessage(`Bod ${sourceIndex + 1} bol presunutý na pozíciu ${targetIndex + 1}.`)
+  }
+
+  function focusItemHandle(sectionId: string, itemIndex: number) {
+    window.requestAnimationFrame(() => {
+      const handle = [...document.querySelectorAll<HTMLButtonElement>('[data-page-structure-item-handle]')]
+        .find((element) => element.dataset.sectionId === sectionId && Number(element.dataset.itemIndex) === itemIndex)
+      handle?.focus()
+    })
+  }
+
+  function startItemDrag(event: ReactPointerEvent<HTMLButtonElement>, sectionId: string, sourceIndex: number) {
+    if (disabled) return
+    const nextDrag = { sectionId, sourceIndex, targetIndex: sourceIndex }
+    event.currentTarget.setPointerCapture(event.pointerId)
+    itemDragRef.current = nextDrag
+    setItemDrag(nextDrag)
+  }
+
+  function updateItemDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    const currentDrag = itemDragRef.current
+    if (!currentDrag) return
+    const targetRow = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-page-structure-item]')
+    if (!targetRow || targetRow.dataset.sectionId !== currentDrag.sectionId) return
+    const targetIndex = Number(targetRow.dataset.itemIndex)
+    if (!Number.isInteger(targetIndex) || targetIndex === currentDrag.targetIndex) return
+    const nextDrag = { ...currentDrag, targetIndex }
+    itemDragRef.current = nextDrag
+    setItemDrag(nextDrag)
+  }
+
+  function finishItemDrag(event: ReactPointerEvent<HTMLButtonElement>, section: PageStructureSection) {
+    const finishedDrag = itemDragRef.current
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+    itemDragRef.current = null
+    setItemDrag(null)
+    if (!finishedDrag || finishedDrag.sectionId !== section.id) return
+    reorderItem(section, finishedDrag.sourceIndex, finishedDrag.targetIndex)
+    if (finishedDrag.sourceIndex !== finishedDrag.targetIndex) {
+      focusItemHandle(section.id, finishedDrag.targetIndex)
+    }
+  }
+
+  function cancelItemDrag(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+    itemDragRef.current = null
+    setItemDrag(null)
+  }
+
   return (
     <div>
+      <span className="sr-only" aria-live="polite">{itemMoveMessage}</span>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           Zoraďte časti webu tak, ako majú ísť za sebou. Ku každej sekcii môžete doplniť obsah,
@@ -184,9 +250,40 @@ export function PageStructureEditor({
                         )}
                       </div>
                       {section.items.length > 0 && (
-                        <ul className="mt-4 space-y-2">
+                        <ul className="mt-4 space-y-1">
                           {section.items.map((item, itemIndex) => (
-                            <li key={`${section.id}-item-${itemIndex}`} className="flex items-center gap-3">
+                            <li
+                              key={`${section.id}-item-${itemIndex}`}
+                              data-page-structure-item
+                              data-section-id={section.id}
+                              data-item-index={itemIndex}
+                              className={`-mx-2 flex items-center gap-2 rounded-lg px-2 transition-colors ${itemDrag?.sectionId === section.id && itemDrag.targetIndex === itemIndex ? 'bg-brand-soft' : ''}`}
+                            >
+                              {!disabled && (
+                                <button
+                                  type="button"
+                                  data-page-structure-item-handle
+                                  data-section-id={section.id}
+                                  data-item-index={itemIndex}
+                                  onPointerDown={(event) => startItemDrag(event, section.id, itemIndex)}
+                                  onPointerMove={updateItemDrag}
+                                  onPointerUp={(event) => finishItemDrag(event, section)}
+                                  onPointerCancel={cancelItemDrag}
+                                  onKeyDown={(event) => {
+                                    const direction = event.key === 'ArrowUp' ? -1 : event.key === 'ArrowDown' ? 1 : 0
+                                    if (!direction) return
+                                    event.preventDefault()
+                                    const targetIndex = itemIndex + direction
+                                    reorderItem(section, itemIndex, targetIndex)
+                                    if (targetIndex >= 0 && targetIndex < section.items.length) focusItemHandle(section.id, targetIndex)
+                                  }}
+                                  aria-label={`Presunúť bod ${itemIndex + 1}. Potiahnite alebo použite šípky hore a dole.`}
+                                  title="Potiahnutím zmeňte poradie"
+                                  className={`grid size-8 shrink-0 touch-none place-items-center rounded-md text-muted-foreground transition-colors hover:bg-white hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand ${itemDrag?.sectionId === section.id && itemDrag.sourceIndex === itemIndex ? 'cursor-grabbing text-brand' : 'cursor-grab'}`}
+                                >
+                                  <GripVertical className="size-4" />
+                                </button>
+                              )}
                               <span className="size-1.5 shrink-0 rounded-full bg-brand" />
                               <input
                                 value={item}

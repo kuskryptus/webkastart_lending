@@ -1,7 +1,7 @@
 import { checkRateLimit, findOnboardingByToken, getDatabase } from '@/lib/onboarding/db'
 import { apiError, getClientIp, isValidToken, privateJson, privateRedirect } from '@/lib/onboarding/http'
 import { removeAsset } from '@/lib/onboarding/assets'
-import { createDownloadUrl } from '@/lib/onboarding/storage'
+import { createAssetReadUrl } from '@/lib/onboarding/storage'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -31,7 +31,13 @@ export async function GET(request: Request, { params }: Context) {
     const asset = rows[0]
     if (!asset) return privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
-    const url = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
+    const url = await createAssetReadUrl({
+      disposition: preview ? 'inline' : 'attachment',
+      key: asset.objectKey,
+      mimeType: asset.mimeType,
+      originalName: asset.name,
+      preview,
+    })
     return privateRedirect(url)
   } catch (error) {
     return apiError(error)

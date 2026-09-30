@@ -2,7 +2,7 @@ import { removeAsset } from '@/lib/onboarding/assets'
 import { getDatabase } from '@/lib/onboarding/db'
 import { apiError, privateJson, privateRedirect } from '@/lib/onboarding/http'
 import { authorizePortalRequest } from '@/lib/onboarding/portal-auth'
-import { createDownloadUrl } from '@/lib/onboarding/storage'
+import { createAssetReadUrl } from '@/lib/onboarding/storage'
 import { getWorkspaceSection } from '@/lib/onboarding/workspace'
 
 export const runtime = 'nodejs'
@@ -38,7 +38,13 @@ export async function GET(request: Request, { params }: Context) {
       }
     }
     const preview = new URL(request.url).searchParams.get('preview') === '1' && asset.mimeType.startsWith('image/')
-    const url = await createDownloadUrl(asset.objectKey, asset.name, preview ? 'inline' : 'attachment')
+    const url = await createAssetReadUrl({
+      disposition: preview ? 'inline' : 'attachment',
+      key: asset.objectKey,
+      mimeType: asset.mimeType,
+      originalName: asset.name,
+      preview,
+    })
     return privateRedirect(url)
   } catch (error) {
     return apiError(error)

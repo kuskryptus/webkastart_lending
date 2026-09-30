@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, Loader2, RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, ArrowUp, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, Loader2, RefreshCw } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { AdminPrefillSection } from './admin-prefill-section'
 import { PageStructureEditor } from './page-structure-editor'
@@ -42,6 +42,95 @@ function Completion({ completed, percentage }: { completed: boolean; percentage:
   return completed
     ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><CheckCircle2 className="size-3.5" /> Hotovo</span>
     : <span className="text-xs font-semibold tabular-nums text-brand">{percentage} %</span>
+}
+
+function WorkspaceNavigation({ items }: { items: { id: string; label: string }[] }) {
+  const [activeId, setActiveId] = useState(items[0]?.id || '')
+  const [showBackToTop, setShowBackToTop] = useState(false)
+  const navRef = useRef<HTMLElement>(null)
+  const itemIds = useMemo(() => items.map((item) => item.id), [items])
+
+  useEffect(() => {
+    let frame = 0
+
+    function updatePosition() {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        const marker = 112
+        let currentId = itemIds[0] || ''
+
+        for (const id of itemIds) {
+          const section = document.getElementById(id)
+          if (section && section.getBoundingClientRect().top <= marker) currentId = id
+        }
+
+        if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+          currentId = itemIds.at(-1) || currentId
+        }
+
+        setActiveId(currentId)
+        setShowBackToTop(window.scrollY > 640)
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, { passive: true })
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', updatePosition)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [itemIds])
+
+  useEffect(() => {
+    const nav = navRef.current
+    const activeItem = nav?.querySelector<HTMLElement>(`[data-section-id="${activeId}"]`)
+    if (!nav || !activeItem) return
+    const left = activeItem.offsetLeft - (nav.clientWidth - activeItem.offsetWidth) / 2
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    nav.scrollTo({ behavior: reducedMotion ? 'auto' : 'smooth', left })
+  }, [activeId])
+
+  function scrollToTop() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ behavior: reducedMotion ? 'auto' : 'smooth', top: 0 })
+  }
+
+  return (
+    <>
+      <nav ref={navRef} aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8">
+        <div className="flex min-w-max gap-6">
+          {items.map((item) => {
+            const active = item.id === activeId
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                aria-current={active ? 'location' : undefined}
+                data-section-id={item.id}
+                className={`relative py-4 text-sm font-semibold transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:origin-left after:bg-brand after:transition-transform ${active ? 'text-brand after:scale-x-100' : 'text-muted-foreground after:scale-x-0 hover:text-foreground'}`}
+              >
+                {item.label}
+              </a>
+            )
+          })}
+        </div>
+      </nav>
+      <button
+        type="button"
+        onClick={scrollToTop}
+        aria-label="Späť na začiatok stránky"
+        aria-hidden={!showBackToTop}
+        tabIndex={showBackToTop ? 0 : -1}
+        className={`fixed right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-20 inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 text-sm font-semibold shadow-card backdrop-blur transition duration-200 hover:border-brand/40 hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:right-8 ${showBackToTop ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}
+      >
+        <ArrowUp className="size-4" />
+        <span className="hidden sm:inline">Hore</span>
+      </button>
+    </>
+  )
 }
 
 function SectionSettings({ message, onChange, section }: {
@@ -113,6 +202,13 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const isMetaAds = workspace.onboardingType === 'meta_ads'
   const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : 'Landing page'
   const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[key]
+  const navigationItems = useMemo(() => [
+    { id: 'overview', label: 'Prehľad' },
+    ...workspace.sections.map((section) => ({
+      id: section.key,
+      label: section.key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[section.key],
+    })),
+  ], [isMetaAds, workspace.sections])
 
   useEffect(() => {
     if (!aiExportPreview) return
@@ -397,7 +493,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
           </div>
         )}
 
-        <nav aria-label="Sekcie klienta" className="sticky top-0 z-10 -mx-5 mt-10 overflow-x-auto border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8"><div className="flex min-w-max gap-6">{workspace.sections.map((section) => <a key={section.key} href={`#${section.key}`} className="py-4 text-sm font-medium text-muted-foreground hover:text-brand">{titleForSection(section.key)}</a>)}</div></nav>
+        <WorkspaceNavigation items={navigationItems} />
 
         <section id="overview" className="scroll-mt-24 py-12 sm:py-16">
           <h2 className="text-2xl font-semibold tracking-[-0.035em]">Prehľad</h2>
