@@ -319,6 +319,29 @@ export function safeStorageFileName(name: string, extension: string) {
   return `${base || 'file'}.${extension}`
 }
 
+export function validateAssetRename(name: unknown, currentName: string) {
+  if (typeof name !== 'string') return { error: 'Zadajte nový názov fotografie.' } as const
+
+  const normalizedName = name.normalize('NFC').trim()
+  if (!normalizedName || normalizedName.length > 255) {
+    return { error: 'Názov fotografie musí mať 1 až 255 znakov.' } as const
+  }
+  if (/[/\\\u0000-\u001f\u007f]/.test(normalizedName) || normalizedName === '.' || normalizedName === '..') {
+    return { error: 'Názov fotografie obsahuje nepovolené znaky.' } as const
+  }
+
+  const currentExtension = currentName.match(/(\.[a-z0-9]{1,16})$/i)?.[1] || ''
+  const nextExtension = normalizedName.match(/(\.[a-z0-9]{1,16})$/i)?.[1] || ''
+  if (currentExtension.toLocaleLowerCase('sk') !== nextExtension.toLocaleLowerCase('sk')) {
+    return { error: `Príponu súboru ${currentExtension || 'nie je možné'} zmeniť.` } as const
+  }
+  if (currentExtension && !normalizedName.slice(0, -currentExtension.length).trim()) {
+    return { error: 'Názov fotografie nesmie byť prázdny.' } as const
+  }
+
+  return { name: normalizedName } as const
+}
+
 export function validateContact(answers: OnboardingAnswers) {
   const errors: Record<string, string> = {}
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ClipboardPaste, ExternalLink, FileText, FileVideo, Loader2, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
+import { Check, ClipboardPaste, ExternalLink, FileText, FileVideo, Loader2, Pencil, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
 import { ShareLinkButton, sharedAssetPath } from './share-link-button'
 import {
@@ -101,6 +101,7 @@ export function UploadField({
   apiBasePath,
   assets,
   canDeleteAsset = () => true,
+  canRenameAsset = () => false,
   getAssetUrl,
   newAssetMetadata,
   notificationsEnabled = true,
@@ -113,6 +114,7 @@ export function UploadField({
   apiBasePath?: string
   assets: OnboardingAsset[]
   canDeleteAsset?: (asset: OnboardingAsset) => boolean
+  canRenameAsset?: (asset: OnboardingAsset) => boolean
   getAssetUrl?: (asset: OnboardingAsset) => string
   newAssetMetadata?: Pick<OnboardingAsset, 'category' | 'clientVisible' | 'uploadedBy'>
   notificationsEnabled?: boolean
@@ -126,7 +128,12 @@ export function UploadField({
   const [dragging, setDragging] = useState(false)
   const [notice, setNotice] = useState('')
   const [readingClipboard, setReadingClipboard] = useState(false)
+  const [renamingId, setRenamingId] = useState('')
+  const [renameValue, setRenameValue] = useState('')
+  const [renameError, setRenameError] = useState('')
+  const [renameSaving, setRenameSaving] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const renameInputRef = useRef<HTMLInputElement>(null)
   const queueRef = useRef<QueueItem[]>([])
   const activeRef = useRef(0)
   const batchesRef = useRef(new Map<string, { pending: number; uploadedIds: string[] }>())
@@ -136,6 +143,15 @@ export function UploadField({
   useEffect(() => {
     assetsRef.current = assets
   }, [assets])
+
+  useEffect(() => {
+    if (!renamingId) return
+    const input = renameInputRef.current
+    if (!input) return
+    input.focus()
+    const extensionIndex = input.value.lastIndexOf('.')
+    input.setSelectionRange(0, extensionIndex > 0 ? extensionIndex : input.value.length)
+  }, [renamingId])
 
   function updateItem(id: string, update: Partial<LocalUpload>) {
     setItems((current) => current.map((item) => item.id === id ? { ...item, ...update } : item))
@@ -434,6 +450,51 @@ export function UploadField({
     }
   }
 
+  function startRenaming(asset: OnboardingAsset) {
+    setRenamingId(asset.id)
+    setRenameValue(asset.name)
+    setRenameError('')
+  }
+
+  function cancelRenaming() {
+    if (renameSaving) return
+    setRenamingId('')
+    setRenameValue('')
+    setRenameError('')
+  }
+
+  async function renameAsset(asset: OnboardingAsset) {
+    const nextName = renameValue.normalize('NFC').trim()
+    if (nextName === asset.name) {
+      cancelRenaming()
+      return
+    }
+
+    setRenameSaving(true)
+    setRenameError('')
+    try {
+      const response = await fetch(`${endpoint}/${asset.id}`, {
+        body: JSON.stringify({ name: nextName }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+      if (!response.ok) {
+        setRenameError(await errorMessage(response))
+        return
+      }
+      const saved = await response.json() as { name: string }
+      const nextAssets = assetsRef.current.map((item) => item.id === asset.id ? { ...item, name: saved.name } : item)
+      assetsRef.current = nextAssets
+      onAssetsChange(nextAssets)
+      setRenamingId('')
+      setRenameValue('')
+    } catch {
+      setRenameError('Názov sa nepodarilo uložiť. Skontrolujte pripojenie a skúste to znova.')
+    } finally {
+      setRenameSaving(false)
+    }
+  }
+
   return (
     <div className="space-y-5">
       <input
@@ -506,40 +567,74 @@ export function UploadField({
             const assetUrl = getAssetUrl?.(asset)
             const openUrl = sharedAssetPath(asset)
               || (assetUrl && canPreviewImage(asset.mimeType) ? `${assetUrl}?preview=1` : assetUrl)
-            return <li key={asset.id} className="flex items-center gap-3 py-3.5">
+            return <li key={asset.id} className="flex flex-wrap items-center gap-3 py-3.5">
               {getAssetUrl && canPreviewImage(asset.mimeType) ? (
                 <Image unoptimized width={44} height={44} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
               ) : asset.mimeType.startsWith('video/')
                 ? <FileVideo className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
-              <span className="min-w-0 flex-1">
-                {openUrl ? (
-                  <a href={openUrl} target="_blank" rel="noreferrer" className="inline-flex max-w-full items-center gap-1.5 truncate text-sm font-medium hover:text-brand hover:underline">
-                    <span className="truncate">{asset.name}</span><ExternalLink className="size-3.5 shrink-0" />
-                  </a>
-                ) : <span className="block truncate text-sm font-medium">{asset.name}</span>}
+              <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-48">
+                {renamingId === asset.id ? (
+                  <form className="flex max-w-xl items-center gap-1.5" onSubmit={(event) => { event.preventDefault(); void renameAsset(asset) }}>
+                    <label className="min-w-0 flex-1">
+                      <span className="sr-only">Nový názov fotografie</span>
+                      <input
+                        ref={renameInputRef}
+                        value={renameValue}
+                        maxLength={255}
+                        disabled={renameSaving}
+                        onChange={(event) => setRenameValue(event.target.value)}
+                        onKeyDown={(event) => { if (event.key === 'Escape') cancelRenaming() }}
+                        className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60"
+                      />
+                    </label>
+                    <button type="submit" disabled={renameSaving || !renameValue.trim()} className="grid size-9 shrink-0 place-items-center rounded-full text-brand transition-colors hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50" aria-label={`Uložiť nový názov fotografie ${asset.name}`}>
+                      {renameSaving ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Check className="size-4" aria-hidden="true" />}
+                    </button>
+                    <button type="button" disabled={renameSaving} onClick={cancelRenaming} className="grid size-9 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50" aria-label="Zrušiť premenovanie">
+                      <X className="size-4" aria-hidden="true" />
+                    </button>
+                  </form>
+                ) : (
+                  <span className="flex min-w-0 items-center gap-2">
+                    {openUrl ? (
+                      <a href={openUrl} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium hover:text-brand hover:underline">
+                        <span className="truncate">{asset.name}</span><ExternalLink className="size-3.5 shrink-0" />
+                      </a>
+                    ) : <span className="block truncate text-sm font-medium">{asset.name}</span>}
+                    {canRenameAsset(asset) && (
+                      <button type="button" onClick={() => startRenaming(asset)} className="inline-flex min-h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand" aria-label={`Premenovať fotografiu ${asset.name}`}>
+                        <Pencil className="size-3.5" aria-hidden="true" />
+                        <span className="hidden sm:inline">Premenovať</span>
+                      </button>
+                    )}
+                  </span>
+                )}
+                {renamingId === asset.id && renameError && <span role="alert" className="mt-1 block text-xs text-destructive">{renameError}</span>}
                 <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Check className="size-3.5 text-emerald-600" aria-hidden="true" />
                   Nahrané · {formatBytes(Number(asset.size))}{showAdminMetadata && ` · ${asset.uploadedBy === 'admin' ? 'správca' : 'klient'} · ${new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}`}
                 </span>
-              </span>
-              {onClientVisibilityChange && (
-                <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground">
-                  <input type="checkbox" checked={asset.clientVisible === true} onChange={(event) => onClientVisibilityChange(asset, event.target.checked)} className="size-4 accent-[var(--brand)]" />
-                  Vidí klient
-                </label>
-              )}
-              <ShareLinkButton asset={asset} />
-              {canDeleteAsset(asset) && (
-                <button
-                  type="button"
-                  onClick={() => void removeAsset(asset)}
-                  className="grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                  aria-label={`Odstrániť ${asset.name}`}
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                </button>
-              )}
+              </div>
+              <div className="ml-14 flex flex-1 basis-[calc(100%-3.5rem)] items-center justify-end gap-1 sm:ml-auto sm:flex-none sm:basis-auto">
+                {onClientVisibilityChange && (
+                  <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <input type="checkbox" checked={asset.clientVisible === true} onChange={(event) => onClientVisibilityChange(asset, event.target.checked)} className="size-4 accent-[var(--brand)]" />
+                    Vidí klient
+                  </label>
+                )}
+                <ShareLinkButton asset={asset} />
+                {canDeleteAsset(asset) && (
+                  <button
+                    type="button"
+                    onClick={() => void removeAsset(asset)}
+                    className="grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                    aria-label={`Odstrániť ${asset.name}`}
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </li>
           })}
           {items.map((item) => (

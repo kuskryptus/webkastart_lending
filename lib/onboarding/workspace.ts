@@ -19,6 +19,7 @@ import { workspaceSectionKeys } from './types'
 import { sanitizeAnswers, sanitizePageStructure } from './validation'
 import { clientIdFromPermanentPortalToken } from './portal-token'
 import { createAssetShareToken } from './asset-share'
+import { sanitizeImplementationFieldSelection, type ImplementationFieldKey } from './implementation-brief'
 
 type ClientRecord = {
   id: string
@@ -236,8 +237,12 @@ export async function getClientWorkspace(
   options: { visibleOnly?: boolean } = {},
 ): Promise<ClientWorkspaceResponse | null> {
   const sql = getDatabase()
-  const clients = await sql<{ displayName: string; onboardingType: OnboardingType }[]>`
-    select display_name as "displayName", onboarding_type as "onboardingType" from clients where id = ${clientId} limit 1
+  const clients = await sql<{ displayName: string; implementationFieldSelection: unknown; onboardingType: OnboardingType }[]>`
+    select
+      display_name as "displayName",
+      implementation_field_selection as "implementationFieldSelection",
+      onboarding_type as "onboardingType"
+    from clients where id = ${clientId} limit 1
   `
   const client = clients[0]
   if (!client) return null
@@ -341,6 +346,9 @@ export async function getClientWorkspace(
   return {
     assets,
     clientLabel: client.displayName,
+    implementationFieldSelection: options.visibleOnly
+      ? {}
+      : sanitizeImplementationFieldSelection(client.implementationFieldSelection),
     onboardingType: client.onboardingType,
     core: coreValue,
     discovery2: discoveryValue,
@@ -484,6 +492,24 @@ export async function updateWorkspaceSection(options: {
     `
     await transaction`update clients set updated_at = now() where id = ${options.clientId}`
   })
+}
+
+export async function updateImplementationFieldSelection(options: {
+  clientId: string
+  fieldKey: ImplementationFieldKey
+  included: boolean
+}) {
+  const sql = getDatabase()
+  await sql`
+    update clients
+    set
+      implementation_field_selection = case
+        when ${options.included} then implementation_field_selection || jsonb_build_object(${options.fieldKey}, true)
+        else implementation_field_selection - ${options.fieldKey}
+      end,
+      updated_at = now()
+    where id = ${options.clientId}
+  `
 }
 
 export function isWorkspaceSectionKey(value: unknown): value is WorkspaceSectionKey {

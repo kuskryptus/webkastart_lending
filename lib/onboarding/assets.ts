@@ -18,6 +18,7 @@ import {
   MULTIPART_UPLOAD_PART_BYTES,
   MULTIPART_UPLOAD_THRESHOLD_BYTES,
   safeStorageFileName,
+  validateAssetRename,
   validateUpload,
 } from './validation'
 import type { AssetCategory } from './types'
@@ -243,4 +244,30 @@ export async function removeAsset(clientId: string, assetId: string, actor?: Ass
     await transaction`update clients set updated_at = now() where id = ${clientId}`
   })
   return true
+}
+
+export async function renameAsset(clientId: string, assetId: string, requestedName: unknown) {
+  const sql = getDatabase()
+  return sql.begin(async (transaction) => {
+    const rows = await transaction<{ name: string }[]>`
+      select original_filename as name
+      from onboarding_assets
+      where id = ${assetId} and client_id = ${clientId} and status = 'uploaded'
+      for update
+    `
+    const asset = rows[0]
+    if (!asset) return { error: 'Súbor sa nenašiel.', status: 404 } as const
+
+    const validation = validateAssetRename(requestedName, asset.name)
+    if ('error' in validation) return { error: validation.error, status: 422 } as const
+    if (validation.name === asset.name) return { name: asset.name } as const
+
+    await transaction`
+      update onboarding_assets
+      set original_filename = ${validation.name}, updated_at = now()
+      where id = ${assetId} and client_id = ${clientId}
+    `
+    await transaction`update clients set updated_at = now() where id = ${clientId}`
+    return { name: validation.name } as const
+  })
 }

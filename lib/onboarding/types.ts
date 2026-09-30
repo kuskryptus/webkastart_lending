@@ -236,8 +236,11 @@ export type WorkspaceProgress = {
   totalItems: number
 }
 
+export type ImplementationFieldSelection = Record<string, boolean>
+
 export type ClientWorkspaceResponse = {
   clientLabel: string
+  implementationFieldSelection: ImplementationFieldSelection
   onboardingType: OnboardingType
   overallProgress: number
   sections: WorkspaceSection[]

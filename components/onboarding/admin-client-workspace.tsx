@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, ArrowUp, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, Loader2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ArrowUp, Check, CheckCircle2, Cloud, CloudOff, Copy, Download, FileDown, Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { AdminPrefillSection } from './admin-prefill-section'
 import { PageStructureEditor } from './page-structure-editor'
 import { UploadField } from './upload-field'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields, MetaAdsWorkspaceFields } from './workspace-form-fields'
-import { stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
+import { createPageStructureAiBrief, stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
+import { createImplementationDocument, type ImplementationFieldKey } from '@/lib/onboarding/implementation-brief'
 import type { ClientWorkspaceResponse, OnboardingAnswers, OnboardingAsset, PrefillFieldKey, WorkspaceProgress, WorkspaceSection, WorkspaceSectionKey } from '@/lib/onboarding/types'
 
 const sectionTitle: Record<WorkspaceSectionKey, string> = {
@@ -25,6 +26,29 @@ const sectionTitle: Record<WorkspaceSectionKey, string> = {
 async function errorMessage(response: Response) {
   const data = await response.json().catch(() => null) as { error?: string } | null
   return data?.error || 'Zmenu sa nepodarilo uložiť.'
+}
+
+async function copyText(value: string) {
+  try {
+    await navigator.clipboard.writeText(value)
+    return
+  } catch {
+    const input = document.createElement('textarea')
+    input.value = value
+    input.setAttribute('readonly', '')
+    input.style.position = 'fixed'
+    input.style.opacity = '0.01'
+    document.body.appendChild(input)
+    input.focus({ preventScroll: true })
+    input.select()
+    const copied = document.execCommand('copy')
+    input.remove()
+    if (!copied) throw new Error('COPY_FAILED')
+  }
+}
+
+function safeDownloadName(value: string) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'klient'
 }
 
 function AutosaveIndicator({ message }: { message: string }) {
@@ -175,7 +199,11 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const [sectionStates, setSectionStates] = useState<Partial<Record<WorkspaceSectionKey, string>>>({})
   const [aiExportState, setAiExportState] = useState<'idle' | 'copied' | 'error'>('idle')
   const [aiExportPreview, setAiExportPreview] = useState('')
+  const [pageStructureAiState, setPageStructureAiState] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [pageStructureAiPreview, setPageStructureAiPreview] = useState('')
+  const [implementationSelectionState, setImplementationSelectionState] = useState('')
   const aiExportRef = useRef<HTMLTextAreaElement>(null)
+  const pageStructureAiRef = useRef<HTMLTextAreaElement>(null)
   const coreRevisionRef = useRef(initialWorkspace.core?.revision ?? 1)
   const discoveryRevisionRef = useRef(initialWorkspace.discovery2?.revision ?? 1)
   const pageStructureRevisionRef = useRef(initialWorkspace.pageStructure?.revision ?? 1)
@@ -191,6 +219,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const discoveryConflictRef = useRef(false)
   const pageStructureConflictRef = useRef(false)
   const sectionQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const implementationSelectionQueueRef = useRef<Promise<void>>(Promise.resolve())
   const sectionTimeoutsRef = useRef<Partial<Record<WorkspaceSectionKey, number>>>({})
   const sectionSequencesRef = useRef<Partial<Record<WorkspaceSectionKey, number>>>({})
 
@@ -200,6 +229,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const discoveryCurrentStep = workspace.discovery2?.currentStep
   const pageStructureData = workspace.pageStructure?.data
   const isMetaAds = workspace.onboardingType === 'meta_ads'
+  const selectedImplementationFields = Object.values(workspace.implementationFieldSelection).filter(Boolean).length
   const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : 'Landing page'
   const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[key]
   const navigationItems = useMemo(() => [
@@ -215,6 +245,12 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     aiExportRef.current?.focus({ preventScroll: true })
     aiExportRef.current?.select()
   }, [aiExportPreview])
+
+  useEffect(() => {
+    if (!pageStructureAiPreview) return
+    pageStructureAiRef.current?.focus({ preventScroll: true })
+    pageStructureAiRef.current?.select()
+  }, [pageStructureAiPreview])
 
   useEffect(() => {
     if (!coreChange || !coreAnswers || !coreCurrentStep || coreConflict) return
@@ -375,38 +411,87 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     const json = aiJson()
     setAiExportPreview('')
     try {
-      await navigator.clipboard.writeText(json)
+      await copyText(json)
       showAiCopied()
     } catch {
-      const input = document.createElement('textarea')
-      input.value = json
-      input.setAttribute('readonly', '')
-      input.style.position = 'fixed'
-      input.style.opacity = '0.01'
-      document.body.appendChild(input)
-      input.focus({ preventScroll: true })
-      input.select()
-      const copied = document.execCommand('copy')
-      input.remove()
-      if (copied) {
-        showAiCopied()
-      } else {
-        setAiExportState('error')
-        setAiExportPreview(json)
-      }
+      setAiExportState('error')
+      setAiExportPreview(json)
+    }
+  }
+
+  async function preparePageStructureForAi() {
+    if (!workspace.pageStructure?.data.sections.length) return
+    const brief = createPageStructureAiBrief({
+      assets: workspace.assets,
+      origin: window.location.origin,
+      projectName: workspace.clientLabel,
+      structure: workspace.pageStructure.data,
+    })
+    setPageStructureAiPreview('')
+    try {
+      await copyText(brief)
+      setPageStructureAiState('copied')
+      window.setTimeout(() => setPageStructureAiState((current) => current === 'copied' ? 'idle' : current), 3000)
+    } catch {
+      setPageStructureAiState('error')
+      setPageStructureAiPreview(brief)
     }
   }
 
   function downloadAiJson() {
     const blobUrl = URL.createObjectURL(new Blob([aiJson()], { type: 'application/json;charset=utf-8' }))
     const link = document.createElement('a')
-    const safeName = workspace.clientLabel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'klient'
+    const safeName = safeDownloadName(workspace.clientLabel)
     link.href = blobUrl
     link.download = `${safeName}-podklady-pre-ai.json`
     document.body.appendChild(link)
     link.click()
     link.remove()
     window.setTimeout(() => URL.revokeObjectURL(blobUrl), 0)
+  }
+
+  function downloadImplementationDocument() {
+    if (!selectedImplementationFields) return
+    const markdown = createImplementationDocument(workspace, window.location.origin)
+    const blobUrl = URL.createObjectURL(new Blob([markdown], { type: 'text/markdown;charset=utf-8' }))
+    const link = document.createElement('a')
+    link.href = blobUrl
+    link.download = `${safeDownloadName(workspace.clientLabel)}-implementacne-zadanie.md`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(blobUrl), 0)
+  }
+
+  function updateImplementationSelection(fieldKey: ImplementationFieldKey, included: boolean) {
+    setWorkspace((current) => ({
+      ...current,
+      implementationFieldSelection: {
+        ...current.implementationFieldSelection,
+        [fieldKey]: included,
+      },
+    }))
+    setImplementationSelectionState('Ukladám…')
+    implementationSelectionQueueRef.current = implementationSelectionQueueRef.current.then(async () => {
+      const response = await fetch(`/api/onboarding/admin/clients/${clientId}/workspace`, {
+        body: JSON.stringify({ fieldKey, included, operation: 'implementation_selection' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      })
+      if (!response.ok) {
+        const message = await errorMessage(response)
+        setWorkspace((current) => current.implementationFieldSelection[fieldKey] === included ? {
+          ...current,
+          implementationFieldSelection: {
+            ...current.implementationFieldSelection,
+            [fieldKey]: !included,
+          },
+        } : current)
+        setImplementationSelectionState(message)
+        return
+      }
+      setImplementationSelectionState('Uložené')
+    }).catch(() => setImplementationSelectionState('Výber sa nepodarilo uložiť.'))
   }
 
   function updateSection(section: WorkspaceSection) {
@@ -478,6 +563,11 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
         <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div><div className="flex flex-wrap items-center gap-3"><h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{workspace.clientLabel}</h1><span className="text-xs font-semibold uppercase tracking-[0.1em] text-brand">{typeLabel}</span></div><p className="mt-3 text-sm text-muted-foreground">Pohľad správcu na rovnaké údaje, ktoré klient upravuje vo svojom portáli. Všetky zmeny sa ukladajú automaticky.</p></div>
           <div className="flex flex-wrap items-center gap-2">
+            {!isMetaAds && (
+              <button type="button" disabled={!selectedImplementationFields} onClick={downloadImplementationDocument} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-foreground px-3 text-xs font-semibold text-background hover:bg-foreground/85 disabled:cursor-not-allowed disabled:opacity-45">
+                <FileDown className="size-3.5" /> Vygenerovať implementačný dokument{selectedImplementationFields ? ` (${selectedImplementationFields})` : ''}
+              </button>
+            )}
             <button type="button" onClick={() => void copyForAi()} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-brand px-3 text-xs font-semibold text-white hover:bg-brand/90">
               {aiExportState === 'copied' ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
               {aiExportState === 'copied' ? 'Skopírované pre AI' : 'Kopírovať pre AI'}
@@ -486,6 +576,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
             <button type="button" onClick={() => window.location.reload()} className="inline-flex min-h-9 items-center gap-2 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"><RefreshCw className="size-3.5" /> Obnoviť dáta</button>
           </div>
         </div>
+        {!isMetaAds && implementationSelectionState && <div className="mt-3 flex justify-end"><AutosaveIndicator message={implementationSelectionState} /></div>}
         {aiExportState === 'error' && aiExportPreview && (
           <div className="mt-5 border-l-2 border-destructive/50 pl-4">
             <p className="text-sm text-destructive">Prehliadač zablokoval kopírovanie. JSON je označený nižšie — použite ⌘C alebo Ctrl+C.</p>
@@ -502,8 +593,37 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
 
         {workspace.sections.map((section) => (
           <section key={section.key} id={section.key} className="scroll-mt-24 border-t border-border py-12 sm:py-16">
-            <div className="flex items-center justify-between gap-4"><h2 className="text-2xl font-semibold tracking-[-0.035em]">{titleForSection(section.key)}</h2>{section.key === 'core' && workspace.core && <Completion {...workspace.core.progress} />}{section.key === 'discovery_2' && workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="text-2xl font-semibold tracking-[-0.035em]">{titleForSection(section.key)}</h2>
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                {section.key === 'core' && workspace.core && <Completion {...workspace.core.progress} />}
+                {section.key === 'discovery_2' && workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}
+                {section.key === 'page_structure' && workspace.pageStructure && (
+                  <>
+                    <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                      <input type="checkbox" checked={workspace.implementationFieldSelection.page_structure === true} onChange={(event) => updateImplementationSelection('page_structure', event.target.checked)} className="size-3.5 accent-[var(--brand)]" />
+                      Zahrnúť do implementačného zadania
+                    </label>
+                    <button
+                      type="button"
+                      disabled={!workspace.pageStructure.data.sections.length}
+                      onClick={() => void preparePageStructureForAi()}
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {pageStructureAiState === 'copied' ? <Check className="size-4 text-emerald-600" /> : <Sparkles className="size-4 text-brand" />}
+                      <span aria-live="polite">{pageStructureAiState === 'copied' ? 'Pripravené a skopírované' : 'Pripraviť pre AI'}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
             <div className="mt-6"><SectionSettings message={sectionStates[section.key] || ''} section={section} onChange={updateSection} /></div>
+            {section.key === 'page_structure' && pageStructureAiState === 'error' && pageStructureAiPreview && (
+              <div className="mt-6 border-l-2 border-destructive/50 pl-4">
+                <p className="text-sm text-destructive">Prehliadač zablokoval kopírovanie. Podklady sú označené nižšie — použite ⌘C alebo Ctrl+C.</p>
+                <textarea ref={pageStructureAiRef} readOnly value={pageStructureAiPreview} onFocus={(event) => event.currentTarget.select()} aria-label="Štruktúra stránky pripravená pre AI" className="mt-3 min-h-52 w-full resize-y border border-border bg-secondary/30 p-3 font-mono text-xs leading-5 outline-none focus:border-brand" />
+              </div>
+            )}
             {section.key === 'core' && workspace.core && <div className="mt-10">
               {!isMetaAds && <AdminPrefillSection
                 answers={workspace.core.answers}
@@ -532,12 +652,14 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                   assets={sourceAssets}
                   disabled={coreConflict}
                   getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`}
+                  implementationSelection={workspace.implementationFieldSelection}
                   onChange={(answers) => {
                     setWorkspace((current) => current.core ? { ...current, core: { ...current.core, answers } } : current)
                     coreSequenceRef.current += 1
                     setCoreState('Ukladám…')
                     setCoreChange((value) => value + 1)
                   }}
+                  onImplementationSelectionChange={updateImplementationSelection}
                 />}
                 <div className="mt-8 flex flex-wrap items-center justify-end gap-4">
                   <AutosaveIndicator message={coreState} />
@@ -549,12 +671,14 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
               <DiscoveryWorkspaceFields
                 answers={workspace.discovery2.answers}
                 disabled={discoveryConflict}
+                implementationSelection={workspace.implementationFieldSelection}
                 onChange={(answers) => {
                   setWorkspace((current) => current.discovery2 ? { ...current, discovery2: { ...current.discovery2, answers } } : current)
                   discoverySequenceRef.current += 1
                   setDiscoveryState('Ukladám…')
                   setDiscoveryChange((value) => value + 1)
                 }}
+                onImplementationSelectionChange={updateImplementationSelection}
               />
               <div className="mt-8 flex flex-wrap items-center justify-end gap-4">
                 <AutosaveIndicator message={discoveryState} />
@@ -570,7 +694,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                   </a>
                 )}
               </div>
-              <UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={sourceAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} />
+              <UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={sourceAssets} canRenameAsset={(asset) => asset.mimeType.startsWith('image/')} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} />
             </div>}
             {section.key === 'page_structure' && workspace.pageStructure && <div className="mt-10">
               <div className="mb-6 flex justify-end"><AutosaveIndicator message={pageStructureState} /></div>
@@ -588,7 +712,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
               />
               {pageStructureConflict && <button type="button" onClick={() => window.location.reload()} className="mt-6 text-sm font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
             </div>}
-            {section.key === 'deliverables' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Nahrajte sem hotové prezentácie, fotografie alebo dokumenty. Nové súbory klient ihneď uvidí vo svojej sekcii na stiahnutie.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={deliverableAssets} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'deliverable', clientVisible: true, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('deliverable', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}
+            {section.key === 'deliverables' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Nahrajte sem hotové prezentácie, fotografie alebo dokumenty. Nové súbory klient ihneď uvidí vo svojej sekcii na stiahnutie.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={deliverableAssets} canRenameAsset={(asset) => asset.mimeType.startsWith('image/')} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'deliverable', clientVisible: true, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('deliverable', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}
             {(section.key === 'creative_strategy' || section.key === 'creative_directions' || section.key === 'internal_notes') && <label className="mt-9 block"><span className="text-sm font-semibold">Obsah sekcie</span><textarea value={section.content} onChange={(event) => updateSection({ ...section, content: event.target.value })} className="mt-3 min-h-52 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-4 text-sm leading-7 outline-none focus:border-brand" placeholder={section.key === 'internal_notes' ? 'Interné poznámky — klient ich nikdy neuvidí.' : 'Pridajte obsah, ktorý bude možné podľa nastavenia viditeľnosti zdieľať s klientom.'} /></label>}
           </section>
         ))}

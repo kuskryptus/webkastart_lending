@@ -84,6 +84,8 @@ and pnpm.
   client onboarding as a landing page or Meta advertising campaign. Migration 012
   adds the shared, versioned page-structure editor stored in the corresponding
   workspace section; photo references always point to existing source assets.
+  Migration 013 stores the admin-only field selection used to generate the final
+  website implementation brief.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -106,6 +108,8 @@ and pnpm.
   header and the server verifies the uploaded object size before accepting it.
   Keep the S3 client's `requestChecksumCalculation` at `WHEN_REQUIRED`: newer
   AWS SDK versions otherwise sign an empty-body CRC32 into browser upload URLs.
+  Renaming an uploaded asset changes only `original_filename`; keep its private
+  storage key, bytes, MIME type, extension, asset ID, and share link stable.
 - A client may own multiple forms. Core and Discovery 2 keep separate persistence
   (and legacy form-specific tokens) behind the shared portal token; never merge or
   overwrite one form's answers with another.
@@ -132,6 +136,9 @@ and pnpm.
   order, section descriptions, item lists, per-section photo assignments and photo
   descriptions. Only uploaded, client-visible source images owned by that client may
   be referenced.
+- Implementation-document selection is admin-only and stored separately from form
+  answers. Never expose it in the client portal; export only whitelisted fields whose
+  stored selection is exactly `true`.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
   values remain in their original answer fields. Reconcile client metadata
   server-side and never trust client-supplied source labels.

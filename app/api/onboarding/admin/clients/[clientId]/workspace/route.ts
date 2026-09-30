@@ -2,6 +2,7 @@ import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { apiError, privateJson, readSmallJson } from '@/lib/onboarding/http'
 import { sanitizeAnswers, sanitizeDiscovery2Answers } from '@/lib/onboarding/validation'
 import { isPrefillFieldKey, markPrefilledFields } from '@/lib/onboarding/prefill'
+import { isImplementationFieldKey } from '@/lib/onboarding/implementation-brief'
 import {
   coreProgress,
   discoveryProgress,
@@ -12,6 +13,7 @@ import {
   saveCoreVersioned,
   saveDiscoveryVersioned,
   savePageStructureVersioned,
+  updateImplementationFieldSelection,
   updateWorkspaceSection,
   WorkspaceConflictError,
 } from '@/lib/onboarding/workspace'
@@ -47,6 +49,19 @@ export async function PATCH(request: Request, { params }: Context) {
     if (!UUID_PATTERN.test(clientId)) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
     const payload = await readSmallJson(request)
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+
+    if (body.operation === 'implementation_selection') {
+      if (!isImplementationFieldKey(body.fieldKey)) {
+        return privateJson({ error: 'Neplatné pole implementačného zadania.' }, { status: 422 })
+      }
+      await updateImplementationFieldSelection({
+        clientId,
+        fieldKey: body.fieldKey,
+        included: body.included === true,
+      })
+      return privateJson({ ok: true })
+    }
+
     const sectionKey = body.sectionKey
     if (!isWorkspaceSectionKey(sectionKey)) return privateJson({ error: 'Neplatná sekcia.' }, { status: 422 })
 

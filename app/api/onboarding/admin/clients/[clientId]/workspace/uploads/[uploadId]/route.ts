@@ -1,4 +1,4 @@
-import { removeAsset } from '@/lib/onboarding/assets'
+import { removeAsset, renameAsset } from '@/lib/onboarding/assets'
 import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { getDatabase } from '@/lib/onboarding/db'
 import { apiError, privateJson, privateRedirect, readSmallJson } from '@/lib/onboarding/http'
@@ -45,15 +45,32 @@ export async function PATCH(request: Request, { params }: Context) {
     const { clientId, uploadId } = await params
     const payload = await readSmallJson(request, 5_000)
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+    const hasClientVisibility = typeof body.clientVisible === 'boolean'
+    const hasName = Object.prototype.hasOwnProperty.call(body, 'name')
+    if (!hasClientVisibility && !hasName) {
+      return privateJson({ error: 'Nie je čo zmeniť.' }, { status: 422 })
+    }
+
+    let renamedName: string | undefined
+    if (hasName) {
+      const renamed = await renameAsset(clientId, uploadId, body.name)
+      if ('error' in renamed) return privateJson({ error: renamed.error }, { status: renamed.status })
+      renamedName = renamed.name
+    }
+
+    if (!hasClientVisibility) {
+      return privateJson({ name: renamedName })
+    }
+
     const sql = getDatabase()
-    const rows = await sql<{ id: string }[]>`
+    const rows = await sql<{ id: string; name: string }[]>`
       update onboarding_assets
       set client_visible = ${body.clientVisible === true}, updated_at = now()
       where id = ${uploadId} and client_id = ${clientId}
-      returning id
+      returning id, original_filename as name
     `
     return rows[0]
-      ? privateJson({ ok: true })
+      ? privateJson({ name: rows[0].name, ok: true })
       : privateJson({ error: 'Súbor sa nenašiel.' }, { status: 404 })
   } catch (error) {
     return apiError(error, { exposeDetails: true })
