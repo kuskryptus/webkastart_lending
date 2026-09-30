@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useId } from 'react'
+import { createContext, useContext, useEffect, useId, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { ChoiceGrid, OtherAnswer, ProductPriceList, RepeatableTextItems } from '@/components/onboarding/quick-fields'
 import { RepresentativePhotoPicker } from '@/components/onboarding/representative-photo-picker'
@@ -23,6 +23,96 @@ type ImplementationSelectionContextValue = {
 }
 
 const ImplementationSelectionContext = createContext<ImplementationSelectionContextValue | null>(null)
+
+const clientCoreNavigationItems = [
+  { id: 'form-about', label: 'O vás' },
+  { id: 'form-domain', label: 'Doména a hosting' },
+  { id: 'form-goal', label: 'Zákazníci a cieľ' },
+  { id: 'form-content', label: 'Obsah stránky' },
+  { id: 'form-visual', label: 'Vizuálny smer' },
+  { id: 'form-collaboration', label: 'Spolupráca' },
+  { id: 'form-contact', label: 'Kontakt' },
+] as const
+
+function ClientFormNavigation({ items }: { items: ReadonlyArray<{ id: string; label: string }> }) {
+  const [activeId, setActiveId] = useState(items[0]?.id || '')
+  const linksRef = useRef<HTMLDivElement>(null)
+  const activeIndex = Math.max(0, items.findIndex((item) => item.id === activeId))
+
+  useEffect(() => {
+    let frame = 0
+
+    function updatePosition() {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        let currentId = items[0]?.id || ''
+
+        for (const item of items) {
+          const section = document.getElementById(item.id)
+          if (section && section.getBoundingClientRect().top <= 112) currentId = item.id
+        }
+
+        setActiveId(currentId)
+      })
+    }
+
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, { passive: true })
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', updatePosition)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [items])
+
+  useEffect(() => {
+    const links = linksRef.current
+    const activeLink = links?.querySelector<HTMLElement>(`[data-form-section="${activeId}"]`)
+    if (!links || !activeLink) return
+    const left = activeLink.offsetLeft - (links.clientWidth - activeLink.offsetWidth) / 2
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    links.scrollTo({ behavior: reducedMotion ? 'auto' : 'smooth', left })
+  }, [activeId])
+
+  function navigate(event: React.MouseEvent<HTMLAnchorElement>, id: string) {
+    const target = document.getElementById(id)
+    if (!target) return
+    event.preventDefault()
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
+    window.history.replaceState(null, '', `#${id}`)
+    setActiveId(id)
+  }
+
+  return (
+    <nav aria-label="Časti formulára" className="sticky top-0 z-20 -mx-5 mb-9 border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8">
+      <div className="flex min-h-14 items-center gap-4">
+        <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+          Formulár <span className="text-brand">{activeIndex + 1}/{items.length}</span>
+        </span>
+        <div ref={linksRef} className="flex min-w-0 flex-1 gap-5 overflow-x-auto">
+          {items.map((item) => {
+            const active = item.id === activeId
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                aria-current={active ? 'location' : undefined}
+                data-form-section={item.id}
+                onClick={(event) => navigate(event, item.id)}
+                className={`relative flex min-h-14 shrink-0 items-center text-sm font-semibold transition-colors after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-brand after:transition-transform ${active ? 'text-brand after:scale-x-100' : 'text-muted-foreground after:scale-x-0 hover:text-foreground'}`}
+              >
+                {item.label}
+              </a>
+            )
+          })}
+        </div>
+      </div>
+    </nav>
+  )
+}
 
 function ImplementationToggle({ fieldKey }: { fieldKey?: ImplementationFieldKey }) {
   const context = useContext(ImplementationSelectionContext)
@@ -67,8 +157,8 @@ function SocialLinksField({ answers, hint, implementationKey, onChange }: { answ
   return <div className="sm:col-span-2"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><p className="text-xs font-semibold text-muted-foreground">Sociálne siete</p><ImplementationToggle fieldKey={implementationKey} /></div>{hint && <p className="mt-1 text-xs text-brand/80">{hint}</p>}<div className="mt-2 space-y-3">{links.map((url, index) => <div key={index} className="grid grid-cols-[8.5rem_1fr_auto] items-center gap-3"><select aria-label={`Platforma ${index + 1}`} value={answers.socialPlatforms[index] || ''} onChange={(event) => { const socialPlatforms = [...answers.socialPlatforms]; while (socialPlatforms.length <= index) socialPlatforms.push(''); socialPlatforms[index] = event.target.value; onChange({ ...answers, socialPlatforms }) }} className="border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm outline-none focus:border-brand"><option value="">Platforma</option>{socialPlatformOptions.map((option) => <option key={option}>{option}</option>)}</select><input aria-label={`Odkaz ${index + 1}`} type="url" value={url} onChange={(event) => { const socialLinks = [...links]; socialLinks[index] = event.target.value; onChange({ ...answers, socialLinks }) }} placeholder="https://" className="min-w-0 border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm outline-none focus:border-brand" />{links.length > 1 && <button type="button" onClick={() => onChange({ ...answers, socialLinks: links.filter((_, itemIndex) => itemIndex !== index), socialPlatforms: answers.socialPlatforms.filter((_, itemIndex) => itemIndex !== index) })} className="grid size-9 place-items-center rounded-full text-muted-foreground hover:bg-secondary"><X className="size-4" /></button>}</div>)}</div>{links.length < 8 && <button type="button" onClick={() => onChange({ ...answers, socialLinks: [...links, ''], socialPlatforms: [...answers.socialPlatforms, ''] })} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"><Plus className="size-4" /> Pridať sociálnu sieť</button>}</div>
 }
 
-function Group({ children, title }: { children: React.ReactNode; title: string }) {
-  return <fieldset className="border-t border-border/70 pt-7 first:border-0 first:pt-0"><legend className="mb-6 text-base font-semibold tracking-[-0.02em]">{title}</legend><div className="grid gap-7 sm:grid-cols-2">{children}</div></fieldset>
+function Group({ children, id, title }: { children: React.ReactNode; id?: string; title: string }) {
+  return <fieldset id={id} className="scroll-mt-4 border-t border-border/70 pt-7 first:border-0 first:pt-0"><legend className="mb-6 text-base font-semibold tracking-[-0.02em]">{title}</legend><div className="grid gap-7 sm:grid-cols-2">{children}</div></fieldset>
 }
 
 function ChoiceField({ children, implementationKey, onChange, options, selected, title }: {
@@ -100,8 +190,9 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
     : undefined
   return (
     <ImplementationSelectionContext.Provider value={onImplementationSelectionChange ? { onChange: onImplementationSelectionChange, selection: implementationSelection } : null}>
+    {actor === 'client' && <ClientFormNavigation items={clientCoreNavigationItems} />}
     <fieldset disabled={disabled} className="space-y-10 disabled:opacity-70">
-      <Group title="O vás a vašom podnikaní">
+      <Group id="form-about" title="O vás a vašom podnikaní">
         <Field implementationKey="core.display_name" hint={hint('client.displayName')} label="Meno / názov podnikania" value={answers.client.displayName} onChange={(displayName) => emit({ ...answers, client: { displayName } }, 'client.displayName')} />
         <Field implementationKey="core.business_area" hint={hint('business.area')} label="Čomu sa venujete" value={answers.business.area} onChange={(area) => emit({ ...answers, business: { ...answers.business, area } }, 'business.area')} />
         <SelectField implementationKey="core.project_type" hint={hint('projectType')} label="Typ projektu / čo potrebujete" options={projectTypeOptions} value={answers.projectType} onChange={(projectType) => emit({ ...answers, projectType }, 'projectType')} />
@@ -111,7 +202,7 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <div className="sm:col-span-2"><Field implementationKey="core.previous_website_experience" multiline label="Mali ste už web alebo ste skúšali niečo podobné? Čo fungovalo a čo nie?" value={answers.previousWebsiteExperience} onChange={(previousWebsiteExperience) => onChange({ ...answers, previousWebsiteExperience })} /></div>
         <SocialLinksField implementationKey="core.social_links" answers={answers} hint={hint('socialLinks')} onChange={(next) => emit(next, 'socialLinks')} />
       </Group>
-      <Group title="Doména a hosting">
+      <Group id="form-domain" title="Doména a hosting">
         <p className="text-xs leading-5 text-muted-foreground sm:col-span-2">Nevkladajte sem prihlasovacie údaje ani heslá. Prístupy si v prípade potreby odovzdáme bezpečným spôsobom.</p>
         <SelectField implementationKey="core.domain_ownership" label="Máte už zaregistrovanú doménu?" options={infrastructureStatusOptions} value={answers.domain.ownership} onChange={(ownership) => onChange({ ...answers, domain: { ...answers.domain, ownership, registrar: ownership === 'Áno' ? answers.domain.registrar : '' } })} />
         <Field implementationKey="core.domain_name" label="Doména, ktorú máte alebo by ste chceli" hint="Napr. vasafirma.sk" value={answers.domain.name} onChange={(name) => onChange({ ...answers, domain: { ...answers.domain, name } })} />
@@ -119,7 +210,7 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <SelectField implementationKey="core.hosting_status" label="Máte už webhosting?" options={infrastructureStatusOptions} value={answers.hosting.status} onChange={(status) => onChange({ ...answers, hosting: { status, provider: status === 'Áno' ? answers.hosting.provider : '' } })} />
         {answers.hosting.status === 'Áno' && <Field implementationKey="core.hosting_provider" label="Poskytovateľ webhostingu" hint="Napr. Websupport, Webglobe, Forpsi" value={answers.hosting.provider} onChange={(provider) => onChange({ ...answers, hosting: { ...answers.hosting, provider } })} />}
       </Group>
-      <Group title="Zákazníci a cieľ webu">
+      <Group id="form-goal" title="Zákazníci a cieľ webu">
         <ChoiceField implementationKey="core.target_audience" title="Kto je váš ideálny zákazník?" options={targetAudienceOptions} selected={answers.targetAudienceSelections} onChange={(targetAudienceSelections) => onChange({ ...answers, targetAudienceSelections })}><OtherAnswer show multiline label="Kto nakupuje dnes a koho chcete získavať viac" value={answers.targetAudience} onChange={(targetAudience) => onChange({ ...answers, targetAudience })} /></ChoiceField>
         <div className="sm:col-span-2"><Field implementationKey="core.customer_insights" multiline label="Čo viete zo skúseností o svojich zákazníkoch – čo najviac riešia, oceňujú alebo sa pýtajú?" value={answers.customerInsights} onChange={(customerInsights) => onChange({ ...answers, customerInsights })} /></div>
         <div className="sm:col-span-2"><Field implementationKey="core.customer_concerns" multiline label="Aké najčastejšie obavy má zákazník pred objednávkou?" hint="Napr. cena, termín, kvalita výsledku, dôvera, reklamácia alebo neistota z výsledku." value={answers.customerConcerns} onChange={(customerConcerns) => onChange({ ...answers, customerConcerns })} /></div>
@@ -135,12 +226,12 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <div className="sm:col-span-2"><Field implementationKey="core.key_takeaway" multiline label="Ak by si návštevník po odchode zo stránky zapamätal iba jednu vec o vás alebo vašej ponuke, čo by to malo byť?" value={answers.keyTakeaway} onChange={(keyTakeaway) => onChange({ ...answers, keyTakeaway })} /></div>
         <div className="sm:col-span-2"><Field implementationKey="core.ten_second_highlight" multiline label="Čo by ste návštevníkovi ukázali ako prvé, keby ste mali iba 10 sekúnd?" value={answers.tenSecondHighlight} onChange={(tenSecondHighlight) => onChange({ ...answers, tenSecondHighlight })} /></div>
       </Group>
-      <Group title="Obsah stránky">
+      <Group id="form-content" title="Obsah stránky">
         <ChoiceField implementationKey="core.sections" title="Čo by ste chceli na stránke?" options={sectionOptions} selected={answers.sections} onChange={(sections) => onChange({ ...answers, sections })}><OtherAnswer show={answers.sections.includes('Iné')} label="Iná časť stránky" value={answers.sectionsOther} onChange={(sectionsOther) => onChange({ ...answers, sectionsOther })} /></ChoiceField>
         <ChoiceField implementationKey="core.future_features" title="Plánujete web v budúcnosti rozšíriť?" options={futureOptions} selected={answers.futureFeatures} onChange={(futureFeatures) => onChange({ ...answers, futureFeatures })}><OtherAnswer show={answers.futureFeatures.includes('Iné')} label="Iné rozšírenie" value={answers.futureFeaturesOther} onChange={(futureFeaturesOther) => onChange({ ...answers, futureFeaturesOther })} /></ChoiceField>
         <div className="sm:col-span-2"><Field implementationKey="core.other_sections" multiline label="Je ešte niečo, čo chcete na stránke?" value={answers.otherSections} onChange={(otherSections) => onChange({ ...answers, otherSections })} /></div>
       </Group>
-      <Group title="Vizuálny smer">
+      <Group id="form-visual" title="Vizuálny smer">
         <div className="sm:col-span-2"><Field implementationKey="core.brand_first_impression" multiline label="Čo chcete, aby si človek o vašej firme pomyslel po 5 sekundách na webe?" hint="Prvá intuitívna reakcia – ešte predtým, než začne čítať detaily." value={answers.brandFirstImpression} onChange={(brandFirstImpression) => onChange({ ...answers, brandFirstImpression })} /></div>
         <ChoiceField implementationKey="core.design_preferences" title="Aké 3–5 slov má vaša značka reprezentovať?" options={includeSavedOptions(brandAttributeOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => onChange({ ...answers, designPreferences })}><OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iné slovo" value={answers.designOther} onChange={(designOther) => onChange({ ...answers, designOther })} /></ChoiceField>
         <ChoiceField implementationKey="core.color_preferences" title="Aké farby vám sú blízke?" options={colorOptions} selected={answers.colorPreferences} onChange={(colorPreferences) => onChange({ ...answers, colorPreferences })}><OtherAnswer show={answers.colorPreferences.includes('Iné')} label="Iná farebná preferencia" value={answers.colorPreferencesOther} onChange={(colorPreferencesOther) => onChange({ ...answers, colorPreferencesOther })} /></ChoiceField>
@@ -149,11 +240,11 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <ListField implementationKey="core.inspiration_urls" label="Weby alebo značky, ktoré sa páčia" value={answers.inspirationUrls} onChange={(inspirationUrls) => onChange({ ...answers, inspirationUrls })} />
         {getAssetUrl && <div className="sm:col-span-2"><div className="mb-3 flex justify-end"><ImplementationToggle fieldKey="core.representative_photos" /></div><RepresentativePhotoPicker assets={assets} getAssetUrl={getAssetUrl} selected={answers.representativePhotoIds} onChange={(representativePhotoIds) => onChange({ ...answers, representativePhotoIds })} /></div>}
       </Group>
-      <Group title="Spolupráca">
+      <Group id="form-collaboration" title="Spolupráca">
         <div className="sm:col-span-2"><Field implementationKey="core.collaboration_involvement" multiline label="Ako veľmi chcete byť zapojený do návrhu a jednotlivých rozhodnutí?" value={answers.collaborationInvolvement} onChange={(collaborationInvolvement) => onChange({ ...answers, collaborationInvolvement })} /></div>
         <div className="sm:col-span-2"><Field implementationKey="core.feedback_communication" multiline label="Ako vám najviac vyhovuje komunikovať a dávať spätnú väzbu?" value={answers.feedbackCommunication} onChange={(feedbackCommunication) => onChange({ ...answers, feedbackCommunication })} /></div>
       </Group>
-      <Group title="Kontakt a fakturácia">
+      <Group id="form-contact" title="Kontakt a fakturácia">
         <Field implementationKey="core.contact_name" hint={hint('contact.name')} label="Kontaktná osoba" value={answers.contact.name} onChange={(name) => emit({ ...answers, contact: { ...answers.contact, name } }, 'contact.name')} />
         <Field implementationKey="core.contact_email" hint={hint('contact.email')} label="E-mail" value={answers.contact.email} onChange={(email) => emit({ ...answers, contact: { ...answers.contact, email } }, 'contact.email')} />
         <Field implementationKey="core.contact_phone" hint={hint('contact.phone')} label="Telefón" value={answers.contact.phone} onChange={(phone) => emit({ ...answers, contact: { ...answers.contact, phone } }, 'contact.phone')} />
