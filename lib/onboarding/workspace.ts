@@ -504,8 +504,8 @@ export async function updateImplementationFieldSelection(options: {
     update clients
     set
       implementation_field_selection = case
-        when ${options.included} then implementation_field_selection || jsonb_build_object(${options.fieldKey}, true)
-        else implementation_field_selection - ${options.fieldKey}
+        when ${options.included} then implementation_field_selection || jsonb_build_object(${options.fieldKey}::text, true)
+        else implementation_field_selection - ${options.fieldKey}::text
       end,
       updated_at = now()
     where id = ${options.clientId}
