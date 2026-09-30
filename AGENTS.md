@@ -85,7 +85,9 @@ and pnpm.
   adds the shared, versioned page-structure editor stored in the corresponding
   workspace section; photo references always point to existing source assets.
   Migration 013 stores the admin-only field selection used to generate the final
-  website implementation brief.
+  website implementation brief. Migration 014 stores the admin-only local assets
+  root used to help coding agents resolve uploaded filenames on the administrator's
+  computer.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -136,9 +138,12 @@ and pnpm.
   order, section descriptions, item lists, per-section photo assignments and photo
   descriptions. Only uploaded, client-visible source images owned by that client may
   be referenced.
-- Implementation-document selection is admin-only and stored separately from form
-  answers. Never expose it in the client portal; export only whitelisted fields whose
-  stored selection is exactly `true`.
+- Implementation-document selection and the local assets root path are admin-only and
+  stored separately from form answers. Never expose either in the client portal; export
+  only whitelisted fields whose stored selection is exactly `true`. AI exports use the
+  assets root only as a recursive search boundary and match the stored upload filename
+  after Unicode NFC normalization, with a case-insensitive fallback, because browsers
+  cannot reveal the original local subdirectory.
 - Core prefill metadata is keyed by canonical field paths in `fieldMetadata`; the
   values remain in their original answer fields. Reconcile client metadata
   server-side and never trust client-supplied source labels.

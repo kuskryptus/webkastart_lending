@@ -150,6 +150,10 @@ export function createImplementationDocument(workspace: ClientWorkspaceResponse,
     '',
     `**Projekt:** ${workspace.clientLabel.trim() || 'Neuvedený'}`,
     `**Vybraných podkladov:** ${selectedFields.length + (selection.page_structure === true ? 1 : 0)}`,
+    ...(workspace.assetsLocalPath.trim() ? [
+      `**Lokálny priečinok assets:** ${workspace.assetsLocalPath.trim()}`,
+      '**Pravidlo vyhľadávania:** Súbory hľadaj rekurzívne podľa názvu. Najprv porovnaj presný názov po Unicode NFC normalizácii, potom prípadne bez rozlíšenia veľkosti písmen. Pri viacerých zhodách použi náhľad.',
+    ] : []),
     '',
     '## Pravidlá implementácie',
     '',
@@ -176,6 +180,7 @@ export function createImplementationDocument(workspace: ClientWorkspaceResponse,
     lines.push('', '## Štruktúra stránky', '')
     lines.push(createPageStructureSectionsMarkdown({
       assets: workspace.assets,
+      assetsLocalPath: workspace.assetsLocalPath,
       headingLevel: 3,
       origin,
       structure: workspace.pageStructure?.data || { sections: [] },

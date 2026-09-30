@@ -239,8 +239,9 @@ export async function getClientWorkspace(
   options: { visibleOnly?: boolean } = {},
 ): Promise<ClientWorkspaceResponse | null> {
   const sql = getDatabase()
-  const clients = await sql<{ displayName: string; implementationFieldSelection: unknown; onboardingType: OnboardingType }[]>`
+  const clients = await sql<{ assetsLocalPath: string; displayName: string; implementationFieldSelection: unknown; onboardingType: OnboardingType }[]>`
     select
+      assets_local_path as "assetsLocalPath",
       display_name as "displayName",
       implementation_field_selection as "implementationFieldSelection",
       onboarding_type as "onboardingType"
@@ -347,6 +348,7 @@ export async function getClientWorkspace(
 
   return {
     assets,
+    assetsLocalPath: options.visibleOnly ? '' : client.assetsLocalPath,
     clientLabel: client.displayName,
     implementationFieldSelection: options.visibleOnly
       ? {}
@@ -512,6 +514,22 @@ export async function updateImplementationFieldSelection(options: {
       updated_at = now()
     where id = ${options.clientId}
   `
+}
+
+export async function updateAssetsLocalPath(options: {
+  assetsLocalPath: unknown
+  clientId: string
+}) {
+  const assetsLocalPath = typeof options.assetsLocalPath === 'string'
+    ? options.assetsLocalPath.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 4096)
+    : ''
+  const sql = getDatabase()
+  await sql`
+    update clients
+    set assets_local_path = ${assetsLocalPath}, updated_at = now()
+    where id = ${options.clientId}
+  `
+  return assetsLocalPath
 }
 
 export function isWorkspaceSectionKey(value: unknown): value is WorkspaceSectionKey {

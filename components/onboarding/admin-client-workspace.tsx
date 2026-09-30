@@ -201,6 +201,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const [aiExportPreview, setAiExportPreview] = useState('')
   const [pageStructureAiState, setPageStructureAiState] = useState<'idle' | 'copied' | 'error'>('idle')
   const [pageStructureAiPreview, setPageStructureAiPreview] = useState('')
+  const [assetsLocalPathState, setAssetsLocalPathState] = useState('')
   const [implementationSelectionState, setImplementationSelectionState] = useState('')
   const aiExportRef = useRef<HTMLTextAreaElement>(null)
   const pageStructureAiRef = useRef<HTMLTextAreaElement>(null)
@@ -212,12 +213,15 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const coreQueueRef = useRef<Promise<void>>(Promise.resolve())
   const discoveryQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pageStructureQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const assetsLocalPathQueueRef = useRef<Promise<void>>(Promise.resolve())
   const coreSequenceRef = useRef(0)
   const discoverySequenceRef = useRef(0)
   const pageStructureSequenceRef = useRef(0)
   const coreConflictRef = useRef(false)
   const discoveryConflictRef = useRef(false)
   const pageStructureConflictRef = useRef(false)
+  const assetsLocalPathTimeoutRef = useRef<number | undefined>(undefined)
+  const assetsLocalPathSequenceRef = useRef(0)
   const sectionQueueRef = useRef<Promise<void>>(Promise.resolve())
   const implementationSelectionQueueRef = useRef<Promise<void>>(Promise.resolve())
   const sectionTimeoutsRef = useRef<Partial<Record<WorkspaceSectionKey, number>>>({})
@@ -371,6 +375,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   }, [clientId, pageStructureChange, pageStructureConflict, pageStructureData])
 
   useEffect(() => () => {
+    if (assetsLocalPathTimeoutRef.current !== undefined) window.clearTimeout(assetsLocalPathTimeoutRef.current)
     for (const timeout of Object.values(sectionTimeoutsRef.current)) {
       if (timeout !== undefined) window.clearTimeout(timeout)
     }
@@ -423,6 +428,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
     if (!workspace.pageStructure?.data.sections.length) return
     const brief = createPageStructureAiBrief({
       assets: workspace.assets,
+      assetsLocalPath: workspace.assetsLocalPath,
       origin: window.location.origin,
       projectName: workspace.clientLabel,
       structure: workspace.pageStructure.data,
@@ -492,6 +498,34 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
       }
       setImplementationSelectionState('Uložené')
     }).catch(() => setImplementationSelectionState('Výber sa nepodarilo uložiť.'))
+  }
+
+  function updateAssetsLocalPath(assetsLocalPath: string) {
+    setWorkspace((current) => ({ ...current, assetsLocalPath }))
+    setAssetsLocalPathState('Ukladám…')
+    assetsLocalPathSequenceRef.current += 1
+    const sequence = assetsLocalPathSequenceRef.current
+    if (assetsLocalPathTimeoutRef.current !== undefined) window.clearTimeout(assetsLocalPathTimeoutRef.current)
+    assetsLocalPathTimeoutRef.current = window.setTimeout(() => {
+      assetsLocalPathQueueRef.current = assetsLocalPathQueueRef.current.then(async () => {
+        const response = await fetch(`/api/onboarding/admin/clients/${clientId}/workspace`, {
+          body: JSON.stringify({ assetsLocalPath, operation: 'assets_local_path' }),
+          headers: { 'Content-Type': 'application/json' },
+          method: 'PATCH',
+        })
+        if (!response.ok) {
+          if (sequence === assetsLocalPathSequenceRef.current) setAssetsLocalPathState(await errorMessage(response))
+          throw new Error('ASSETS_LOCAL_PATH_SAVE_FAILED')
+        }
+        const saved = await response.json() as { assetsLocalPath: string }
+        if (sequence === assetsLocalPathSequenceRef.current) {
+          setWorkspace((current) => current.assetsLocalPath === assetsLocalPath ? { ...current, assetsLocalPath: saved.assetsLocalPath } : current)
+          setAssetsLocalPathState('Uložené')
+        }
+      }).catch(() => {
+        if (sequence === assetsLocalPathSequenceRef.current) setAssetsLocalPathState((current) => current === 'Ukladám…' ? 'Cestu sa nepodarilo uložiť.' : current)
+      })
+    }, 600)
   }
 
   function updateSection(section: WorkspaceSection) {
@@ -618,6 +652,24 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
               </div>
             </div>
             <div className="mt-6"><SectionSettings message={sectionStates[section.key] || ''} section={section} onChange={updateSection} /></div>
+            {section.key === 'page_structure' && (
+              <div className="mt-8 max-w-3xl">
+                <div className="flex items-center justify-between gap-4">
+                  <label htmlFor="assets-local-path" className="text-sm font-semibold">Cesta k assets na počítači</label>
+                  <AutosaveIndicator message={assetsLocalPathState} />
+                </div>
+                <input
+                  id="assets-local-path"
+                  value={workspace.assetsLocalPath}
+                  onChange={(event) => updateAssetsLocalPath(event.target.value)}
+                  placeholder="/Users/meno/Projekt/assets"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="mt-2 min-h-11 w-full rounded-lg border border-border bg-background px-3 font-mono text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-brand focus:ring-2 focus:ring-brand/15"
+                />
+                <p className="mt-2 text-xs leading-5 text-muted-foreground">Iba pre správcu. AI bude v tomto priečinku a jeho podpriečinkoch hľadať fotografie podľa rovnakého názvu, aký je uvedený vo formulári.</p>
+              </div>
+            )}
             {section.key === 'page_structure' && pageStructureAiState === 'error' && pageStructureAiPreview && (
               <div className="mt-6 border-l-2 border-destructive/50 pl-4">
                 <p className="text-sm text-destructive">Prehliadač zablokoval kopírovanie. Podklady sú označené nižšie — použite ⌘C alebo Ctrl+C.</p>

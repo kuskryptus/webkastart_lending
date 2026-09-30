@@ -42,11 +42,13 @@ function pageStructurePhotoUrl(asset: OnboardingAsset, origin?: string) {
 
 export function createPageStructureSectionsMarkdown({
   assets,
+  assetsLocalPath,
   headingLevel = 2,
   origin,
   structure,
 }: {
   assets: OnboardingAsset[]
+  assetsLocalPath?: string
   headingLevel?: number
   origin?: string
   structure: PageStructure
@@ -96,6 +98,9 @@ export function createPageStructureSectionsMarkdown({
         `- **Názov súboru:** ${asset ? markdownInline(asset.name, 'Bez názvu') : 'Súbor sa už nenachádza v podkladoch'}`,
         `- **Popis a spôsob použitia:** ${markdownBlock(photo.description)}`,
       )
+      if (asset && assetsLocalPath?.trim()) {
+        lines.push(`- **Lokálne umiestnenie:** V priečinku ${markdownInline(assetsLocalPath, 'Neuvedené')} a jeho podpriečinkoch vyhľadaj súbor podľa názvu ${markdownInline(asset.name, 'Bez názvu')}. Najprv porovnaj názov presne po Unicode NFC normalizácii, potom prípadne bez rozlíšenia veľkosti písmen.`)
+      }
       if (photoUrl) lines.push(`- **Odkaz na náhľad:** ${photoUrl}`)
       lines.push('')
     })
@@ -106,11 +111,13 @@ export function createPageStructureSectionsMarkdown({
 
 export function createPageStructureAiBrief({
   assets,
+  assetsLocalPath,
   origin,
   projectName,
   structure,
 }: {
   assets: OnboardingAsset[]
+  assetsLocalPath?: string
   origin?: string
   projectName: string
   structure: PageStructure
@@ -121,6 +128,10 @@ export function createPageStructureAiBrief({
     `**Projekt:** ${markdownInline(projectName, 'Neuvedený')}`,
     '**Jazyk obsahu:** slovenčina',
     `**Počet sekcií:** ${structure.sections.length}`,
+    ...(assetsLocalPath?.trim() ? [
+      `**Lokálny priečinok assets:** ${markdownInline(assetsLocalPath, 'Neuvedený')}`,
+      '**Pravidlo vyhľadávania:** Súbory hľadaj rekurzívne v tomto priečinku podľa názvu uvedeného pri fotografii. Najprv porovnaj presný názov po Unicode NFC normalizácii, potom prípadne bez rozlíšenia veľkosti písmen. Pri viacerých zhodách nepouži súbor bez overenia cez náhľad.',
+    ] : []),
     '',
     '## Ako s podkladmi pracovať',
     '',
@@ -131,7 +142,7 @@ export function createPageStructureAiBrief({
     '- Fotografie používaj iba v sekciách, ku ktorým sú priradené, a podľa uvedeného popisu použitia.',
   ]
 
-  lines.push('', createPageStructureSectionsMarkdown({ assets, origin, structure }))
+  lines.push('', createPageStructureSectionsMarkdown({ assets, assetsLocalPath, origin, structure }))
   return lines.join('\n')
 }
 
@@ -398,9 +409,13 @@ export function createAiClientBrief(workspace: ClientWorkspaceResponse) {
 
   return {
     format: 'webkastart_ai_client_brief',
-    version: 2,
+    version: 3,
     language: 'sk',
     project: {
+      asset_lookup: {
+        root_path: workspace.assetsLocalPath || null,
+        strategy: workspace.assetsLocalPath ? 'recursive_filename_unicode_nfc_exact_then_case_insensitive' : null,
+      },
       name: workspace.clientLabel,
       onboarding_type: workspace.onboardingType,
       overall_completion_percent: workspace.overallProgress,

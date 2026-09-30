@@ -241,6 +241,7 @@ export type WorkspaceProgress = {
 export type ImplementationFieldSelection = Record<string, boolean>
 
 export type ClientWorkspaceResponse = {
+  assetsLocalPath: string
   clientLabel: string
   implementationFieldSelection: ImplementationFieldSelection
   onboardingType: OnboardingType

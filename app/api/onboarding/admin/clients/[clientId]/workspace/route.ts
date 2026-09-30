@@ -13,6 +13,7 @@ import {
   saveCoreVersioned,
   saveDiscoveryVersioned,
   savePageStructureVersioned,
+  updateAssetsLocalPath,
   updateImplementationFieldSelection,
   updateWorkspaceSection,
   WorkspaceConflictError,
@@ -49,6 +50,14 @@ export async function PATCH(request: Request, { params }: Context) {
     if (!UUID_PATTERN.test(clientId)) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
     const payload = await readSmallJson(request)
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+
+    if (body.operation === 'assets_local_path') {
+      const assetsLocalPath = await updateAssetsLocalPath({
+        assetsLocalPath: body.assetsLocalPath,
+        clientId,
+      })
+      return privateJson({ assetsLocalPath })
+    }
 
     if (body.operation === 'implementation_selection') {
       if (!isImplementationFieldKey(body.fieldKey)) {
