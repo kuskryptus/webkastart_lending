@@ -1,4 +1,4 @@
-import Image from 'next/image'
+import { PaperEdge } from '@/components/paper-edge'
 
 export function HeroPaperReveal() {
   return (
@@ -55,15 +55,7 @@ export function HeroPaperReveal() {
         <div className="absolute -right-32 top-24 size-80 rounded-full bg-brand/8 blur-3xl sm:size-[30rem]" />
       </div>
 
-      <Image
-        src="/torn-paper-edge.png"
-        alt=""
-        width={2172}
-        height={724}
-        loading="eager"
-        sizes="(max-width: 1023px) 210vw, 100vw"
-        className="hero-paper-edge pointer-events-none absolute z-[3] h-auto max-w-none select-none"
-      />
+      <PaperEdge variant="hero" />
     </>
   )
 }
