@@ -101,7 +101,7 @@ function ClientFormNavigation({ items }: { items: ReadonlyArray<{ id: string; la
         <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
           Formulár <span className="text-brand">{activeIndex + 1}/{items.length}</span>
         </span>
-        <div ref={linksRef} className="flex min-w-0 flex-1 gap-5 overflow-x-auto">
+        <div ref={linksRef} className="flex min-w-0 flex-1 gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((item) => {
             const active = item.id === activeId
             return (
