@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronRight, Copy, Globe2, LayoutTemplate, Loader2, LockKeyhole, LogOut, Megaphone, Plus, Search, X } from 'lucide-react'
+import { Check, ChevronRight, Copy, Globe2, LayoutTemplate, Loader2, LockKeyhole, LogOut, Megaphone, Plus, Search, Trash2, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import type { OnboardingStatus, OnboardingType } from '@/lib/onboarding/types'
 
@@ -91,12 +91,15 @@ export function OnboardingAdmin({
   const [onboardingType, setOnboardingType] = useState<OnboardingType>('landing_page')
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [createdUrl, setCreatedUrl] = useState('')
+  const [createdProjectId, setCreatedProjectId] = useState('')
   const [copied, setCopied] = useState(false)
   const [copiedClientId, setCopiedClientId] = useState('')
   const [linkLoadingClientId, setLinkLoadingClientId] = useState('')
+  const [deletingClientId, setDeletingClientId] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(initialError)
+  const [deleteError, setDeleteError] = useState('')
   const [manualCopy, setManualCopy] = useState<ManualCopy | null>(null)
   const [search, setSearch] = useState('')
   const manualCopyInputRef = useRef<HTMLInputElement>(null)
@@ -156,6 +159,7 @@ export function OnboardingAdmin({
     setError('')
     setManualCopy(null)
     setCreatedUrl('')
+    setCreatedProjectId('')
     try {
       const response = await fetch('/api/onboarding/admin/projects', {
         body: JSON.stringify({ clientLabel, onboardingType }),
@@ -166,6 +170,7 @@ export function OnboardingAdmin({
       const data = await response.json() as { project: Project; url: string }
       setProjects((current) => [data.project, ...current])
       setCreatedUrl(data.url)
+      setCreatedProjectId(data.project.id)
       setClientLabel('')
     } catch (createError) {
       setError(createError instanceof Error ? createError.message : 'Link sa nepodarilo vytvoriť.')
@@ -255,11 +260,35 @@ export function OnboardingAdmin({
     }
   }
 
+  async function deleteProject(project: Project) {
+    const description = `${project.clientLabel} · ${onboardingTypeLabel[project.onboardingType]} · vytvorené ${formatDate(project.createdAt)}`
+    if (!window.confirm(`Naozaj natrvalo odstrániť tento formulár?\n\n${description}\n\nVymažú sa odpovede, nahrané súbory aj link pre klienta. Túto akciu nemožno vrátiť späť.`)) return
+
+    setDeletingClientId(project.id)
+    setDeleteError('')
+    try {
+      const response = await fetch(`/api/onboarding/admin/projects/${project.id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error(await getError(response))
+      setProjects((current) => current.filter((item) => item.id !== project.id))
+      if (createdProjectId === project.id) {
+        setCreatedUrl('')
+        setCreatedProjectId('')
+      }
+      if (copiedClientId === project.id) setCopiedClientId('')
+    } catch (deleteError) {
+      setDeleteError(`${deleteError instanceof Error ? deleteError.message : 'Formulár sa nepodarilo odstrániť.'} Obnovte zoznam; ak je formulár stále zobrazený, skúste to znova.`)
+    } finally {
+      setDeletingClientId('')
+    }
+  }
+
   async function logout() {
     await fetch('/api/onboarding/admin/session', { method: 'DELETE' })
     setAuthenticated(false)
     setProjects([])
     setCreatedUrl('')
+    setCreatedProjectId('')
+    setDeleteError('')
   }
 
   if (!configured) {
@@ -378,6 +407,7 @@ export function OnboardingAdmin({
             <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Vyhľadať klienta…" className="w-full border-0 border-b border-border bg-transparent py-3 pl-7 pr-10 text-sm outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
             {search && <button type="button" onClick={() => setSearch('')} aria-label="Vymazať vyhľadávanie" className="absolute right-0 top-1/2 grid size-8 -translate-y-1/2 place-items-center text-muted-foreground hover:text-foreground"><X className="size-4" /></button>}
           </label>
+          {deleteError && <p role="alert" className="mt-4 text-sm leading-6 text-destructive">{deleteError}</p>}
           {loading ? (
             <p className="mt-8 inline-flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Načítavam…</p>
           ) : projects.length === 0 ? (
@@ -397,19 +427,31 @@ export function OnboardingAdmin({
                     <div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-brand">{project.clientLabel}</p><span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{onboardingTypeLabel[project.onboardingType]}</span></div><p className="mt-1 text-xs text-muted-foreground">Vytvorené {formatDate(project.createdAt)}</p></div>
                     <p className="text-xs text-muted-foreground">{project.status === 'in_progress' ? (project.onboardingType === 'landing_page' ? `${project.currentStep}. krok zo 6` : 'Formulár rozpracovaný') : `Aktivita ${formatDate(project.lastActivityAt)}`}</p>
                     <span className={`text-xs font-semibold ${project.status === 'submitted' ? 'text-emerald-700' : project.status === 'in_progress' ? 'text-brand' : 'text-muted-foreground'}`}>{statusLabel[project.status]}</span>
-                    <button
-                      type="button"
-                      onClick={() => void copyProjectLink(project)}
-                      disabled={linkLoadingClientId === project.id}
-                      className="pointer-events-auto relative z-10 inline-flex min-h-9 items-center justify-center gap-1.5 justify-self-start rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60 sm:justify-self-end"
-                    >
-                      {linkLoadingClientId === project.id
-                        ? <Loader2 className="size-3.5 animate-spin" />
-                        : copiedClientId === project.id
-                          ? <Check className="size-3.5 text-emerald-600" />
-                          : <Copy className="size-3.5" />}
-                      {copiedClientId === project.id ? 'Skopírované' : 'Kopírovať link'}
-                    </button>
+                    <div className="pointer-events-auto relative z-10 flex items-center gap-1 justify-self-start sm:justify-self-end">
+                      <button
+                        type="button"
+                        onClick={() => void copyProjectLink(project)}
+                        disabled={linkLoadingClientId === project.id || deletingClientId === project.id}
+                        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-60"
+                      >
+                        {linkLoadingClientId === project.id
+                          ? <Loader2 className="size-3.5 animate-spin" />
+                          : copiedClientId === project.id
+                            ? <Check className="size-3.5 text-emerald-600" />
+                            : <Copy className="size-3.5" />}
+                        {copiedClientId === project.id ? 'Skopírované' : 'Kopírovať link'}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Odstrániť formulár ${project.clientLabel}, ${onboardingTypeLabel[project.onboardingType]}, vytvorený ${formatDate(project.createdAt)}`}
+                        title="Odstrániť formulár"
+                        onClick={() => void deleteProject(project)}
+                        disabled={Boolean(deletingClientId)}
+                        className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive disabled:opacity-40"
+                      >
+                        {deletingClientId === project.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                      </button>
+                    </div>
                     <ChevronRight className="hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-brand sm:block" aria-hidden="true" />
                   </div>
                 </li>

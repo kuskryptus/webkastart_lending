@@ -116,6 +116,10 @@ and pnpm.
 - A client may own multiple forms. Core and Discovery 2 keep separate persistence
   (and legacy form-specific tokens) behind the shared portal token; never merge or
   overwrite one form's answers with another.
+- Deleting an onboarding entry removes the corresponding client, cascading its
+  forms, workspace, assets, and links. Remove private originals, previews, and
+  pending multipart uploads first via `lib/onboarding/project-deletion.ts`;
+  leave the database entry available for retry if storage removal fails.
 - `clients.onboarding_type` selects the questionnaire presentation. Existing and
   legacy clients default to `landing_page`; `meta_ads` reuses the Core record with
   campaign-specific answers and does not expose the web-only Discovery 2 section.
