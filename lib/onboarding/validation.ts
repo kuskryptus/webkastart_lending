@@ -14,6 +14,7 @@ export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024
 export const MAX_UPLOAD_FILES = 100
 export const MAX_REPRESENTATIVE_PHOTOS = 5
 export const MAX_PAGE_STRUCTURE_SECTIONS = 30
+export const MAX_WEBSITE_PAGES = 30
 export const MAX_PAGE_STRUCTURE_ITEMS = 20
 export const MAX_PAGE_STRUCTURE_PHOTOS = 20
 export const MULTIPART_UPLOAD_THRESHOLD_BYTES = 64 * 1024 * 1024
@@ -100,11 +101,10 @@ function object(value: unknown): Record<string, unknown> {
 
 export function sanitizePageStructure(input: unknown): PageStructure {
   const source = object(input)
-  const rawSections = Array.isArray(source.sections) ? source.sections : []
-  const sectionIds = new Set<string>()
-
-  return {
-    sections: rawSections.slice(0, MAX_PAGE_STRUCTURE_SECTIONS).flatMap((item) => {
+  function sectionsFrom(value: unknown) {
+    const rawSections = Array.isArray(value) ? value : []
+    const sectionIds = new Set<string>()
+    return rawSections.slice(0, MAX_PAGE_STRUCTURE_SECTIONS).flatMap((item) => {
       const section = object(item)
       const id = text(section.id, 64)
       if (!/^[A-Za-z0-9_-]{1,64}$/.test(id) || sectionIds.has(id)) return []
@@ -127,7 +127,26 @@ export function sanitizePageStructure(input: unknown): PageStructure {
         items: list(section.items, MAX_PAGE_STRUCTURE_ITEMS, 300),
         photos,
       }]
-    }),
+    })
+  }
+  const pages = Array.isArray(source.pages) ? source.pages : undefined
+  const pageIds = new Set<string>()
+  return {
+    sections: sectionsFrom(source.sections),
+    ...(pages ? { pages: pages.slice(0, MAX_WEBSITE_PAGES).flatMap((item) => {
+      const page = object(item)
+      const id = text(page.id, 64)
+      if (!/^[A-Za-z0-9_-]{1,64}$/.test(id) || pageIds.has(id)) return []
+      pageIds.add(id)
+      return [{
+        id,
+        title: text(page.title, 160),
+        purpose: text(page.purpose, 2000),
+        keyInformation: text(page.keyInformation, 3000),
+        nextAction: text(page.nextAction, 1000),
+        sections: sectionsFrom(page.sections),
+      }]
+    }) } : {}),
   }
 }
 
@@ -180,6 +199,7 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
   const contact = object(source.contact)
   const billing = object(source.billing)
   const metaCampaign = object(source.metaCampaign)
+  const multiPage = object(source.multiPage)
 
   return {
     ...emptyOnboardingAnswers,
@@ -216,6 +236,28 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     sections: list(source.sections, 24, 100),
     sectionsOther: text(source.sectionsOther, 1000),
     otherSections: text(source.otherSections, 2000),
+    multiPage: {
+      projectScope: text(multiPage.projectScope, 100),
+      contentOwner: text(multiPage.contentOwner, 100),
+      editableContent: list(multiPage.editableContent, 20, 100),
+      contentChanges: text(multiPage.contentChanges, 1000),
+      languages: text(multiPage.languages, 500),
+      translationOwner: text(multiPage.translationOwner, 500),
+      features: list(multiPage.features, 20, 100),
+      featuresDetails: text(multiPage.featuresDetails, 3000),
+      formsDetails: text(multiPage.formsDetails, 3000),
+      integrations: text(multiPage.integrations, 3000),
+      productMode: text(multiPage.productMode, 100),
+      productCount: text(multiPage.productCount, 100),
+      productSource: text(multiPage.productSource, 2000),
+      shopUrl: text(multiPage.shopUrl, 500),
+      shopPlatform: text(multiPage.shopPlatform, 200),
+      productDetails: text(multiPage.productDetails, 3000),
+      checkoutDetails: text(multiPage.checkoutDetails, 3000),
+      migrationContent: text(multiPage.migrationContent, 3000),
+      migrationUrls: text(multiPage.migrationUrls, 3000),
+      decisionMaker: text(multiPage.decisionMaker, 160),
+    },
     futureFeatures: list(source.futureFeatures, 16, 100),
     futureFeaturesOther: text(source.futureFeaturesOther, 1000),
     designPreferences: list(source.designPreferences, 24, 100),

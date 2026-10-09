@@ -90,7 +90,7 @@ export function coreProgress(answers: OnboardingAnswers, onboardingType: Onboard
     answers.client.displayName,
     answers.business.area,
     answers.business.description,
-    answers.projectType,
+    ...(onboardingType === 'landing_page' ? [answers.projectType] : []),
     answers.targetAudienceSelections,
     answers.targetAudience,
     answers.websiteExpectations,
@@ -109,9 +109,7 @@ export function coreProgress(answers: OnboardingAnswers, onboardingType: Onboard
     answers.uniqueOffering,
     answers.keyTakeaway,
     answers.tenSecondHighlight,
-    answers.sections,
-    answers.otherSections,
-    answers.futureFeatures,
+    ...(onboardingType === 'landing_page' ? [answers.sections, answers.otherSections, answers.futureFeatures] : []),
     answers.designPreferences,
     answers.designOther,
     answers.brandFirstImpression,
@@ -143,6 +141,17 @@ export function coreProgress(answers: OnboardingAnswers, onboardingType: Onboard
     answers.billing.address,
     answers.additionalNotes,
   ]
+  if (onboardingType === 'multi_page_website') {
+    values.push(
+      answers.multiPage.projectScope,
+      answers.multiPage.contentOwner,
+      answers.multiPage.editableContent,
+      answers.multiPage.languages,
+      answers.multiPage.features,
+      answers.multiPage.productMode,
+      answers.multiPage.decisionMaker,
+    )
+  }
   const completedItems = values.filter(hasValue).length
   return {
     completed: completedItems === values.length,
@@ -297,6 +306,13 @@ export async function getClientWorkspace(
         ...section,
         photos: section.photos.filter((photo) => availableAssetIds.has(photo.assetId)),
       })),
+      ...(client.onboardingType === 'multi_page_website' ? { pages: (parsedPageStructure.pages || []).map((page) => ({
+        ...page,
+        sections: page.sections.map((section) => ({
+          ...section,
+          photos: section.photos.filter((photo) => availableAssetIds.has(photo.assetId)),
+        })),
+      })) } : {}),
     },
     revision: pageStructureRecord.revision,
     updatedAt: pageStructureRecord.updatedAt.toISOString(),
@@ -339,7 +355,9 @@ export async function getClientWorkspace(
     if (section.key === 'core' && coreValue) return [coreValue.progress.percentage]
     if (section.key === 'discovery_2' && discoveryValue) return [discoveryValue.progress.percentage]
     if (section.key === 'files') return [assets.some((asset) => (asset.category || 'source') === 'source') ? 100 : 0]
-    if (section.key === 'page_structure') return [pageStructure?.data.sections.length ? 100 : 0]
+    if (section.key === 'page_structure') return [client.onboardingType === 'multi_page_website'
+      ? (pageStructure?.data.pages?.some((page) => page.purpose.trim()) ? 100 : 0)
+      : (pageStructure?.data.sections.length ? 100 : 0)]
     if (section.key === 'creative_strategy' || section.key === 'creative_directions') {
       return [section.content.trim() ? 100 : 0]
     }
@@ -437,6 +455,7 @@ export async function savePageStructureVersioned(options: {
   structure: unknown
 }) {
   const sanitized = sanitizePageStructure(options.structure)
+  const onboardingType = await getClientOnboardingType(options.clientId)
   const availableAssets = await listAssets(options.clientId)
   const allowedAssetIds = new Set(
     availableAssets
@@ -446,10 +465,17 @@ export async function savePageStructureVersioned(options: {
       .map((asset) => asset.id),
   )
   const structure: PageStructure = {
-    sections: sanitized.sections.map((section) => ({
+    sections: (onboardingType === 'multi_page_website' ? [] : sanitized.sections).map((section) => ({
       ...section,
       photos: section.photos.filter((photo) => allowedAssetIds.has(photo.assetId)),
     })),
+    ...(onboardingType === 'multi_page_website' ? { pages: (sanitized.pages || []).map((page) => ({
+      ...page,
+      sections: page.sections.map((section) => ({
+        ...section,
+        photos: section.photos.filter((photo) => allowedAssetIds.has(photo.assetId)),
+      })),
+    })) } : {}),
   }
   const sql = getDatabase()
   const rows = await sql.begin(async (transaction) => {

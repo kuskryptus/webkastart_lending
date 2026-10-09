@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ChevronRight, Copy, Globe2, Loader2, LockKeyhole, LogOut, Megaphone, Plus, Search, X } from 'lucide-react'
+import { Check, ChevronRight, Copy, Globe2, LayoutTemplate, Loader2, LockKeyhole, LogOut, Megaphone, Plus, Search, X } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import type { OnboardingStatus, OnboardingType } from '@/lib/onboarding/types'
 
@@ -37,6 +37,7 @@ const statusLabel: Record<OnboardingStatus, string> = {
 
 const onboardingTypeLabel: Record<OnboardingType, string> = {
   landing_page: 'Landing page',
+  multi_page_website: 'Viacstránkový web',
   meta_ads: 'FB/IG kampane',
 }
 
@@ -308,10 +309,14 @@ export function OnboardingAdmin({
         <form onSubmit={createProject} className="mt-10">
           <fieldset>
             <legend className="text-sm font-semibold">Typ projektu</legend>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <button type="button" onClick={() => setOnboardingType('landing_page')} aria-pressed={onboardingType === 'landing_page'} className={`flex min-h-20 items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${onboardingType === 'landing_page' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40'}`}>
                 <Globe2 className={`mt-0.5 size-5 shrink-0 ${onboardingType === 'landing_page' ? 'text-brand' : 'text-muted-foreground'}`} />
                 <span><span className="block text-sm font-semibold">Landing page</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Existujúci formulár pre web a podklady k stránke.</span></span>
+              </button>
+              <button type="button" onClick={() => setOnboardingType('multi_page_website')} aria-pressed={onboardingType === 'multi_page_website'} className={`flex min-h-20 items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${onboardingType === 'multi_page_website' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40'}`}>
+                <LayoutTemplate className={`mt-0.5 size-5 shrink-0 ${onboardingType === 'multi_page_website' ? 'text-brand' : 'text-muted-foreground'}`} />
+                <span><span className="block text-sm font-semibold">Viacstránkový web</span><span className="mt-1 block text-xs leading-5 text-muted-foreground">Podstránky, obsah, funkcie a produkty.</span></span>
               </button>
               <button type="button" onClick={() => setOnboardingType('meta_ads')} aria-pressed={onboardingType === 'meta_ads'} className={`flex min-h-20 items-start gap-3 rounded-xl border px-4 py-4 text-left transition-colors ${onboardingType === 'meta_ads' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40'}`}>
                 <Megaphone className={`mt-0.5 size-5 shrink-0 ${onboardingType === 'meta_ads' ? 'text-brand' : 'text-muted-foreground'}`} />
@@ -322,7 +327,7 @@ export function OnboardingAdmin({
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="min-w-0 flex-1">
               <span className="text-sm font-semibold">Klient alebo projekt</span>
-              <input value={clientLabel} onChange={(event) => setClientLabel(event.target.value)} placeholder={onboardingType === 'meta_ads' ? 'Napr. Jana Nováková – reklamná kampaň' : 'Napr. Jana Nováková – nová landing page'} maxLength={200} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
+              <input value={clientLabel} onChange={(event) => setClientLabel(event.target.value)} placeholder={onboardingType === 'meta_ads' ? 'Napr. Jana Nováková – reklamná kampaň' : onboardingType === 'multi_page_website' ? 'Napr. Jana Nováková – nový firemný web' : 'Napr. Jana Nováková – nová landing page'} maxLength={200} className="mt-3 w-full border-0 border-b border-border bg-transparent px-0 py-3 text-base outline-none placeholder:text-muted-foreground/55 focus:border-brand" />
             </label>
             <button disabled={submitting || !clientLabel.trim()} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white disabled:opacity-50">
               {submitting ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Vytvoriť link

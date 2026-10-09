@@ -37,6 +37,11 @@ export async function createOnboardingProject(clientLabel: string, onboardingTyp
     ...emptyOnboardingAnswers,
     client: { displayName: clientLabel },
   }, ['client.displayName'])
+  const initialStructure = onboardingType === 'multi_page_website'
+    ? JSON.stringify({ sections: [], pages: ['Domov', 'Služby', 'O nás', 'Realizácie', 'Kontakt'].map((title) => ({
+      id: randomUUID(), title, purpose: '', keyInformation: '', nextAction: '', sections: [],
+    })) })
+    : '{"sections":[]}'
   const rows = await sql.begin(async (transaction) => {
     await transaction`
       insert into clients (id, display_name, portal_token_hash, onboarding_type)
@@ -55,14 +60,21 @@ export async function createOnboardingProject(clientLabel: string, onboardingTyp
       insert into client_workspace_sections (client_id, section_key, client_visible, client_editable)
       values
         (${clientId}, 'core', true, true),
-        (${clientId}, 'discovery_2', ${onboardingType === 'landing_page'}, ${onboardingType === 'landing_page'}),
+        (${clientId}, 'discovery_2', ${onboardingType !== 'meta_ads'}, ${onboardingType !== 'meta_ads'}),
         (${clientId}, 'files', true, true),
-        (${clientId}, 'page_structure', ${onboardingType === 'landing_page'}, ${onboardingType === 'landing_page'}),
+        (${clientId}, 'page_structure', ${onboardingType !== 'meta_ads'}, ${onboardingType !== 'meta_ads'}),
         (${clientId}, 'deliverables', true, false),
         (${clientId}, 'creative_strategy', false, false),
         (${clientId}, 'creative_directions', false, false),
         (${clientId}, 'internal_notes', false, false)
     `
+    if (onboardingType === 'multi_page_website') {
+      await transaction`
+        update client_workspace_sections
+        set content = ${initialStructure}
+        where client_id = ${clientId} and section_key = 'page_structure'
+      `
+    }
     return projects
   }) as { createdAt: Date; id: string }[]
   const project = rows[0]

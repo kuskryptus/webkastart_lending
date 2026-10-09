@@ -1,6 +1,6 @@
 export type OnboardingStatus = 'not_started' | 'in_progress' | 'submitted'
 
-export const onboardingTypes = ['landing_page', 'meta_ads'] as const
+export const onboardingTypes = ['landing_page', 'multi_page_website', 'meta_ads'] as const
 export type OnboardingType = typeof onboardingTypes[number]
 
 export const prefillFieldKeys = [
@@ -104,6 +104,28 @@ export type OnboardingAnswers = {
   sections: string[]
   sectionsOther: string
   otherSections: string
+  multiPage: {
+    projectScope: string
+    contentOwner: string
+    editableContent: string[]
+    contentChanges: string
+    languages: string
+    translationOwner: string
+    features: string[]
+    featuresDetails: string
+    formsDetails: string
+    integrations: string
+    productMode: string
+    productCount: string
+    productSource: string
+    shopUrl: string
+    shopPlatform: string
+    productDetails: string
+    checkoutDetails: string
+    migrationContent: string
+    migrationUrls: string
+    decisionMaker: string
+  }
   futureFeatures: string[]
   futureFeaturesOther: string
   designPreferences: string[]
@@ -204,8 +226,18 @@ export type PageStructureSection = {
   photos: PageStructurePhoto[]
 }
 
+export type WebsitePage = {
+  id: string
+  title: string
+  purpose: string
+  keyInformation: string
+  nextAction: string
+  sections: PageStructureSection[]
+}
+
 export type PageStructure = {
   sections: PageStructureSection[]
+  pages?: WebsitePage[]
 }
 
 export const emptyPageStructure: PageStructure = { sections: [] }
@@ -319,6 +351,13 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   sections: [],
   sectionsOther: '',
   otherSections: '',
+  multiPage: {
+    projectScope: '', contentOwner: '', editableContent: [], contentChanges: '',
+    languages: '', translationOwner: '', features: [], featuresDetails: '',
+    formsDetails: '', integrations: '', productMode: '', productCount: '',
+    productSource: '', shopUrl: '', shopPlatform: '', productDetails: '',
+    checkoutDetails: '', migrationContent: '', migrationUrls: '', decisionMaker: '',
+  },
   futureFeatures: [],
   futureFeaturesOther: '',
   designPreferences: [],

@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowUp, Check, CheckCircle2, Cloud, CloudOff, Copy, Downloa
 import { LogoMark } from '@/components/logo'
 import { AdminPrefillSection } from './admin-prefill-section'
 import { PageStructureEditor } from './page-structure-editor'
+import { WebsiteMapEditor } from './website-map-editor'
 import { UploadField } from './upload-field'
 import { CoreWorkspaceFields, DiscoveryWorkspaceFields, MetaAdsWorkspaceFields } from './workspace-form-fields'
 import { createPageStructureAiBrief, stringifyAiClientBrief } from '@/lib/onboarding/ai-export'
@@ -233,16 +234,17 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
   const discoveryCurrentStep = workspace.discovery2?.currentStep
   const pageStructureData = workspace.pageStructure?.data
   const isMetaAds = workspace.onboardingType === 'meta_ads'
+  const isMultiPage = workspace.onboardingType === 'multi_page_website'
   const selectedImplementationFields = Object.values(workspace.implementationFieldSelection).filter(Boolean).length
-  const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : 'Landing page'
-  const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[key]
+  const typeLabel = isMetaAds ? 'Reklamné kampane (FB a IG)' : isMultiPage ? 'Viacstránkový web' : 'Landing page'
+  const titleForSection = (key: WorkspaceSectionKey) => key === 'core' && isMetaAds ? 'Kampaňový formulár' : key === 'page_structure' && isMultiPage ? 'Mapa webu' : sectionTitle[key]
   const navigationItems = useMemo(() => [
     { id: 'overview', label: 'Prehľad' },
     ...workspace.sections.map((section) => ({
       id: section.key,
-      label: section.key === 'core' && isMetaAds ? 'Kampaňový formulár' : sectionTitle[section.key],
+      label: section.key === 'core' && isMetaAds ? 'Kampaňový formulár' : section.key === 'page_structure' && isMultiPage ? 'Mapa webu' : sectionTitle[section.key],
     })),
-  ], [isMetaAds, workspace.sections])
+  ], [isMetaAds, isMultiPage, workspace.sections])
 
   useEffect(() => {
     if (!aiExportPreview) return
@@ -622,7 +624,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
 
         <section id="overview" className="scroll-mt-24 py-12 sm:py-16">
           <h2 className="text-2xl font-semibold tracking-[-0.035em]">Prehľad</h2>
-          <dl className={`mt-8 grid gap-8 sm:grid-cols-2 ${isMetaAds ? 'lg:grid-cols-3' : 'lg:grid-cols-5'}`}><div><dt className="text-xs font-medium text-muted-foreground">{isMetaAds ? 'Kampaňový formulár' : 'Základný formulár'}</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div>{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div>}{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Štruktúra stránky</dt><dd className="mt-2 text-sm font-semibold">{workspace.pageStructure?.data.sections.length || 0} sekcií</dd></div>}<div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
+          <dl className={`mt-8 grid gap-8 sm:grid-cols-2 ${isMetaAds ? 'lg:grid-cols-3' : 'lg:grid-cols-5'}`}><div><dt className="text-xs font-medium text-muted-foreground">{isMetaAds ? 'Kampaňový formulár' : 'Základný formulár'}</dt><dd className="mt-2">{workspace.core && <Completion {...workspace.core.progress} />}</dd></div>{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">Doplňujúce otázky</dt><dd className="mt-2">{workspace.discovery2 && <Completion {...workspace.discovery2.progress} />}</dd></div>}{!isMetaAds && <div><dt className="text-xs font-medium text-muted-foreground">{isMultiPage ? 'Mapa webu' : 'Štruktúra stránky'}</dt><dd className="mt-2 text-sm font-semibold">{isMultiPage ? `${workspace.pageStructure?.data.pages?.length || 0} stránok` : `${workspace.pageStructure?.data.sections.length || 0} sekcií`}</dd></div>}<div><dt className="text-xs font-medium text-muted-foreground">Podklady od klienta</dt><dd className="mt-2 text-sm font-semibold">{sourceAssets.length} nahraných</dd></div><div><dt className="text-xs font-medium text-muted-foreground">Súbory pre klienta</dt><dd className="mt-2 text-sm font-semibold">{deliverableAssets.length} nahraných</dd></div></dl>
         </section>
 
         {workspace.sections.map((section) => (
@@ -640,7 +642,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                     </label>
                     <button
                       type="button"
-                      disabled={!workspace.pageStructure.data.sections.length}
+                      disabled={isMultiPage ? !workspace.pageStructure.data.pages?.length : !workspace.pageStructure.data.sections.length}
                       onClick={() => void preparePageStructureForAi()}
                       className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-sm font-semibold text-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -700,6 +702,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                     setCoreChange((value) => value + 1)
                   }}
                 /> : <CoreWorkspaceFields
+                  onboardingType={workspace.onboardingType}
                   answers={workspace.core.answers}
                   assets={sourceAssets}
                   disabled={coreConflict}
@@ -750,7 +753,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
             </div>}
             {section.key === 'page_structure' && workspace.pageStructure && <div className="mt-10">
               <div className="mb-6 flex justify-end"><AutosaveIndicator message={pageStructureState} /></div>
-              <PageStructureEditor
+              {isMultiPage ? <WebsiteMapEditor
                 assets={sourceAssets}
                 disabled={pageStructureConflict}
                 getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`}
@@ -761,7 +764,18 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                   setPageStructureState('Ukladám…')
                   setPageStructureChange((value) => value + 1)
                 }}
-              />
+              /> : <PageStructureEditor
+                assets={sourceAssets}
+                disabled={pageStructureConflict}
+                getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`}
+                structure={workspace.pageStructure.data}
+                onChange={(structure) => {
+                  setWorkspace((current) => current.pageStructure ? { ...current, pageStructure: { ...current.pageStructure, data: structure } } : current)
+                  pageStructureSequenceRef.current += 1
+                  setPageStructureState('Ukladám…')
+                  setPageStructureChange((value) => value + 1)
+                }}
+              />}
               {pageStructureConflict && <button type="button" onClick={() => window.location.reload()} className="mt-6 text-sm font-semibold text-brand underline">Načítať aktuálnu verziu</button>}
             </div>}
             {section.key === 'deliverables' && <div className="mt-10"><p className="mb-6 max-w-2xl text-sm leading-6 text-muted-foreground">Nahrajte sem hotové prezentácie, fotografie alebo dokumenty. Nové súbory klient ihneď uvidí vo svojej sekcii na stiahnutie.</p><UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={deliverableAssets} canRenameAsset={(asset) => asset.mimeType.startsWith('image/')} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'deliverable', clientVisible: true, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('deliverable', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} /></div>}

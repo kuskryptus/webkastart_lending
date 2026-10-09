@@ -12,10 +12,12 @@ import {
   campaignAssetOptions, campaignBudgetOptions, campaignDestinationOptions, campaignDurationOptions,
   campaignGoalOptions, campaignMetaSetupOptions, campaignPlatformOptions, campaignServiceOptions,
   campaignTrackingOptions, previousCampaignOptions,
+  multiPageContentOwnerOptions, multiPageEditableContentOptions, multiPageFeatureOptions,
+  multiPageProductOptions, multiPageScopeOptions,
 } from '@/lib/onboarding/options'
 import { isUnconfirmedPrefill, markClientFieldChange } from '@/lib/onboarding/prefill'
 import type { ImplementationFieldKey } from '@/lib/onboarding/implementation-brief'
-import type { Discovery2Answers, ImplementationFieldSelection, OnboardingAnswers, OnboardingAsset, PrefillFieldKey } from '@/lib/onboarding/types'
+import type { Discovery2Answers, ImplementationFieldSelection, OnboardingAnswers, OnboardingAsset, OnboardingType, PrefillFieldKey } from '@/lib/onboarding/types'
 
 type ImplementationSelectionContextValue = {
   onChange: (fieldKey: ImplementationFieldKey, included: boolean) => void
@@ -33,6 +35,13 @@ const clientCoreNavigationItems = [
   { id: 'form-collaboration', label: 'Spolupráca' },
   { id: 'form-contact', label: 'Kontakt' },
 ] as const
+
+const clientMultiPageNavigationItems = [
+  ...clientCoreNavigationItems.slice(0, 3),
+  { id: 'form-content', label: 'Rozsah webu' },
+  { id: 'form-products', label: 'Produkty' },
+  ...clientCoreNavigationItems.slice(4),
+]
 
 function ClientFormNavigation({ items }: { items: ReadonlyArray<{ id: string; label: string }> }) {
   const [activeId, setActiveId] = useState(items[0]?.id || '')
@@ -130,9 +139,24 @@ function ImplementationToggle({ fieldKey }: { fieldKey?: ImplementationFieldKey 
   )
 }
 
-function Field({ hint, implementationKey, label, multiline = false, onChange, value }: {
+function ImportantLabel({ answered }: { answered: boolean }) {
+  return <span className="ml-1 text-[11px] font-semibold text-brand">{answered ? 'Dôležité' : 'Dôležité · treba doplniť'}</span>
+}
+
+function isResolvedAnswer(value: string) {
+  return Boolean(value.trim()) && !value.toLocaleLowerCase('sk').includes('neviem')
+}
+
+function keepExclusiveChoice(previous: string[], next: string[], exclusive: string[]) {
+  const newlySelected = next.find((item) => !previous.includes(item))
+  if (newlySelected && exclusive.includes(newlySelected)) return [newlySelected]
+  return next.some((item) => !exclusive.includes(item)) ? next.filter((item) => !exclusive.includes(item)) : next
+}
+
+function Field({ hint, implementationKey, important = false, label, multiline = false, onChange, value }: {
   hint?: string
   implementationKey?: ImplementationFieldKey
+  important?: boolean
   label: string
   multiline?: boolean
   onChange: (value: string) => void
@@ -140,12 +164,12 @@ function Field({ hint, implementationKey, label, multiline = false, onChange, va
 }) {
   const id = useId()
   const className = 'mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm leading-6 outline-none focus:border-brand disabled:cursor-not-allowed disabled:opacity-70'
-  return <div className="block"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><label htmlFor={id} className="text-xs font-semibold text-muted-foreground">{label}</label><ImplementationToggle fieldKey={implementationKey} /></div>{hint && <span className="mt-1 block text-xs text-brand/80">{hint}</span>}{multiline ? <textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24 resize-y`} /> : <input id={id} value={value} onChange={(event) => onChange(event.target.value)} className={className} />}</div>
+  return <div className="block"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><label htmlFor={id} className="text-xs font-semibold text-muted-foreground">{label}{important && <ImportantLabel answered={isResolvedAnswer(value)} />}</label><ImplementationToggle fieldKey={implementationKey} /></div>{hint && <span className="mt-1 block text-xs text-brand/80">{hint}</span>}{multiline ? <textarea id={id} value={value} onChange={(event) => onChange(event.target.value)} className={`${className} min-h-24 resize-y`} /> : <input id={id} value={value} onChange={(event) => onChange(event.target.value)} className={className} />}</div>
 }
 
-function SelectField({ hint, implementationKey, label, onChange, options, value }: { hint?: string; implementationKey?: ImplementationFieldKey; label: string; onChange: (value: string) => void; options: readonly string[]; value: string }) {
+function SelectField({ hint, implementationKey, important = false, label, onChange, options, value }: { hint?: string; implementationKey?: ImplementationFieldKey; important?: boolean; label: string; onChange: (value: string) => void; options: readonly string[]; value: string }) {
   const id = useId()
-  return <div className="block"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><label htmlFor={id} className="text-xs font-semibold text-muted-foreground">{label}</label><ImplementationToggle fieldKey={implementationKey} /></div>{hint && <span className="mt-1 block text-xs text-brand/80">{hint}</span>}<select id={id} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm outline-none focus:border-brand"><option value="">Nevyplnené</option>{options.map((option) => <option key={option}>{option}</option>)}</select></div>
+  return <div className="block"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><label htmlFor={id} className="text-xs font-semibold text-muted-foreground">{label}{important && <ImportantLabel answered={isResolvedAnswer(value)} />}</label><ImplementationToggle fieldKey={implementationKey} /></div>{hint && <span className="mt-1 block text-xs text-brand/80">{hint}</span>}<select id={id} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2.5 text-sm outline-none focus:border-brand"><option value="">Nevyplnené</option>{options.map((option) => <option key={option}>{option}</option>)}</select></div>
 }
 
 function ListField({ implementationKey, label, onChange, value }: { implementationKey?: ImplementationFieldKey; label: string; onChange: (value: string[]) => void; value: string[] }) {
@@ -161,24 +185,26 @@ function Group({ children, id, title }: { children: React.ReactNode; id?: string
   return <fieldset id={id} className="scroll-mt-4 border-t border-border/70 pt-7 first:border-0 first:pt-0"><legend className="mb-6 text-base font-semibold tracking-[-0.02em]">{title}</legend><div className="grid gap-7 sm:grid-cols-2">{children}</div></fieldset>
 }
 
-function ChoiceField({ children, implementationKey, onChange, options, selected, title }: {
+function ChoiceField({ children, implementationKey, important = false, onChange, options, selected, title }: {
   children?: React.ReactNode
   implementationKey?: ImplementationFieldKey
+  important?: boolean
   onChange: (value: string[]) => void
   options: readonly string[]
   selected: string[]
   title: string
 }) {
-  return <div className="sm:col-span-2"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><p className="text-xs font-semibold text-muted-foreground">{title}</p><ImplementationToggle fieldKey={implementationKey} /></div><ChoiceGrid options={options} selected={selected} onChange={onChange} />{children}</div>
+  return <div className="sm:col-span-2"><div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><p className="text-xs font-semibold text-muted-foreground">{title}{important && <ImportantLabel answered={selected.some(isResolvedAnswer)} />}</p><ImplementationToggle fieldKey={implementationKey} /></div><ChoiceGrid options={options} selected={selected} onChange={onChange} />{children}</div>
 }
 
-export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, getAssetUrl, implementationSelection = {}, onChange, onImplementationSelectionChange }: {
+export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, getAssetUrl, implementationSelection = {}, onboardingType = 'landing_page', onChange, onImplementationSelectionChange }: {
   actor?: 'client'
   answers: OnboardingAnswers
   assets?: OnboardingAsset[]
   disabled?: boolean
   getAssetUrl?: (asset: OnboardingAsset) => string
   implementationSelection?: ImplementationFieldSelection
+  onboardingType?: OnboardingType
   onChange: (answers: OnboardingAnswers) => void
   onImplementationSelectionChange?: (fieldKey: ImplementationFieldKey, included: boolean) => void
 }) {
@@ -190,12 +216,12 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
     : undefined
   return (
     <ImplementationSelectionContext.Provider value={onImplementationSelectionChange ? { onChange: onImplementationSelectionChange, selection: implementationSelection } : null}>
-    {actor === 'client' && <ClientFormNavigation items={clientCoreNavigationItems} />}
+    {actor === 'client' && <ClientFormNavigation items={onboardingType === 'multi_page_website' ? clientMultiPageNavigationItems : clientCoreNavigationItems} />}
     <fieldset disabled={disabled} className="space-y-10 disabled:opacity-70">
       <Group id="form-about" title="O vás a vašom podnikaní">
         <Field implementationKey="core.display_name" hint={hint('client.displayName')} label="Meno / názov podnikania" value={answers.client.displayName} onChange={(displayName) => emit({ ...answers, client: { displayName } }, 'client.displayName')} />
         <Field implementationKey="core.business_area" hint={hint('business.area')} label="Čomu sa venujete" value={answers.business.area} onChange={(area) => emit({ ...answers, business: { ...answers.business, area } }, 'business.area')} />
-        <SelectField implementationKey="core.project_type" hint={hint('projectType')} label="Typ projektu / čo potrebujete" options={projectTypeOptions} value={answers.projectType} onChange={(projectType) => emit({ ...answers, projectType }, 'projectType')} />
+        {onboardingType !== 'multi_page_website' && <SelectField implementationKey="core.project_type" hint={hint('projectType')} label="Typ projektu / čo potrebujete" options={projectTypeOptions} value={answers.projectType} onChange={(projectType) => emit({ ...answers, projectType }, 'projectType')} />}
         <div className="sm:col-span-2"><Field implementationKey="core.business_description" multiline label="Povedzte mi trochu viac o vašom podnikaní a o tom, čomu sa venujete." value={answers.business.description} onChange={(description) => onChange({ ...answers, business: { ...answers.business, description } })} /></div>
         <div className="sm:col-span-2"><Field implementationKey="core.brand_story" multiline label="Je za vašou značkou nejaký osobný príbeh, ktorý by mal zákazník poznať?" value={answers.brandStory} onChange={(brandStory) => onChange({ ...answers, brandStory })} /></div>
         <Field implementationKey="core.existing_website" hint={hint('existingWebsite')} label="Existujúci web" value={answers.existingWebsite} onChange={(existingWebsite) => emit({ ...answers, existingWebsite }, 'existingWebsite')} />
@@ -226,11 +252,43 @@ export function CoreWorkspaceFields({ actor, answers, assets = [], disabled, get
         <div className="sm:col-span-2"><Field implementationKey="core.key_takeaway" multiline label="Ak by si návštevník po odchode zo stránky zapamätal iba jednu vec o vás alebo vašej ponuke, čo by to malo byť?" value={answers.keyTakeaway} onChange={(keyTakeaway) => onChange({ ...answers, keyTakeaway })} /></div>
         <div className="sm:col-span-2"><Field implementationKey="core.ten_second_highlight" multiline label="Čo by ste návštevníkovi ukázali ako prvé, keby ste mali iba 10 sekúnd?" value={answers.tenSecondHighlight} onChange={(tenSecondHighlight) => onChange({ ...answers, tenSecondHighlight })} /></div>
       </Group>
-      <Group id="form-content" title="Obsah stránky">
+      {onboardingType === 'multi_page_website' ? <>
+      <Group id="form-content" title="Rozsah a správa webu">
+        <p className="text-xs leading-5 text-muted-foreground sm:col-span-2">Otázky označené ako <span className="font-semibold text-brand">Dôležité</span> potrebujeme vyriešiť pred presným návrhom a nacenením. Ak si nie ste istý, pokojne napíšte „neviem“.</p>
+        <SelectField implementationKey="multi.project_scope" important label="Čo ideme vytvoriť?" options={multiPageScopeOptions} value={answers.multiPage.projectScope} onChange={(projectScope) => onChange({ ...answers, multiPage: { ...answers.multiPage, projectScope } })} />
+        <SelectField implementationKey="multi.content_owner" important label="Kto pripraví texty a vyberie podklady pre jednotlivé stránky?" options={multiPageContentOwnerOptions} value={answers.multiPage.contentOwner} onChange={(contentOwner) => onChange({ ...answers, multiPage: { ...answers.multiPage, contentOwner } })} />
+        <ChoiceField implementationKey="multi.editable_content" important title="Čo budete chcieť po spustení sami pridávať alebo upravovať?" options={multiPageEditableContentOptions} selected={answers.multiPage.editableContent} onChange={(next) => onChange({ ...answers, multiPage: { ...answers.multiPage, editableContent: keepExclusiveChoice(answers.multiPage.editableContent, next, ['Nechcem obsah upravovať sám', 'Ešte neviem']) } })} />
+        <Field implementationKey="multi.content_changes" label="Ako často očakávate zmeny obsahu?" hint="Napr. nové realizácie každý mesiac, články raz za týždeň, cenník príležitostne." value={answers.multiPage.contentChanges} onChange={(contentChanges) => onChange({ ...answers, multiPage: { ...answers.multiPage, contentChanges } })} />
+        <Field implementationKey="multi.languages" important label="V akých jazykoch má byť web?" hint="Napr. slovenčina a angličtina. Ak stačí slovenčina, napíšte to." value={answers.multiPage.languages} onChange={(languages) => onChange({ ...answers, multiPage: { ...answers.multiPage, languages } })} />
+        {answers.multiPage.languages.trim() && !['slovenčina', 'slovensky', 'sk'].includes(answers.multiPage.languages.trim().toLocaleLowerCase('sk')) && <Field implementationKey="multi.translation_owner" important label="Kto dodá alebo schváli preklady?" value={answers.multiPage.translationOwner} onChange={(translationOwner) => onChange({ ...answers, multiPage: { ...answers.multiPage, translationOwner } })} />}
+        <ChoiceField implementationKey="multi.features" important title="Aké funkcie web potrebuje?" options={multiPageFeatureOptions} selected={answers.multiPage.features} onChange={(next) => onChange({ ...answers, multiPage: { ...answers.multiPage, features: keepExclusiveChoice(answers.multiPage.features, next, ['Žiadne špeciálne funkcie', 'Ešte neviem']) } })} />
+        {answers.multiPage.features.includes('Dopytové formuláre') && <div className="sm:col-span-2"><Field implementationKey="multi.forms_details" important multiline label="Aké formuláre potrebujete a kam majú chodiť odoslané správy?" hint="Napr. všeobecný kontakt, samostatný dopyt pre službu, prílohy alebo špeciálne polia. Neuvádzajte heslá." value={answers.multiPage.formsDetails} onChange={(formsDetails) => onChange({ ...answers, multiPage: { ...answers.multiPage, formsDetails } })} /></div>}
+        {answers.multiPage.features.some((feature) => ['Rezervácie', 'Newsletter', 'Vyhľadávanie', 'Pobočky / mapy', 'Blog / články'].includes(feature)) && <div className="sm:col-span-2"><Field implementationKey="multi.features_details" multiline label="Ako majú vybrané funkcie fungovať?" hint="Napr. pri rezerváciách termíny a potvrdenia; pri blogu kto bude písať články." value={answers.multiPage.featuresDetails} onChange={(featuresDetails) => onChange({ ...answers, multiPage: { ...answers.multiPage, featuresDetails } })} /></div>}
+        {answers.multiPage.features.includes('Prepojenie s iným systémom') && <div className="sm:col-span-2"><Field implementationKey="multi.integrations" important multiline label="S akými systémami sa má web prepojiť a čo sa má prenášať?" hint="Napr. CRM, fakturácia, rezervačný systém. Stačí názov služby a opis; prihlasovacie údaje sem neposielajte." value={answers.multiPage.integrations} onChange={(integrations) => onChange({ ...answers, multiPage: { ...answers.multiPage, integrations } })} /></div>}
+        {answers.multiPage.projectScope === 'Redizajn existujúceho webu' && <>
+          <div className="sm:col-span-2"><Field implementationKey="multi.migration_content" important multiline label="Čo treba zo starého webu zachovať alebo preniesť?" hint="Texty, články, realizácie, produkty, fotografie, existujúce podstránky; prípadne čo už nechcete." value={answers.multiPage.migrationContent} onChange={(migrationContent) => onChange({ ...answers, multiPage: { ...answers.multiPage, migrationContent } })} /></div>
+          <div className="sm:col-span-2"><Field implementationKey="multi.migration_urls" multiline label="Ktoré existujúce odkazy alebo stránky musia zostať dostupné?" hint="Dôležité pre presmerovania zo starého webu a zachovanie návštevnosti." value={answers.multiPage.migrationUrls} onChange={(migrationUrls) => onChange({ ...answers, multiPage: { ...answers.multiPage, migrationUrls } })} /></div>
+        </>}
+        <Field implementationKey="multi.decision_maker" label="Kto bude schvaľovať obsah a finálnu podobu webu?" value={answers.multiPage.decisionMaker} onChange={(decisionMaker) => onChange({ ...answers, multiPage: { ...answers.multiPage, decisionMaker } })} />
+      </Group>
+      <Group id="form-products" title="Produkty a predaj">
+        <SelectField implementationKey="multi.product_mode" important label="Ako majú byť produkty na webe zobrazené alebo predávané?" options={multiPageProductOptions} value={answers.multiPage.productMode} onChange={(productMode) => onChange({ ...answers, multiPage: { ...answers.multiPage, productMode } })} />
+        {answers.multiPage.productMode && answers.multiPage.productMode !== 'Produkty na webe nepotrebujem' && <>
+          <Field implementationKey="multi.product_count" important label="Koľko produktov približne máte a budú sa často meniť?" value={answers.multiPage.productCount} onChange={(productCount) => onChange({ ...answers, multiPage: { ...answers.multiPage, productCount } })} />
+          <Field implementationKey="multi.product_source" important label="Odkiaľ vezmeme názvy, ceny, popisy a fotografie produktov?" hint="Napr. existujúci e-shop, tabuľka, katalóg alebo ich pripravíte vy." value={answers.multiPage.productSource} onChange={(productSource) => onChange({ ...answers, multiPage: { ...answers.multiPage, productSource } })} />
+          <div className="sm:col-span-2"><Field implementationKey="multi.product_details" multiline label="Majú produkty varianty, kategórie alebo špeciálne parametre?" hint="Napr. veľkosti, farby, filtrovanie, dostupnosť, ceny bez DPH alebo dopyt namiesto nákupu." value={answers.multiPage.productDetails} onChange={(productDetails) => onChange({ ...answers, multiPage: { ...answers.multiPage, productDetails } })} /></div>
+        </>}
+        {(answers.multiPage.productMode === 'Produkty s odkazom na existujúci e-shop' || answers.multiPage.productMode === 'Nákup a platba priamo na novom webe') && <>
+          <Field implementationKey="multi.shop_url" important={answers.multiPage.productMode === 'Produkty s odkazom na existujúci e-shop'} label="Máte už e-shop? Pošlite jeho adresu, ak existuje." value={answers.multiPage.shopUrl} onChange={(shopUrl) => onChange({ ...answers, multiPage: { ...answers.multiPage, shopUrl } })} />
+          <Field implementationKey="multi.shop_platform" label="Na akej platforme funguje alebo má fungovať?" hint="Napr. Shoptet, Shopify, WooCommerce alebo neviem." value={answers.multiPage.shopPlatform} onChange={(shopPlatform) => onChange({ ...answers, multiPage: { ...answers.multiPage, shopPlatform } })} />
+        </>}
+        {answers.multiPage.productMode === 'Nákup a platba priamo na novom webe' && <div className="sm:col-span-2"><Field implementationKey="multi.checkout_details" important multiline label="Ako má prebiehať objednávka, platba, doprava a správa skladu?" hint="Uveďte požadované spôsoby platby a dopravy, skladové zásoby, fakturáciu, krajiny predaja a kto vybavuje objednávky. E-shop naceníme ako samostatný rozsah." value={answers.multiPage.checkoutDetails} onChange={(checkoutDetails) => onChange({ ...answers, multiPage: { ...answers.multiPage, checkoutDetails } })} /></div>}
+      </Group>
+      </> : <Group id="form-content" title="Obsah stránky">
         <ChoiceField implementationKey="core.sections" title="Čo by ste chceli na stránke?" options={sectionOptions} selected={answers.sections} onChange={(sections) => onChange({ ...answers, sections })}><OtherAnswer show={answers.sections.includes('Iné')} label="Iná časť stránky" value={answers.sectionsOther} onChange={(sectionsOther) => onChange({ ...answers, sectionsOther })} /></ChoiceField>
         <ChoiceField implementationKey="core.future_features" title="Plánujete web v budúcnosti rozšíriť?" options={futureOptions} selected={answers.futureFeatures} onChange={(futureFeatures) => onChange({ ...answers, futureFeatures })}><OtherAnswer show={answers.futureFeatures.includes('Iné')} label="Iné rozšírenie" value={answers.futureFeaturesOther} onChange={(futureFeaturesOther) => onChange({ ...answers, futureFeaturesOther })} /></ChoiceField>
         <div className="sm:col-span-2"><Field implementationKey="core.other_sections" multiline label="Je ešte niečo, čo chcete na stránke?" value={answers.otherSections} onChange={(otherSections) => onChange({ ...answers, otherSections })} /></div>
-      </Group>
+      </Group>}
       <Group id="form-visual" title="Vizuálny smer">
         <div className="sm:col-span-2"><Field implementationKey="core.brand_first_impression" multiline label="Čo chcete, aby si človek o vašej firme pomyslel po 5 sekundách na webe?" hint="Prvá intuitívna reakcia – ešte predtým, než začne čítať detaily." value={answers.brandFirstImpression} onChange={(brandFirstImpression) => onChange({ ...answers, brandFirstImpression })} /></div>
         <ChoiceField implementationKey="core.design_preferences" title="Aké 3–5 slov má vaša značka reprezentovať?" options={includeSavedOptions(brandAttributeOptions, answers.designPreferences)} selected={answers.designPreferences} onChange={(designPreferences) => onChange({ ...answers, designPreferences })}><OtherAnswer show={answers.designPreferences.includes('Iné')} label="Iné slovo" value={answers.designOther} onChange={(designOther) => onChange({ ...answers, designOther })} /></ChoiceField>

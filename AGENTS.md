@@ -87,7 +87,8 @@ and pnpm.
   Migration 013 stores the admin-only field selection used to generate the final
   website implementation brief. Migration 014 stores the admin-only local assets
   root used to help coding agents resolve uploaded filenames on the administrator's
-  computer.
+  computer. Migration 015 permits `multi_page_website` projects; their page map
+  is stored in the existing versioned `page_structure` workspace section.
 - Deployment and environment setup: `DEPLOYMENT.md` and `.env.example`.
 
 ## Onboarding invariants
@@ -118,6 +119,8 @@ and pnpm.
 - `clients.onboarding_type` selects the questionnaire presentation. Existing and
   legacy clients default to `landing_page`; `meta_ads` reuses the Core record with
   campaign-specific answers and does not expose the web-only Discovery 2 section.
+  `multi_page_website` reuses Core and Discovery 2, adds sanitized `multiPage`
+  answers, and stores ordered pages with per-page sections in `page_structure`.
 - Admin and portal are presentations over the same Core, Discovery, and asset
   rows. Respect `client_workspace_sections`; internal notes are never client-visible.
   Assets with category `source` are client inputs; `deliverable` assets are admin
@@ -136,8 +139,9 @@ and pnpm.
   state; do not reintroduce a required manual save step.
 - The landing-page workspace structure is shared by admin and client. Preserve its
   order, section descriptions, item lists, per-section photo assignments and photo
-  descriptions. Only uploaded, client-visible source images owned by that client may
-  be referenced.
+  descriptions. Multi-page projects preserve the same information separately on
+  each page, plus page purpose, key information, and next action. Only uploaded,
+  client-visible source images owned by that client may be referenced.
 - Implementation-document selection and the local assets root path are admin-only and
   stored separately from form answers. Never expose either in the client portal; export
   only whitelisted fields whose stored selection is exactly `true`. AI exports use the

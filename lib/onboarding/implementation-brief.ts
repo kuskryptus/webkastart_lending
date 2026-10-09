@@ -39,6 +39,26 @@ export const implementationFieldGroups = [
   { key: 'core.sections', sectionId: 'website_content', title: 'Požadované časti stránky', responseKeys: ['sections', 'sections_other'] },
   { key: 'core.future_features', sectionId: 'website_content', title: 'Budúce rozšírenia', responseKeys: ['future_features', 'future_features_other'] },
   { key: 'core.other_sections', sectionId: 'website_content', title: 'Ďalšie požiadavky na obsah', responseKeys: ['other_sections'] },
+  { key: 'multi.project_scope', sectionId: 'multi_page', title: 'Typ a rozsah projektu', responseKeys: ['project_scope'] },
+  { key: 'multi.content_owner', sectionId: 'multi_page', title: 'Príprava obsahu', responseKeys: ['content_owner'] },
+  { key: 'multi.editable_content', sectionId: 'multi_page', title: 'Obsah upravovaný klientom', responseKeys: ['editable_content'] },
+  { key: 'multi.content_changes', sectionId: 'multi_page', title: 'Frekvencia zmien obsahu', responseKeys: ['content_changes'] },
+  { key: 'multi.languages', sectionId: 'multi_page', title: 'Jazyky webu', responseKeys: ['languages'] },
+  { key: 'multi.translation_owner', sectionId: 'multi_page', title: 'Príprava prekladov', responseKeys: ['translation_owner'] },
+  { key: 'multi.features', sectionId: 'multi_page', title: 'Požadované funkcie', responseKeys: ['features'] },
+  { key: 'multi.features_details', sectionId: 'multi_page', title: 'Fungovanie funkcií', responseKeys: ['features_details'] },
+  { key: 'multi.forms_details', sectionId: 'multi_page', title: 'Formuláre a doručovanie správ', responseKeys: ['forms_details'] },
+  { key: 'multi.integrations', sectionId: 'multi_page', title: 'Integrácie', responseKeys: ['integrations'] },
+  { key: 'multi.product_mode', sectionId: 'multi_page', title: 'Produkty a predaj', responseKeys: ['product_mode'] },
+  { key: 'multi.product_count', sectionId: 'multi_page', title: 'Počet a zmeny produktov', responseKeys: ['product_count'] },
+  { key: 'multi.product_source', sectionId: 'multi_page', title: 'Zdroj produktových údajov', responseKeys: ['product_source'] },
+  { key: 'multi.product_details', sectionId: 'multi_page', title: 'Parametre produktov', responseKeys: ['product_details'] },
+  { key: 'multi.shop_url', sectionId: 'multi_page', title: 'Existujúci e-shop', responseKeys: ['shop_url'] },
+  { key: 'multi.shop_platform', sectionId: 'multi_page', title: 'Platforma e-shopu', responseKeys: ['shop_platform'] },
+  { key: 'multi.checkout_details', sectionId: 'multi_page', title: 'Objednávky, platby, doprava a sklad', responseKeys: ['checkout_details'] },
+  { key: 'multi.migration_content', sectionId: 'multi_page', title: 'Prenos obsahu', responseKeys: ['migration_content'] },
+  { key: 'multi.migration_urls', sectionId: 'multi_page', title: 'Staré odkazy a presmerovania', responseKeys: ['migration_urls'] },
+  { key: 'multi.decision_maker', sectionId: 'multi_page', title: 'Schvaľovanie webu', responseKeys: ['decision_maker'] },
   { key: 'core.brand_first_impression', sectionId: 'visual_direction', title: 'Prvý dojem zo značky', responseKeys: ['brand_first_impression'] },
   { key: 'core.design_preferences', sectionId: 'visual_direction', title: 'Charakter značky', responseKeys: ['design_preferences', 'design_other'] },
   { key: 'core.color_preferences', sectionId: 'visual_direction', title: 'Farebné preferencie', responseKeys: ['color_preferences', 'color_preferences_other'] },
@@ -177,7 +197,7 @@ export function createImplementationDocument(workspace: ClientWorkspaceResponse,
   }
 
   if (selection.page_structure === true) {
-    lines.push('', '## Štruktúra stránky', '')
+    lines.push('', workspace.onboardingType === 'multi_page_website' ? '## Mapa webu' : '## Štruktúra stránky', '')
     lines.push(createPageStructureSectionsMarkdown({
       assets: workspace.assets,
       assetsLocalPath: workspace.assetsLocalPath,

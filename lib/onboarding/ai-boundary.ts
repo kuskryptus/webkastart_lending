@@ -63,6 +63,7 @@ export async function getWebsiteGenerationInput(projectId: string) {
     tenSecondHighlight: answers.tenSecondHighlight,
     sections: answers.sections,
     sectionsOther: answers.sectionsOther,
+    multiPage: answers.multiPage,
     futureFeatures: answers.futureFeatures,
     futureFeaturesOther: answers.futureFeaturesOther,
     designPreferences: answers.designPreferences,
