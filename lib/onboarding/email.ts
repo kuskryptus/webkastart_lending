@@ -29,6 +29,9 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Opis práce', answers.business.description],
         ['Predchádzajúce skúsenosti s webom', answers.previousWebsiteExperience],
         ['Existujúci web', answers.existingWebsite],
+        ['Má existujúci web', answers.existingWebsiteStatus || (answers.existingWebsite ? 'Áno' : '')],
+        ['Požadované zmeny existujúceho webu', answers.redesignChanges],
+        ['Podrobnosti požadovaných zmien', answers.redesignDetails],
         ['Platformy sociálnych sietí', answers.socialPlatforms],
         ['Sociálne siete', answers.socialLinks],
       ],
@@ -41,6 +44,8 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
         ['Registrátor domény', answers.domain.registrar],
         ['Má webhosting', answers.hosting.status],
         ['Poskytovateľ webhostingu', answers.hosting.provider],
+        ['Technické požiadavky', answers.technicalRequirements],
+        ['Podrobnosti technických požiadaviek', answers.technicalRequirementsDetails],
       ],
     },
     {
@@ -48,6 +53,8 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
       rows: [
         ['Typy zákazníkov', answers.targetAudienceSelections],
         ['Cieľová skupina', answers.targetAudience],
+        ['Zdroje návštevnosti', answers.trafficSources],
+        ['Iný zdroj návštevnosti', answers.trafficSourcesOther],
         ['Očakávania od webu', answers.websiteExpectations],
         ['Iné očakávanie', answers.websiteExpectationsOther],
         ['Prečo je cieľ dôležitý', answers.goalImportance],
@@ -100,6 +107,9 @@ export function createOnboardingEmail(clientLabel: string, answers: OnboardingAn
     {
       title: 'Spolupráca',
       rows: [
+        ['Požadovaný termín dokončenia', answers.desiredCompletion],
+        ['Konkrétny požadovaný dátum', answers.desiredCompletionDate],
+        ['Správa webu po spustení', answers.websiteManagement],
         ['Zapojenie klienta do návrhu', answers.collaborationInvolvement],
         ['Komunikácia a spätná väzba', answers.feedbackCommunication],
       ],

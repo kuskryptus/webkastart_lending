@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CheckCircle2, ChevronDown, Cloud, CloudOff, Download, FileText, Images, LayoutTemplate, ListChecks, Loader2, LockKeyhole } from 'lucide-react'
+import { ArrowUp, CheckCircle2, ChevronDown, Cloud, CloudOff, Download, FileText, Images, LayoutTemplate, ListChecks, Loader2, LockKeyhole } from 'lucide-react'
 import { LogoMark } from '@/components/logo'
 import { AutoSaveNotice, CampaignMaterialsChecklist, SourceMaterialsChecklist } from './onboarding-guidance'
 import { UploadField } from './upload-field'
@@ -74,6 +74,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
   const [coreConflict, setCoreConflict] = useState(false)
   const [discoveryConflict, setDiscoveryConflict] = useState(false)
   const [pageStructureConflict, setPageStructureConflict] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
   const [coreChange, setCoreChange] = useState(0)
   const [discoveryChange, setDiscoveryChange] = useState(0)
   const [pageStructureChange, setPageStructureChange] = useState(0)
@@ -100,6 +101,18 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
   const visibleSections = new Set(workspace.sections.map((section) => section.key))
   const isMetaAds = workspace.onboardingType === 'meta_ads'
   const isMultiPage = workspace.onboardingType === 'multi_page_website'
+
+  useEffect(() => {
+    const updateVisibility = () => setShowBackToTop(window.scrollY > 640)
+    updateVisibility()
+    window.addEventListener('scroll', updateVisibility, { passive: true })
+    return () => window.removeEventListener('scroll', updateVisibility)
+  }, [])
+
+  function scrollToTop() {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    window.scrollTo({ behavior: reducedMotion ? 'auto' : 'smooth', top: 0 })
+  }
 
   function replaceCategoryAssets(category: AssetCategory, assets: OnboardingAsset[]) {
     setWorkspace((current) => refreshOverallProgress({
@@ -284,6 +297,17 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
           })}
         </div>
       </div>
+      <button
+        type="button"
+        onClick={(event) => { event.currentTarget.blur(); scrollToTop() }}
+        aria-label="Späť na začiatok stránky"
+        aria-hidden={!showBackToTop}
+        tabIndex={showBackToTop ? 0 : -1}
+        className={`fixed right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-20 inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 text-sm font-semibold shadow-card backdrop-blur transition duration-200 hover:border-brand/40 hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:right-8 ${showBackToTop ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}`}
+      >
+        <ArrowUp className="size-4" />
+        <span className="hidden sm:inline">Hore</span>
+      </button>
     </main>
   )
 }

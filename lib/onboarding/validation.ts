@@ -8,6 +8,12 @@ import {
   type PageStructure,
   type ProductPriceItem,
 } from './types'
+import { completionTimeOptions, infrastructureStatusOptions, redesignChangeOptions, technicalRequirementOptions, trafficSourceOptions, websiteManagementOptions } from './options'
+
+function normalizeExclusive(values: string[], exclusive: readonly string[]) {
+  const concrete = values.filter((value) => !exclusive.includes(value))
+  return concrete.length ? concrete : values.slice(0, 1)
+}
 
 export const ONBOARDING_TOKEN_PATTERN = /^(?:[A-Za-z0-9_-]{43}|[A-Za-z0-9_-]{48}\.[A-Za-z0-9_-]{43})$/
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 * 1024
@@ -200,6 +206,14 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
   const billing = object(source.billing)
   const metaCampaign = object(source.metaCampaign)
   const multiPage = object(source.multiPage)
+  const existingWebsite = text(source.existingWebsite, 500)
+  const existingWebsiteStatus = infrastructureStatusOptions.includes(source.existingWebsiteStatus as typeof infrastructureStatusOptions[number])
+    ? source.existingWebsiteStatus as string : ''
+  const hasExistingWebsite = existingWebsiteStatus === 'Áno' || (!existingWebsiteStatus && Boolean(existingWebsite))
+  const redesignChanges = list(source.redesignChanges, 6, 120).filter((value) => redesignChangeOptions.includes(value as typeof redesignChangeOptions[number]))
+  const desiredCompletion = completionTimeOptions.includes(source.desiredCompletion as typeof completionTimeOptions[number]) ? source.desiredCompletion as string : ''
+  const trafficSources = list(source.trafficSources, 7, 120).filter((value) => trafficSourceOptions.includes(value as typeof trafficSourceOptions[number]))
+  const technicalRequirements = list(source.technicalRequirements, 8, 120).filter((value) => technicalRequirementOptions.includes(value as typeof technicalRequirementOptions[number]))
 
   return {
     ...emptyOnboardingAnswers,
@@ -270,8 +284,18 @@ export function sanitizeAnswers(input: unknown): OnboardingAnswers {
     dislikes: text(source.dislikes, 2000),
     representativePhotoIds: uniqueList(source.representativePhotoIds, MAX_REPRESENTATIVE_PHOTOS, 100),
     brandStory: text(source.brandStory, 5000),
-    existingWebsite: text(source.existingWebsite, 500),
+    existingWebsite: hasExistingWebsite ? existingWebsite : '',
+    existingWebsiteStatus,
+    redesignChanges: hasExistingWebsite ? normalizeExclusive(redesignChanges, ['Ešte neviem, potrebujem poradiť.']) : [],
+    redesignDetails: hasExistingWebsite ? text(source.redesignDetails, 3000) : '',
     previousWebsiteExperience: text(source.previousWebsiteExperience, 5000),
+    desiredCompletion,
+    desiredCompletionDate: desiredCompletion === 'Iný termín.' && /^\d{4}-\d{2}-\d{2}$/.test(text(source.desiredCompletionDate, 10)) ? text(source.desiredCompletionDate, 10) : '',
+    trafficSources: normalizeExclusive(trafficSources, ['Zatiaľ neviem.']),
+    trafficSourcesOther: trafficSources.includes('Iné.') && !trafficSources.includes('Zatiaľ neviem.') ? text(source.trafficSourcesOther, 1000) : '',
+    technicalRequirements: normalizeExclusive(technicalRequirements, ['Nemáme žiadne špeciálne požiadavky.', 'Neviem, potrebujem poradiť.']),
+    technicalRequirementsDetails: technicalRequirements.some((value) => !['Nemáme žiadne špeciálne požiadavky.', 'Neviem, potrebujem poradiť.'].includes(value)) ? text(source.technicalRequirementsDetails, 3000) : '',
+    websiteManagement: websiteManagementOptions.includes(source.websiteManagement as typeof websiteManagementOptions[number]) ? source.websiteManagement as string : '',
     domain: {
       ownership: text(domain.ownership, 80),
       name: text(domain.name, 253),

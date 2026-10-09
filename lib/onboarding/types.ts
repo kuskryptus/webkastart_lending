@@ -139,7 +139,17 @@ export type OnboardingAnswers = {
   representativePhotoIds: string[]
   brandStory: string
   existingWebsite: string
+  existingWebsiteStatus: string
+  redesignChanges: string[]
+  redesignDetails: string
   previousWebsiteExperience: string
+  desiredCompletion: string
+  desiredCompletionDate: string
+  trafficSources: string[]
+  trafficSourcesOther: string
+  technicalRequirements: string[]
+  technicalRequirementsDetails: string
+  websiteManagement: string
   domain: {
     ownership: string
     name: string
@@ -371,7 +381,17 @@ export const emptyOnboardingAnswers: OnboardingAnswers = {
   representativePhotoIds: [],
   brandStory: '',
   existingWebsite: '',
+  existingWebsiteStatus: '',
+  redesignChanges: [],
+  redesignDetails: '',
   previousWebsiteExperience: '',
+  desiredCompletion: '',
+  desiredCompletionDate: '',
+  trafficSources: [],
+  trafficSourcesOther: '',
+  technicalRequirements: [],
+  technicalRequirementsDetails: '',
+  websiteManagement: '',
   domain: { ownership: '', name: '', registrar: '' },
   hosting: { status: '', provider: '' },
   socialLinks: [''],

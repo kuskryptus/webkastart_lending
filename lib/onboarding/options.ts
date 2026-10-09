@@ -17,6 +17,17 @@ export const colorOptions = ['Svetlé / neutrálne', 'Tmavé', 'Teplé', 'Studen
 export const dislikeOptions = ['Príliš veľa farieb', 'Ostré / krikľavé farby', 'Príliš tmavý vzhľad', 'Príliš sterilný vzhľad', 'Príliš korporátny vzhľad', 'Príliš hravý vzhľad', 'Príliš luxusný vzhľad', 'Príliš veľa animácií', 'Preplnený dizajn', 'Príliš veľa textu', 'Nemám konkrétne obmedzenia', 'Iné'] as const
 export const communicationOptions = ['Telefón', 'E-mail', 'Kontaktný formulár', 'Messenger', 'WhatsApp', 'Instagram', 'Osobne', 'Rezervačný systém', 'Iné'] as const
 export const infrastructureStatusOptions = ['Áno', 'Nie', 'Neviem / nie som si istý'] as const
+export const redesignChangeOptions = ['Chcem zmeniť iba dizajn, texty a obsah zostanú rovnaké.', 'Chcem nový dizajn a zároveň upraviť existujúce texty.', 'Chcem úplne nový web vrátane nového obsahu.', 'Chcem zachovať väčšinu stránky a zmeniť iba niektoré časti.', 'Chcem doplniť nové podstránky alebo funkcie.', 'Ešte neviem, potrebujem poradiť.'] as const
+export const completionTimeOptions = ['Čo najskôr.', 'Do 2 týždňov.', 'Do 1 mesiaca.', 'Do 2–3 mesiacov.', 'Nemám konkrétny termín.', 'Iný termín.'] as const
+export const trafficSourceOptions = ['Cez Google a iné vyhľadávače.', 'Zo sociálnych sietí.', 'Z platenej reklamy (Google Ads, Facebook, Instagram).', 'Na základe odporúčaní.', 'Z vizitiek, letákov alebo iných propagačných materiálov.', 'Zatiaľ neviem.', 'Iné.'] as const
+export const technicalRequirementOptions = ['Stránka musí fungovať s naším existujúcim systémom.', 'Potrebujeme zachovať existujúce e-mailové schránky.', 'Máme konkrétne požiadavky na hosting.', 'Potrebujeme prepojenie s externou službou alebo systémom.', 'Máme požiadavky na technológiu, v ktorej má byť web vytvorený.', 'Nemáme žiadne špeciálne požiadavky.', 'Neviem, potrebujem poradiť.', 'Iné.'] as const
+export const websiteManagementOptions = ['Chcem si obsah stránky upravovať sám.', 'Chcem, aby ste mi s úpravami a správou pomáhali.', 'Stránka sa pravdepodobne nebude často meniť.', 'Zatiaľ neviem, rád si nechám poradiť.'] as const
+
+export function keepExclusiveChoice(previous: string[], next: string[], exclusive: readonly string[]) {
+  const newlySelected = next.find((item) => !previous.includes(item))
+  if (newlySelected && exclusive.includes(newlySelected)) return [newlySelected]
+  return next.some((item) => !exclusive.includes(item)) ? next.filter((item) => !exclusive.includes(item)) : next
+}
 
 export const campaignPlatformOptions = ['Facebook', 'Instagram', 'Facebook aj Instagram', 'Nechám si poradiť'] as const
 export const campaignGoalOptions = ['Získať dopyty / kontakty', 'Získať správy', 'Zvýšiť predaj', 'Priviesť ľudí na web', 'Zvýšiť návštevnosť prevádzky', 'Zvýšiť povedomie o značke', 'Propagovať konkrétnu akciu', 'Iné / ešte neviem'] as const
