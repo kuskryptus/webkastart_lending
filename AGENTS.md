@@ -61,6 +61,8 @@ Tailwind CSS 4, PostgreSQL via `postgres`, private S3-compatible storage, Resend
 and pnpm.
 
 - Public landing page: `app/page.tsx` and `components/`.
+  Its hero images use precompressed static WebP files; keep first paint independent
+  of image-load callbacks and client hydration, and animate only opacity/position.
 - Contact API: `app/api/contact/route.ts`.
 - Public consultation booking: `/rezervacia`, backed by `/api/bookings` and the
   `consultation_bookings` table. The authenticated Team Go integration lives at
