@@ -57,10 +57,11 @@ function ClientFormNavigation({ items }: { items: ReadonlyArray<{ id: string; la
       frame = window.requestAnimationFrame(() => {
         frame = 0
         let currentId = items[0]?.id || ''
+        const marker = window.matchMedia('(min-width: 640px)').matches ? 144 : 96
 
         for (const item of items) {
           const section = document.getElementById(item.id)
-          if (section && section.getBoundingClientRect().top <= 112) currentId = item.id
+          if (section && section.getBoundingClientRect().top <= marker) currentId = item.id
         }
 
         setActiveId(currentId)
@@ -97,7 +98,7 @@ function ClientFormNavigation({ items }: { items: ReadonlyArray<{ id: string; la
   }
 
   return (
-    <nav aria-label="Časti formulára" className="sticky top-0 z-20 -mx-5 mb-9 border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:-mx-8 sm:px-8">
+    <nav aria-label="Časti formulára" className="sticky top-0 z-20 -mx-5 mb-9 border-y border-border/70 bg-background/95 px-5 backdrop-blur sm:top-14 sm:-mx-8 sm:px-8">
       <div className="flex min-h-14 items-center gap-4">
         <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
           Formulár <span className="text-brand">{activeIndex + 1}/{items.length}</span>
@@ -178,7 +179,7 @@ function SocialLinksField({ answers, hint, implementationKey, onChange }: { answ
 }
 
 function Group({ children, id, title }: { children: React.ReactNode; id?: string; title: string }) {
-  return <fieldset id={id} className="scroll-mt-4 border-t border-border/70 pt-7 first:border-0 first:pt-0"><legend className="mb-6 text-base font-semibold tracking-[-0.02em]">{title}</legend><div className="grid gap-7 sm:grid-cols-2">{children}</div></fieldset>
+  return <fieldset id={id} className="scroll-mt-20 border-t border-border/70 pt-7 first:border-0 first:pt-0 sm:scroll-mt-32"><legend className="mb-6 text-base font-semibold tracking-[-0.02em]">{title}</legend><div className="grid gap-7 sm:grid-cols-2">{children}</div></fieldset>
 }
 
 function ChoiceField({ children, implementationKey, important = false, onChange, options, selected, title }: {

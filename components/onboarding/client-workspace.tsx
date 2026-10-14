@@ -241,7 +241,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
         <div className="mt-6">
           <AutoSaveNotice />
         </div>
-        <nav aria-label="Rýchle odkazy" className="-mx-1 mt-7 flex gap-2 overflow-x-auto px-1 pb-1">
+        <nav aria-label="Rýchle odkazy" className="-mx-1 mt-7 flex gap-2 overflow-x-auto px-1 pb-1 sm:sticky sm:top-0 sm:z-30 sm:-mx-8 sm:h-14 sm:items-center sm:border-b sm:border-border/70 sm:bg-background/95 sm:px-8 sm:pb-0 sm:backdrop-blur">
           {visibleSections.has('core') && <a href="#core" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><ListChecks className="size-4" /> Formulár</a>}
           {visibleSections.has('files') && <a href="#files" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><Images className="size-4" /> {isMetaAds ? 'Nahrať podklady' : 'Nahrať fotky'}</a>}
           {visibleSections.has('page_structure') && <a href="#page_structure" className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-border bg-white px-4 text-sm font-semibold hover:border-brand/40 hover:text-brand"><LayoutTemplate className="size-4" /> {isMultiPage ? 'Mapa webu' : 'Štruktúra stránky'}</a>}
