@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ClipboardPaste, ExternalLink, FileText, FileVideo, Loader2, Pencil, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
+import { Check, ClipboardPaste, Download, ExternalLink, FileText, FileVideo, Loader2, Pencil, RefreshCw, Trash2, UploadCloud, X } from 'lucide-react'
 import type { OnboardingAsset } from '@/lib/onboarding/types'
 import { ShareLinkButton, sharedAssetPath } from './share-link-button'
 import {
@@ -99,6 +99,7 @@ async function errorMessage(response: Response) {
 
 export function UploadField({
   apiBasePath,
+  archiveUrl,
   assets,
   canDeleteAsset = () => true,
   canRenameAsset = () => false,
@@ -112,6 +113,7 @@ export function UploadField({
   totalAssetCount,
 }: {
   apiBasePath?: string
+  archiveUrl?: string
   assets: OnboardingAsset[]
   canDeleteAsset?: (asset: OnboardingAsset) => boolean
   canRenameAsset?: (asset: OnboardingAsset) => boolean
@@ -132,6 +134,7 @@ export function UploadField({
   const [renameValue, setRenameValue] = useState('')
   const [renameError, setRenameError] = useState('')
   const [renameSaving, setRenameSaving] = useState(false)
+  const [selectedAssetIds, setSelectedAssetIds] = useState<Set<string>>(() => new Set())
   const inputRef = useRef<HTMLInputElement>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
   const queueRef = useRef<QueueItem[]>([])
@@ -139,6 +142,12 @@ export function UploadField({
   const batchesRef = useRef(new Map<string, { pending: number; uploadedIds: string[] }>())
   const assetsRef = useRef(assets)
   const endpoint = apiBasePath || `/api/onboarding/${token}/uploads`
+  const selectedAssets = assets.filter((asset) => selectedAssetIds.has(asset.id))
+  const selectedDownloadUrl = selectedAssets.length === 1
+    ? getAssetUrl?.(selectedAssets[0])
+    : selectedAssets.length > 1 && archiveUrl
+      ? `${archiveUrl}?${new URLSearchParams(selectedAssets.map((asset) => ['id', asset.id])).toString()}`
+      : undefined
 
   useEffect(() => {
     assetsRef.current = assets
@@ -561,6 +570,27 @@ export function UploadField({
 
       {notice && <p className="flex items-start gap-2 text-sm text-destructive"><X className="mt-0.5 size-4 shrink-0" />{notice}</p>}
 
+      {archiveUrl && assets.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+        <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 font-medium text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={selectedAssets.length === assets.length}
+            onChange={(event) => setSelectedAssetIds(event.target.checked ? new Set(assets.map((asset) => asset.id)) : new Set())}
+            className="size-4 accent-[var(--brand)]"
+          />
+          Označiť všetky
+        </label>
+        {selectedDownloadUrl ? (
+          <a href={selectedDownloadUrl} className="inline-flex min-h-9 items-center gap-2 rounded-lg bg-secondary px-3 text-xs font-semibold text-foreground hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+            <Download className="size-3.5" aria-hidden="true" /> Stiahnuť vybrané ({selectedAssets.length})
+          </a>
+        ) : (
+          <button type="button" disabled className="inline-flex min-h-9 cursor-not-allowed items-center gap-2 rounded-lg bg-secondary px-3 text-xs font-semibold text-foreground opacity-50">
+            <Download className="size-3.5" aria-hidden="true" /> Stiahnuť vybrané
+          </button>
+        )}
+      </div>}
+
       {(assets.length > 0 || items.length > 0) && (
         <ul className="divide-y divide-border/70" aria-label="Nahrávané súbory">
           {assets.map((asset) => {
@@ -568,12 +598,26 @@ export function UploadField({
             const openUrl = sharedAssetPath(asset)
               || (assetUrl && canPreviewImage(asset.mimeType) ? `${assetUrl}?preview=1` : assetUrl)
             return <li key={asset.id} className="flex flex-wrap items-center gap-3 py-3.5">
+              {archiveUrl && <label className="grid size-8 shrink-0 cursor-pointer place-items-center">
+                <input
+                  type="checkbox"
+                  aria-label={`Označiť na stiahnutie: ${asset.name}`}
+                  checked={selectedAssetIds.has(asset.id)}
+                  onChange={(event) => setSelectedAssetIds((current) => {
+                    const next = new Set(current)
+                    if (event.target.checked) next.add(asset.id)
+                    else next.delete(asset.id)
+                    return next
+                  })}
+                  className="size-4 accent-[var(--brand)]"
+                />
+              </label>}
               {getAssetUrl && canPreviewImage(asset.mimeType) ? (
                 <Image unoptimized width={44} height={44} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-11 shrink-0 rounded-lg object-cover" />
               ) : asset.mimeType.startsWith('video/')
                 ? <FileVideo className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
                 : <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />}
-              <div className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-48">
+              <div className={`min-w-0 flex-1 sm:basis-48 ${archiveUrl ? 'basis-[calc(100%-6.25rem)]' : 'basis-[calc(100%-3.5rem)]'}`}>
                 {renamingId === asset.id ? (
                   <form className="flex max-w-xl items-center gap-1.5" onSubmit={(event) => { event.preventDefault(); void renameAsset(asset) }}>
                     <label className="min-w-0 flex-1">
@@ -616,7 +660,7 @@ export function UploadField({
                   Nahrané · {formatBytes(Number(asset.size))}{showAdminMetadata && ` · ${asset.uploadedBy === 'admin' ? 'správca' : 'klient'} · ${new Intl.DateTimeFormat('sk-SK', { dateStyle: 'medium' }).format(new Date(asset.createdAt))}`}
                 </span>
               </div>
-              <div className="ml-14 flex flex-1 basis-[calc(100%-3.5rem)] items-center justify-end gap-1 sm:ml-auto sm:flex-none sm:basis-auto">
+              <div className={`flex flex-1 items-center justify-end gap-1 sm:ml-auto sm:flex-none sm:basis-auto ${archiveUrl ? 'ml-[6.25rem] basis-[calc(100%-6.25rem)]' : 'ml-14 basis-[calc(100%-3.5rem)]'}`}>
                 {onClientVisibilityChange && (
                   <label className="flex shrink-0 items-center gap-2 text-xs font-medium text-muted-foreground">
                     <input type="checkbox" checked={asset.clientVisible === true} onChange={(event) => onClientVisibilityChange(asset, event.target.checked)} className="size-4 accent-[var(--brand)]" />

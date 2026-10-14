@@ -5,6 +5,7 @@ import { isAdminRequest } from '@/lib/onboarding/admin-auth'
 import { getDatabase } from '@/lib/onboarding/db'
 import { apiError, privateJson } from '@/lib/onboarding/http'
 import { createObjectReadStream } from '@/lib/onboarding/storage'
+import { MAX_UPLOAD_FILES } from '@/lib/onboarding/validation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -46,6 +47,10 @@ export async function GET(request: Request, { params }: Context) {
   try {
     const { clientId } = await params
     if (!UUID_PATTERN.test(clientId)) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
+    const requestedIds = new URL(request.url).searchParams.getAll('id')
+    if (requestedIds.length > MAX_UPLOAD_FILES || requestedIds.some((id) => !UUID_PATTERN.test(id)) || new Set(requestedIds).size !== requestedIds.length) {
+      return privateJson({ error: 'Neplatný výber súborov.' }, { status: 400 })
+    }
 
     const sql = getDatabase()
     const clients = await sql<{ clientLabel: string }[]>`
@@ -56,14 +61,21 @@ export async function GET(request: Request, { params }: Context) {
     `
     if (!clients[0]) return privateJson({ error: 'Klient sa nenašiel.' }, { status: 404 })
 
-    const assets = await sql<{ name: string; objectKey: string }[]>`
-      select original_filename as name, storage_key as "objectKey"
+    const availableAssets = await sql<{ id: string; name: string; objectKey: string }[]>`
+      select id, original_filename as name, storage_key as "objectKey"
       from onboarding_assets
       where client_id = ${clientId}
         and status = 'uploaded'
         and asset_category = 'source'
       order by created_at asc
     `
+    const selectedIds = new Set(requestedIds)
+    const assets = requestedIds.length
+      ? availableAssets.filter((asset) => selectedIds.has(asset.id))
+      : availableAssets
+    if (requestedIds.length && assets.length !== requestedIds.length) {
+      return privateJson({ error: 'Niektorý z vybraných súborov sa nenašiel.' }, { status: 404 })
+    }
     if (!assets.length) return privateJson({ error: 'Klient zatiaľ nemá žiadne podklady.' }, { status: 404 })
 
     const archive = new ZipArchive({ forceZip64: true, store: true })

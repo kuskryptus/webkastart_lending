@@ -749,7 +749,7 @@ export function AdminClientWorkspace({ clientId, initialWorkspace }: {
                   </a>
                 )}
               </div>
-              <UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} assets={sourceAssets} canRenameAsset={(asset) => asset.mimeType.startsWith('image/')} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} />
+              <UploadField apiBasePath={`/api/onboarding/admin/clients/${clientId}/workspace/uploads`} archiveUrl={`/api/onboarding/admin/clients/${clientId}/workspace/uploads/archive`} assets={sourceAssets} canRenameAsset={(asset) => asset.mimeType.startsWith('image/')} getAssetUrl={(asset) => `/api/onboarding/admin/clients/${clientId}/workspace/uploads/${asset.id}`} newAssetMetadata={{ category: 'source', clientVisible: false, uploadedBy: 'admin' }} notificationsEnabled={false} onAssetsChange={(assets) => replaceCategoryAssets('source', assets)} onClientVisibilityChange={(asset, visible) => void changeAssetVisibility(asset, visible)} showAdminMetadata totalAssetCount={workspace.assets.length} />
             </div>}
             {section.key === 'page_structure' && workspace.pageStructure && <div className="mt-10">
               <div className="mb-6 flex justify-end"><AutosaveIndicator message={pageStructureState} /></div>
