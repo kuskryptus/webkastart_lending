@@ -1,8 +1,8 @@
 'use client'
 
 import Image from 'next/image'
-import { ArrowDown, ArrowUp, GripVertical, ImageIcon, Plus, Trash2, X } from 'lucide-react'
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { ArrowDown, ArrowUp, ChevronDown, GripVertical, ImageIcon, Plus, Trash2, X } from 'lucide-react'
+import { useId, useRef, useState, type Dispatch, type PointerEvent as ReactPointerEvent, type SetStateAction } from 'react'
 import type { OnboardingAsset, PageStructure, PageStructureSection } from '@/lib/onboarding/types'
 import {
   MAX_PAGE_STRUCTURE_ITEMS,
@@ -52,11 +52,23 @@ export function PageStructureEditor({
   structure: PageStructure
 }) {
   const [photoPickerSectionId, setPhotoPickerSectionId] = useState<string | null>(null)
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set())
+  const [expandedPhotos, setExpandedPhotos] = useState<Set<string>>(() => new Set())
   const [itemDrag, setItemDrag] = useState<ItemDragState | null>(null)
   const [itemMoveMessage, setItemMoveMessage] = useState('')
   const itemDragRef = useRef<ItemDragState | null>(null)
+  const editorId = useId()
   const imageAssets = assets.filter((asset) => asset.status === 'uploaded' && asset.mimeType.startsWith('image/'))
   const assetById = new Map(imageAssets.map((asset) => [asset.id, asset]))
+
+  function toggleExpanded(id: string, setExpanded: Dispatch<SetStateAction<Set<string>>>) {
+    setExpanded((current) => {
+      const next = new Set(current)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   function replaceSection(sectionId: string, nextSection: PageStructureSection) {
     onChange({
@@ -66,11 +78,12 @@ export function PageStructureEditor({
 
   function addSection() {
     if (disabled || structure.sections.length >= MAX_PAGE_STRUCTURE_SECTIONS) return
+    const id = crypto.randomUUID()
     onChange({
       sections: [
         ...structure.sections,
         {
-          id: crypto.randomUUID(),
+          id,
           title: '',
           description: '',
           items: [],
@@ -78,6 +91,7 @@ export function PageStructureEditor({
         },
       ],
     })
+    setExpandedSections((current) => new Set(current).add(id))
   }
 
   function moveSection(index: number, direction: -1 | 1) {
@@ -95,6 +109,12 @@ export function PageStructureEditor({
     const label = section.title.trim() ? ` „${section.title.trim()}“` : ''
     if (!window.confirm(`Odstrániť sekciu${label}?`)) return
     onChange({ sections: structure.sections.filter((item) => item.id !== section.id) })
+    setExpandedSections((current) => {
+      const next = new Set(current)
+      next.delete(section.id)
+      return next
+    })
+    setExpandedPhotos((current) => new Set([...current].filter((key) => !key.startsWith(`${section.id}:`))))
     if (photoPickerSectionId === section.id) setPhotoPickerSectionId(null)
   }
 
@@ -190,11 +210,29 @@ export function PageStructureEditor({
             const assignedAssetIds = new Set(section.photos.map((photo) => photo.assetId))
             const availableAssets = imageAssets.filter((asset) => !assignedAssetIds.has(asset.id))
             const pickerOpen = photoPickerSectionId === section.id
+            const sectionExpanded = expandedSections.has(section.id)
 
             return (
               <li key={section.id} className="border-b border-border py-9 first:pt-8">
-                <div className="flex items-start gap-4">
-                  <span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold tabular-nums text-brand">
+                <button
+                  type="button"
+                  aria-expanded={sectionExpanded}
+                  aria-controls={`${editorId}-section-${section.id}`}
+                  onClick={() => toggleExpanded(section.id, setExpandedSections)}
+                  className="flex min-h-12 w-full items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand sm:hidden"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold tabular-nums text-brand">{index + 1}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{section.title.trim() || `Sekcia ${index + 1}`}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{section.photos.length} {section.photos.length === 1 ? 'fotografia' : section.photos.length >= 2 && section.photos.length <= 4 ? 'fotografie' : 'fotografií'}</span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
+                    {sectionExpanded ? 'Zbaliť' : 'Rozbaliť'}
+                    <ChevronDown className={`size-4 transition-transform ${sectionExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+                  </span>
+                </button>
+                <div id={`${editorId}-section-${section.id}`} className={`items-start gap-4 ${sectionExpanded ? 'flex' : 'hidden sm:flex'}`}>
+                  <span className="mt-1 hidden size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold tabular-nums text-brand sm:grid">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -361,37 +399,64 @@ export function PageStructureEditor({
                           {section.photos.map((photo, photoIndex) => {
                             const asset = assetById.get(photo.assetId)
                             if (!asset) return null
+                            const photoKey = `${section.id}:${photo.assetId}`
+                            const photoExpanded = expandedPhotos.has(photoKey)
                             return (
                               <div key={photo.assetId} className="overflow-hidden rounded-xl border border-border bg-white/60">
-                                <div className="relative">
-                                  <PhotoPreview asset={asset} getAssetUrl={getAssetUrl} />
-                                  {!disabled && (
-                                    <button
-                                      type="button"
-                                      onClick={() => replaceSection(section.id, { ...section, photos: section.photos.filter((item) => item.assetId !== photo.assetId) })}
-                                      aria-label={`Odobrať fotografiu ${asset.name}`}
-                                      className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-white/90 text-foreground shadow-sm hover:text-destructive"
-                                    >
-                                      <X className="size-4" />
-                                    </button>
-                                  )}
-                                </div>
-                                <div className="p-3">
-                                  <p className="truncate text-xs font-medium text-muted-foreground">{asset.name}</p>
-                                  <label className="mt-3 block">
-                                    <span className="sr-only">Popis fotografie {photoIndex + 1}</span>
-                                    <textarea
-                                      value={photo.description}
-                                      disabled={disabled}
-                                      maxLength={1000}
-                                      onChange={(event) => replaceSection(section.id, {
-                                        ...section,
-                                        photos: section.photos.map((item) => item.assetId === photo.assetId ? { ...item, description: event.target.value } : item),
-                                      })}
-                                      placeholder="Popis fotografie alebo spôsob použitia"
-                                      className="min-h-20 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-2 text-sm leading-5 outline-none focus:border-brand disabled:opacity-70"
-                                    />
-                                  </label>
+                                <button
+                                  type="button"
+                                  aria-expanded={photoExpanded}
+                                  aria-controls={`${editorId}-photo-${section.id}-${photo.assetId}`}
+                                  onClick={() => toggleExpanded(photoKey, setExpandedPhotos)}
+                                  className="flex min-h-16 w-full items-center gap-3 p-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:hidden"
+                                >
+                                  {previewableImageTypes.has(asset.mimeType)
+                                    ? <Image unoptimized width={48} height={48} src={`${getAssetUrl(asset)}?preview=1`} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
+                                    : <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-secondary text-muted-foreground"><ImageIcon className="size-5" aria-hidden="true" /></span>}
+                                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{asset.name}</span>
+                                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
+                                    {photoExpanded ? 'Zbaliť' : 'Rozbaliť'}
+                                    <ChevronDown className={`size-4 transition-transform ${photoExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
+                                  </span>
+                                </button>
+                                <div id={`${editorId}-photo-${section.id}-${photo.assetId}`} className={photoExpanded ? '' : 'hidden sm:block'}>
+                                  <div className="relative">
+                                    <PhotoPreview asset={asset} getAssetUrl={getAssetUrl} />
+                                    {!disabled && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          replaceSection(section.id, { ...section, photos: section.photos.filter((item) => item.assetId !== photo.assetId) })
+                                          setExpandedPhotos((current) => {
+                                            const next = new Set(current)
+                                            next.delete(photoKey)
+                                            return next
+                                          })
+                                        }}
+                                        aria-label={`Odobrať fotografiu ${asset.name}`}
+                                        className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-white/90 text-foreground shadow-sm hover:text-destructive"
+                                      >
+                                        <X className="size-4" />
+                                      </button>
+                                    )}
+                                  </div>
+                                  <div className="p-3">
+                                    <p className="truncate text-xs font-medium text-muted-foreground">{asset.name}</p>
+                                    <label className="mt-3 block">
+                                      <span className="sr-only">Popis fotografie {photoIndex + 1}</span>
+                                      <textarea
+                                        value={photo.description}
+                                        disabled={disabled}
+                                        maxLength={1000}
+                                        onChange={(event) => replaceSection(section.id, {
+                                          ...section,
+                                          photos: section.photos.map((item) => item.assetId === photo.assetId ? { ...item, description: event.target.value } : item),
+                                        })}
+                                        placeholder="Popis fotografie alebo spôsob použitia"
+                                        className="min-h-20 w-full resize-y border-0 border-b border-border bg-transparent px-0 py-2 text-sm leading-5 outline-none focus:border-brand disabled:opacity-70"
+                                      />
+                                    </label>
+                                  </div>
                                 </div>
                               </div>
                             )

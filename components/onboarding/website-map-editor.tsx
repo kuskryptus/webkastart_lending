@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-react'
 import { PageStructureEditor } from './page-structure-editor'
 import type { OnboardingAsset, PageStructure, WebsitePage } from '@/lib/onboarding/types'
 import { MAX_WEBSITE_PAGES } from '@/lib/onboarding/validation'
@@ -55,9 +55,15 @@ export function WebsiteMapEditor({ assets, disabled = false, getAssetUrl, onChan
             <div className="flex items-start gap-3">
               <span className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">{index + 1}</span>
               <details className="min-w-0 flex-1 group">
-                <summary className="cursor-pointer list-none py-1 marker:hidden [&::-webkit-details-marker]:hidden">
-                  <span className="block text-base font-semibold">{page.title.trim() || 'Nová podstránka'} <span className="ml-2 text-xs font-medium text-muted-foreground">{page.sections.length ? `${page.sections.length} sekcií` : 'Bez sekcií'}</span></span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{page.purpose.trim() || 'Rozbaliť a doplniť účel stránky'}</span>
+                <summary className="flex cursor-pointer list-none items-center gap-3 py-1 marker:hidden [&::-webkit-details-marker]:hidden">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-base font-semibold">{page.title.trim() || 'Nová podstránka'} <span className="ml-2 text-xs font-medium text-muted-foreground">{page.sections.length ? `${page.sections.length} sekcií` : 'Bez sekcií'}</span></span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{page.purpose.trim() || 'Doplňte účel stránky'}</span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
+                    <span className="group-open:hidden">Rozbaliť</span><span className="hidden group-open:inline">Zbaliť</span>
+                    <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                  </span>
                 </summary>
                 <div className="space-y-5 pb-5 pt-7">
                   <label className="block text-sm font-semibold">Názov stránky <span className="ml-1 text-xs font-medium text-brand">{page.title.trim() ? 'Dôležité' : 'Dôležité · treba doplniť'}</span>

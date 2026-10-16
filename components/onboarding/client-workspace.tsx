@@ -281,6 +281,7 @@ export function ClientWorkspace({ initialWorkspace, token }: { initialWorkspace:
                 >
                   <span className="min-w-0 flex-1"><span className="block text-lg font-semibold tracking-[-0.025em]">{copy.title}</span><span className="mt-1 block text-sm leading-6 text-muted-foreground">{copy.description}</span></span>
                   {section.key === 'deliverables' ? <span className="shrink-0 text-xs font-semibold text-muted-foreground">{deliverableAssets.length || '—'}</span> : section.key === 'page_structure' ? <span className="shrink-0 text-xs font-semibold text-muted-foreground">{isMultiPage ? `${workspace.pageStructure?.data.pages?.length || 0} stránok` : workspace.pageStructure?.data.sections.length ? `${workspace.pageStructure.data.sections.length} sekcií` : 'Začať'}</span> : <ProgressLabel progress={progress} />}
+                  {!fixedOpen && <span className="shrink-0 text-xs font-semibold text-brand sm:hidden"><span className="group-open:hidden">Rozbaliť</span><span className="hidden group-open:inline">Zbaliť</span></span>}
                   {!fixedOpen && <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />}
                 </summary>
                 <div className="pb-10 pt-3">
