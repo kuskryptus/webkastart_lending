@@ -183,3 +183,5 @@ and pnpm.
 
 Run `pnpm typecheck`, `pnpm lint`, and `pnpm build`. Database setup and the exact
 production onboarding flow are documented in `DEPLOYMENT.md`.
+Run typecheck and build sequentially; build rewrites `.next/types`, so running them
+at the same time can cause a transient missing generated route module error.

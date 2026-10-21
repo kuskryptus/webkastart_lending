@@ -2,11 +2,12 @@ import Image from 'next/image'
 import { ExpenseTrackerDemo } from '@/components/expense-tracker-demo'
 import { LaptopFrame } from '@/components/laptop-frame'
 
-export type ProjectDevice = 'phone' | 'browser' | 'chat' | 'desktop' | 'image'
+export type ProjectDevice = 'phone' | 'phone-image' | 'browser' | 'chat' | 'desktop' | 'image'
 
 export type ProjectShowcase = {
   alt: string
   device: ProjectDevice
+  imageAspectRatio?: number
   imageClassName?: string
   interactive?: 'expenses'
   phoneTone?: 'light' | 'dark'
@@ -18,6 +19,7 @@ type MockupProps = {
   compactMobile?: boolean
   detail?: boolean
   image: string
+  imageAspectRatio?: number
   imageClassName?: string
   interactive?: 'expenses'
   preload?: boolean
@@ -35,20 +37,26 @@ export function PhoneMockup({
   tone = 'light',
 }: MockupProps) {
   const widthClassName = interactive
-    ? 'w-[min(58vw,210px)] sm:w-[220px] lg:w-[225px]'
+    ? 'w-[min(80vw,260px)] sm:w-[270px] lg:w-[275px]'
     : detail
-    ? 'w-[min(76vw,32dvh,340px)]'
+    ? 'w-[min(88vw,32dvh,400px)]'
     : compactMobile
-      ? 'w-[min(49vw,190px)] min-[430px]:w-[200px] sm:w-[225px] lg:w-[250px]'
-      : 'w-[min(60vw,230px)] min-[430px]:w-[min(56vw,245px)] sm:w-[240px] lg:w-[250px]'
+      ? 'w-[min(65vw,250px)] sm:w-[275px] lg:w-[295px]'
+      : 'w-[min(72vw,275px)] sm:w-[290px] lg:w-[300px]'
 
   return (
-    <div data-device-mockup="phone" className={`relative z-10 aspect-[9/19.5] rounded-[2.45rem] bg-[#0b0b0b] p-1 shadow-[0_22px_56px_rgb(24_23_22_/_15%),0_4px_14px_rgb(24_23_22_/_8%)] ring-1 ring-black/20 sm:rounded-[2.7rem] sm:p-[5px] ${widthClassName}`}>
-      <span className="absolute -left-[3px] top-[21%] h-9 w-[3px] rounded-l-full bg-[#1d1d1d]" aria-hidden="true" />
-      <span className="absolute -left-[3px] top-[32%] h-12 w-[3px] rounded-l-full bg-[#1d1d1d]" aria-hidden="true" />
-      <span className="absolute -right-[3px] top-[31%] h-14 w-[3px] rounded-r-full bg-[#1d1d1d]" aria-hidden="true" />
-      <div className="absolute inset-[3px] rounded-[2.3rem] border border-white/10 sm:rounded-[2.55rem]" aria-hidden="true" />
-      <div className={`relative h-full overflow-hidden rounded-[2.18rem] ring-1 ring-black/30 sm:rounded-[2.4rem] ${tone === 'dark' ? 'bg-[#080808]' : 'bg-white'}`}>
+    <div data-device-mockup="phone" className={`relative z-10 aspect-[324/638] ${widthClassName}`}>
+      <Image
+        src="/portfolio/phone-frame.png"
+        alt=""
+        fill
+        loading="eager"
+        sizes="(max-width: 639px) 80vw, (max-width: 1023px) 300px, 400px"
+        className="pointer-events-none select-none object-contain"
+        style={{ clipPath: 'inset(3.5% 4% 5.5% 6.2% round 17% / 8.6%)' }}
+        aria-hidden="true"
+      />
+      <div className={`absolute left-[10.8%] top-[5.55%] z-10 h-[86.2%] w-[80.5%] overflow-hidden rounded-[1.75rem] sm:rounded-[2.25rem] ${tone === 'dark' ? 'bg-[#080808]' : 'bg-white'}`}>
         {interactive === 'expenses' ? (
           <ExpenseTrackerDemo />
         ) : (
@@ -74,6 +82,31 @@ export function PhoneMockup({
           />
         )}
       </div>
+    </div>
+  )
+}
+
+export function PhoneImage({ alt, compactMobile = false, detail = false, image, preload }: MockupProps) {
+  const widthClassName = detail
+    ? 'w-[min(88vw,32dvh,400px)]'
+    : compactMobile
+      ? 'w-[min(65vw,250px)] sm:w-[275px] lg:w-[295px]'
+      : 'w-[min(72vw,275px)] sm:w-[290px] lg:w-[300px]'
+
+  return (
+    <div data-device-mockup="phone-image" className={`relative z-10 aspect-[889/1768] ${widthClassName}`}>
+      <Image
+        src={image}
+        alt={alt}
+        fill
+        preload={preload}
+        sizes={detail
+          ? '(max-width: 639px) 88vw, 400px'
+          : compactMobile
+            ? '(max-width: 639px) 65vw, 295px'
+            : '(max-width: 639px) 72vw, 300px'}
+        className="object-contain"
+      />
     </div>
   )
 }
@@ -151,11 +184,12 @@ export function LaptopMockup({ alt, detail = false, image, imageClassName, prelo
   )
 }
 
-export function ProductImage({ alt, detail = false, image, imageClassName, preload }: MockupProps) {
+export function ProductImage({ alt, detail = false, image, imageAspectRatio = 1442 / 960, imageClassName, preload }: MockupProps) {
   return (
     <div
       data-device-mockup="image"
-      className={`relative z-10 aspect-[1442/960] w-full ${detail ? 'max-w-[1200px]' : 'max-w-[460px] sm:max-w-[680px] lg:max-w-[820px]'}`}
+      className={`relative z-10 w-full ${detail ? 'max-w-[1200px]' : 'max-w-[460px] sm:max-w-[680px] lg:max-w-[820px]'}`}
+      style={{ aspectRatio: imageAspectRatio }}
     >
       <Image
         src={image}
@@ -182,7 +216,7 @@ export function ProjectVisual({
   priority?: boolean
   showcase: ProjectShowcase
 }) {
-  const isPhone = showcase.device === 'phone'
+  const isPhone = showcase.device === 'phone' || showcase.device === 'phone-image'
   const wrapperClassName = detail
     ? 'relative isolate flex h-full w-full items-center justify-center overflow-visible px-1 py-2 sm:px-4 sm:py-3'
     : compactMobile
@@ -196,11 +230,20 @@ export function ProjectVisual({
       <div className="absolute left-1/2 top-1/2 -z-10 h-[72%] w-[74%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand/[0.07] blur-3xl" />
       <div className="absolute bottom-[7%] left-1/2 -z-10 h-7 w-3/5 -translate-x-1/2 rounded-full bg-foreground/[0.06] blur-2xl" />
 
-      {showcase.device === 'image' ? (
+      {showcase.device === 'phone-image' ? (
+        <PhoneImage
+          alt={showcase.alt}
+          compactMobile={compactMobile}
+          detail={detail}
+          image={showcase.src}
+          preload={preload}
+        />
+      ) : showcase.device === 'image' ? (
         <ProductImage
           alt={showcase.alt}
           detail={detail}
           image={showcase.src}
+          imageAspectRatio={showcase.imageAspectRatio}
           imageClassName={showcase.imageClassName}
           preload={preload}
         />
