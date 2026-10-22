@@ -60,7 +60,11 @@ WebkaStart is a Slovak Next.js 16 App Router site. It uses React 19, TypeScript,
 Tailwind CSS 4, PostgreSQL via `postgres`, private S3-compatible storage, Resend,
 and pnpm.
 
-- Public landing page: `app/page.tsx` and `components/`.
+- Public pages: `app/(public)/` and `components/`; the route group keeps public
+  URLs unchanged and loads Ahrefs Analytics only on public pages. Do not add
+  third-party analytics to the root layout: private portal and file URLs contain
+  bearer tokens.
+  The landing page is `app/(public)/page.tsx`.
   Its hero images use precompressed static WebP files; keep first paint independent
   of image-load callbacks and client hydration, and animate only opacity/position.
 - Contact API: `app/api/contact/route.ts`.
