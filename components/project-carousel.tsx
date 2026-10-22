@@ -2,7 +2,7 @@
 
 import { type TouchEvent, useRef, useState } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { ArrowLeft, ArrowRight, Maximize2, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, X } from 'lucide-react'
 import type { Project } from '@/components/projects'
 import { ProjectVisual } from '@/components/project-visual'
 
@@ -126,14 +126,10 @@ function ProjectSlide({
             <button
               type="button"
               onClick={onOpenDetail}
-              className="group relative block w-full cursor-zoom-in focus-visible:outline-none"
+              className="relative block w-full cursor-zoom-in rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2"
               aria-label={`Zväčšiť ukážku projektu ${project.title}`}
             >
               <ProjectVisual compactMobile priority showcase={project.showcase} />
-              <span className="absolute right-1.5 top-1.5 inline-flex size-8 items-center justify-center gap-1.5 rounded-full bg-background/92 text-[11px] font-semibold text-foreground shadow-[0_2px_12px_rgb(24_23_22_/_8%)] backdrop-blur transition-colors group-hover:bg-brand group-hover:text-white group-focus-visible:ring-2 group-focus-visible:ring-brand/45 group-focus-visible:ring-offset-2 sm:right-3 sm:top-3 sm:size-auto sm:px-2.5 sm:py-1.5 lg:hidden">
-                <Maximize2 className="size-3.5" aria-hidden="true" />
-                <span className="hidden sm:inline">Detail</span>
-              </span>
             </button>
           )}
         </div>

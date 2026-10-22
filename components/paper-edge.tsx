@@ -12,7 +12,7 @@ export function PaperEdge({ variant }: PaperEdgeProps) {
     <Image
       src={tornPaperEdge}
       alt=""
-      placeholder="blur"
+      placeholder={isHero ? 'empty' : 'blur'}
       unoptimized
       loading={isHero ? 'eager' : 'lazy'}
       sizes="(max-width: 1023px) 210vw, 100vw"

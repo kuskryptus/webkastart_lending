@@ -78,11 +78,9 @@ export const projects: Project[] = [
     result: 'Obsah sa dá rýchlo importovať, čítať a ovládať v tmavom, sústredenom rozhraní.',
     scope: 'Mobilná aplikácia · reader · import obsahu',
     showcase: {
-      device: 'phone',
-      phoneTone: 'dark',
+      device: 'phone-screen',
       src: '/portfolio/reader-view-clean.png',
       alt: 'Obrazovka mobilnej čítačky s textom',
-      imageClassName: 'object-center',
     },
   },
   {
@@ -93,11 +91,10 @@ export const projects: Project[] = [
     result: 'Návštevník hneď pochopí, kedy sa akcia deje, pre koho je určená a aký je ďalší krok.',
     scope: 'Web · prezentačná stránka · registrácia',
     showcase: {
-      device: 'phone',
-      phoneTone: 'dark',
-      src: '/portfolio/newlevel-youth-clean.jpg',
-      alt: 'Mobilná stránka New Level Youth',
-      imageClassName: 'object-top',
+      device: 'phone-image',
+      src: '/portfolio/newlevel-youth-phone.png',
+      alt: 'Mobilná stránka New Level Youth vo vizualizácii telefónu',
+      imageClassName: 'scale-[1.1] [clip-path:inset(0.6%_4.3%_0.8%_4.3%_round_12%)]',
     },
   },
   {
@@ -109,7 +106,7 @@ export const projects: Project[] = [
     scope: 'Landing page · ponuka jedál · navigácia',
     showcase: {
       device: 'phone-image',
-      src: '/portfolio/bistro-phone.webp',
+      src: '/portfolio/bistro-phone-cutout.webp',
       alt: 'Mobilná landing stránka Bistro do ruky vo vizualizácii telefónu',
     },
   },
@@ -135,7 +132,7 @@ export const projects: Project[] = [
     scope: 'Kampane · dopyty · zákazky',
     showcase: {
       device: 'image',
-      src: '/portfolio/sambike-campaigns.webp',
+      src: '/portfolio/sambike-campaigns-cutout.webp',
       alt: 'Obchodný prehľad kampaní Sambike zobrazený na notebooku',
       imageAspectRatio: 1630 / 965,
     },
