@@ -1,7 +1,7 @@
 import { ArrowRight, Bot, Code2, Lightbulb, Ruler, Sparkles, Zap } from 'lucide-react'
 import { HeroLaptop } from '@/components/hero-laptop'
-import { HeroPaperReveal } from '@/components/hero-paper-reveal'
 import { SectionLink } from '@/components/section-link'
+import { TechnologyBackdrop } from '@/components/technology-backdrop'
 
 const features = [
   { icon: Zap, title: 'Rýchle dodanie', desc: 'Pri menších weboch a úpravách.' },
@@ -10,8 +10,8 @@ const features = [
 
 export function Hero() {
   return (
-    <section className="relative isolate mx-auto max-w-[100rem] overflow-hidden px-5 pb-40 pt-4 sm:px-6 sm:pb-44 sm:pt-6 lg:pb-36 lg:pt-10">
-      <HeroPaperReveal />
+    <section className="relative isolate mx-auto max-w-[100rem] overflow-hidden px-5 pb-12 pt-4 sm:px-6 sm:pb-16 sm:pt-6 lg:pt-10">
+      <TechnologyBackdrop />
 
       <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-x-12 gap-y-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-y-0">
         {/* Left */}
